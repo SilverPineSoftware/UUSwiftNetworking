@@ -292,6 +292,7 @@
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1.0.3;
 				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = SVT6H48N2C;
 				DYLIB_COMPATIBILITY_VERSION = 1;
@@ -304,6 +305,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
+				MARKETING_VERSION = 1.0.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.silverpine.UUSwiftNetworking;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
@@ -318,6 +320,7 @@
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1.0.3;
 				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = SVT6H48N2C;
 				DYLIB_COMPATIBILITY_VERSION = 1;
@@ -330,6 +333,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
+				MARKETING_VERSION = 1.0.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.silverpine.UUSwiftNetworking;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
@@ -367,7 +371,7 @@
 			repositoryURL = "https://github.com/SilverPineSoftware/UUSwiftCore";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.2;
+				minimumVersion = 1.0.3;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
