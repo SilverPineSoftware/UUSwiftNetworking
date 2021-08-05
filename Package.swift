@@ -29,7 +29,7 @@ let package = Package(
 	targets: [
 		.target(
 			name: "UUSwiftNetworking",
-			dependencies: ["UUSwiftNetworking"],
+			dependencies: ["UUSwiftCore"],
 			path: "UUSwiftNetworking",
 			exclude: ["Info.plist"])
 	],
