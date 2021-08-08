@@ -21,7 +21,6 @@
 		C574962426BB5EE200CECCC0 /* UURemoteImage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UURemoteImage.swift; sourceTree = "<group>"; };
 		C574962526BB5EE200CECCC0 /* UURemoteData.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UURemoteData.swift; sourceTree = "<group>"; };
 		C574962626BB5EE200CECCC0 /* UUHttpSession.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UUHttpSession.swift; sourceTree = "<group>"; };
-		C574962A26BB5F3E00CECCC0 /* UUSwiftCore.podspec */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = UUSwiftCore.podspec; sourceTree = "<group>"; };
 		C574962B26BB5F3E00CECCC0 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		C574962C26BB5F3E00CECCC0 /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
 		C574962D26BB5F3E00CECCC0 /* Package.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
@@ -45,7 +44,6 @@
 				C574962C26BB5F3E00CECCC0 /* LICENSE */,
 				C574962D26BB5F3E00CECCC0 /* Package.swift */,
 				C574962B26BB5F3E00CECCC0 /* README.md */,
-				C574962A26BB5F3E00CECCC0 /* UUSwiftCore.podspec */,
 				C574961B26BB5E7A00CECCC0 /* UUSwiftNetworking */,
 				C574961A26BB5E7A00CECCC0 /* Products */,
 			);

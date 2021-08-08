@@ -11,15 +11,12 @@ let package = Package(
 	],
 
 	products: [
-		// Products define the executables and libraries a package produces, and make them visible to other packages.
 		.library(
 			name: "UUSwiftNetworking",
 			targets: ["UUSwiftNetworking"]),
 	],
 
 	dependencies: [
-		// Here we define our package's external dependencies
-		// and from where they can be fetched:
 		.package(
 			url: "https://github.com/SilverPineSoftware/UUSwiftCore.git",
 			from: "1.0.2"
