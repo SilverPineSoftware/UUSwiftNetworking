@@ -28,12 +28,12 @@ public typealias UUImageLoadedCompletionBlock = (UUImage?, Error?) -> Void
 
 public class UURemoteImage: NSObject
 {
-    public struct Notifications
+	public static let shared = UURemoteImage()
+
+	public struct Notifications
     {
         public static let ImageDownloaded = Notification.Name("UUImageDownloadedNotification")
     }
-    
-    public static let shared = UURemoteImage()
 
     public func imageSize(for path: String) -> CGSize?
     {
@@ -48,7 +48,12 @@ public class UURemoteImage: NSObject
         return nil
     }
     
-    public func clearCache()
+	public func memoryCache() -> NSCache<NSString, UUImage>
+	{
+		return self.systemImageCache
+	}
+
+	public func clearCache()
     {
         self.systemImageCache.removeAllObjects()
     }
