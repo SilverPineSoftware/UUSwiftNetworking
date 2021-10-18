@@ -28,7 +28,11 @@ let package = Package(
 			name: "UUSwiftNetworking",
 			dependencies: ["UUSwiftCore"],
 			path: "UUSwiftNetworking",
-			exclude: ["Info.plist"])
+			exclude: ["Info.plist"]),
+        .testTarget(
+            name: "UUSwiftCoreTests",
+            dependencies: ["UUSwiftCore", "UUSwiftNetworking"],
+            path: "Tests"),
 	],
 	swiftLanguageVersions: [
 		.v4_2,
