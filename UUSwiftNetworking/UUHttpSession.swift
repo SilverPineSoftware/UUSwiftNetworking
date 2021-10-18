@@ -21,7 +21,8 @@ public class UUHttpSession: NSObject
 {
     private var urlSession : URLSession? = nil
     private var sessionConfiguration : URLSessionConfiguration? = nil
-    private var activeTasks : UUThreadSafeArray<URLSessionTask> = UUThreadSafeArray()
+    private var activeTasks : [URLSessionTask] = []
+    private var threadSafetyBarrier = DispatchQueue(label: "UUHttpSession_SynchronizedArrayAccess", attributes: .concurrent)
     private var responseHandlers : [String:UUHttpResponseHandler] = [:]
     
     public static let shared = UUHttpSession()
@@ -93,14 +94,16 @@ public class UUHttpSession: NSObject
         let task = urlSession!.dataTask(with: request.httpRequest!)
         { (data : Data?, response: URLResponse?, error : Error?) in
 			
-			if let httpTask = request.httpTask {
-				self.activeTasks.remove(httpTask)
+			if let httpTask = request.httpTask
+            {
+                self.removeActiveTask(httpTask)
 			}
+            
             self.handleResponse(request, data, response, error, completion)
         }
 		request.httpTask = task
 		
-        activeTasks.append(task)
+        addActiveTask(task)
         task.resume()
         return request
     }
@@ -308,5 +311,21 @@ public class UUHttpSession: NSObject
     public static func registerResponseHandler(_ handler : UUHttpResponseHandler)
     {
         shared.registerResponseHandler(handler)
+    }
+    
+    private func addActiveTask(_ task : URLSessionTask)
+    {
+        self.threadSafetyBarrier.sync
+        {
+            self.activeTasks.append(task)
+        }
+    }
+    
+    private func removeActiveTask(_ task : URLSessionTask)
+    {
+        self.threadSafetyBarrier.sync
+        {
+            self.activeTasks.removeAll(where: { $0.taskIdentifier == task.taskIdentifier })
+        }
     }
 }
