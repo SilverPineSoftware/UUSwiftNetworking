@@ -11,21 +11,15 @@ import UUSwiftCore
 
 class UURemoteDataTests: XCTestCase
 {
-    static var isFirstTest : Bool = true
-    
     private static let testUrl : String = "http://publicdomainarchive.com/?ddownload=47473"
 
     override func setUp()
     {
         super.setUp()
         
-        if (UURemoteDataTests.isFirstTest)
-        {
-            UUDataCache.shared.clearCache()
-            UURemoteDataTests.isFirstTest = false
-            UURemoteData.shared.maxActiveRequests = 50
-            UUDataCache.shared.contentExpirationLength = 30 * 24 * 60 * 60
-        }
+        UUDataCache.shared.clearCache()
+        UURemoteData.shared.maxActiveRequests = 50
+        UUDataCache.shared.contentExpirationLength = 30 * 24 * 60 * 60
     }
     
     override func tearDown()
@@ -33,7 +27,7 @@ class UURemoteDataTests: XCTestCase
         super.tearDown()
     }
     
-    func test_0000_fetchNoLocal()
+    func test_fetchNoLocal()
     {
         let key = UURemoteDataTests.testUrl
         
@@ -74,7 +68,7 @@ class UURemoteDataTests: XCTestCase
         XCTAssertNotNil(md)
     }
     
-    func test_0001_fetchFromBadUrl()
+    func test_fetchFromBadUrl()
     {
         expectation(forNotification: NSNotification.Name(rawValue: UURemoteData.Notifications.DataDownloadFailed.rawValue), object: nil)
         
@@ -93,32 +87,59 @@ class UURemoteDataTests: XCTestCase
         }
     }
     
-    func test_0002_fetchExisting()
+    func test_fetchExisting()
     {
         let key = UURemoteDataTests.testUrl
+        
+        let exp = expectation(description: #function)
+   
+        let existing = UURemoteData.shared.data(for: key)
+        { result, err in
+            exp.fulfill()
+        }
+        
+        XCTAssertNil(existing)
+        
+        waitForExpectations(timeout: 60, handler: nil)
+        
         
         let data = UURemoteData.shared.data(for: key)
         XCTAssertNotNil(data)
     }
     
-    func test_0003_downloadMultiple_10()
+    func test_downloadMultiple_largeFiles_noDuplicates_10()
     {
-        do_concurrentDownloadTest(count: 10)
+        do_concurrentDownloadTest(count: 10, large: true, includeDuplicates: false)
     }
     
-    func test_0004_downloadMultiple_100()
+    func test_downloadMultiple_largeFiles_noDuplicates_100()
     {
-        do_concurrentDownloadTest(count: 100)
+        do_concurrentDownloadTest(count: 100, large: true, includeDuplicates: false)
     }
     
-    func test_0004_downloadMultiple_1000()
+    func test_downloadMultiple_largeFiles_noDuplicates_1000()
     {
-        do_concurrentDownloadTest(count: 1000)
+        do_concurrentDownloadTest(count: 1000, large: true, includeDuplicates: false)
     }
     
-    private func do_concurrentDownloadTest(count: Int)
+    func test_downloadMultiple_smallFiles_noDuplicates_10()
     {
-        let imageUrls = getImageUrls(count: count)
+        do_concurrentDownloadTest(count: 10, large: false, includeDuplicates: false)
+    }
+    
+    func test_downloadMultiple_smallFiles_noDuplicates_100()
+    {
+        do_concurrentDownloadTest(count: 100, large: false, includeDuplicates: false)
+    }
+    
+    func test_downloadMultiple_smallFiles_noDuplicates_1000()
+    {
+        do_concurrentDownloadTest(count: 1000, large: false, includeDuplicates: false)
+    }
+    
+    private func do_concurrentDownloadTest(count: Int, large: Bool, includeDuplicates: Bool)
+    {
+        let imageUrls = getImageUrls(count: count, large: large)
         XCTAssertTrue(imageUrls.count > 0)
         
         for (index, url) in imageUrls.enumerated()
@@ -139,13 +160,13 @@ class UURemoteDataTests: XCTestCase
         waitForExpectations(timeout: 300, handler: nil)
     }
     
-    private func getImageUrls(count: Int) -> [String]
+    private func getImageUrls(count: Int, large: Bool) -> [String]
     {
         let exp = expectation(description: #function)
         
         var results: [String] = []
         
-        ShutterstockApi.fetchImageUrls(count: count)
+        ShutterstockApi.fetchImageUrls(count: count, large: large)
         { list in
             results.append(contentsOf: list)
             exp.fulfill()
@@ -153,20 +174,46 @@ class UURemoteDataTests: XCTestCase
         
         waitForExpectations(timeout: 60, handler: nil)
         
-        return results
+        let truncated = Array(results.prefix(count))
+        XCTAssertEqual(truncated.count, count)
+        return truncated
     }
 }
 
 fileprivate class ShutterstockApi
 {
-    class func fetchImageUrls(count: Int, callback: @escaping (([String])->()))
+    private static let maxPerPage = 500
+    
+    class func fetchImageUrls(count: Int, large: Bool, callback: @escaping (([String])->()))
+    {
+        fetchAssets(workingResults: [], page: 1, count: count, query: "forest", assetKey: large ? "preview_1500" : "small_thumb", callback: callback)
+    }
+    
+    private class func fetchAssets(workingResults: [String], page: Int, count: Int, query: String, assetKey: String, callback: @escaping (([String])->()))
+    {
+        if (workingResults.count >= count)
+        {
+            callback(workingResults)
+            return
+        }
+        
+        fetchAssetPage(page: page, perPage: min(count, maxPerPage), query: query, assetKey: assetKey)
+        { pageResult in
+            
+            var tmp = workingResults
+            tmp.append(contentsOf: pageResult)
+            fetchAssets(workingResults: tmp, page: page + 1, count: count, query: query, assetKey: assetKey, callback: callback)
+        }
+    }
+    
+    private class func fetchAssetPage(page: Int, perPage: Int, query: String, assetKey: String, callback: @escaping (([String])->()))
     {
         let url = "https://api.shutterstock.com/v2/images/search"
         
         var args: UUQueryStringArgs = [:]
-        args["page"] = "1"
-        args["per_page"] = "500" // 500 is the max allowed
-        args["query"] = "forest"
+        args["page"] = "\(page)"
+        args["per_page"] = "\(perPage)" // 500 is the max allowed
+        args["query"] = query
         
         let req = UUHttpRequest(url: url, method: .get, queryArguments: args)
         
@@ -175,6 +222,7 @@ fileprivate class ShutterstockApi
         let usernameEncoded = usernameData!.base64EncodedString(options: Data.Base64EncodingOptions.init(rawValue: 0))
         req.headerFields["Authorization"] = "Basic \(usernameEncoded)"
         
+        NSLog("Fetching page \(page)")
         _ = UUHttpSession.executeRequest(req)
         { (response: UUHttpResponse) in
         
@@ -196,16 +244,7 @@ fileprivate class ShutterstockApi
                             //preview_1000
                             //preview_1500
                             
-                            if let d = assets.uuSafeGetDictionary("preview_1500"),
-                               let url = d.uuSafeGetString("url")
-                            {
-                                if (!results.contains(url))
-                                {
-                                    results.append(url)
-                                }
-                            }
-                            
-                            if let d = assets.uuSafeGetDictionary("small_thumb"),
+                            if let d = assets.uuSafeGetDictionary(assetKey),
                                let url = d.uuSafeGetString("url")
                             {
                                 if (!results.contains(url))
