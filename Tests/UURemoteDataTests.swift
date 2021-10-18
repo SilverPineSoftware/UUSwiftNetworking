@@ -23,6 +23,7 @@ class UURemoteDataTests: XCTestCase
         {
             UUDataCache.shared.clearCache()
             UURemoteDataTests.isFirstTest = false
+            UURemoteData.shared.maxActiveRequests = 50
             UUDataCache.shared.contentExpirationLength = 30 * 24 * 60 * 60
         }
     }
@@ -102,31 +103,21 @@ class UURemoteDataTests: XCTestCase
     
     func test_0003_downloadMultiple_10()
     {
-        let count = 10
-        let imageUrls = getImageUrls(count: count)
-        XCTAssertTrue(imageUrls.count > 0)
-        
-        for (index, url) in imageUrls.enumerated()
-        {
-            let exp = expectation(description: "Iteration_\(index)")
-            
-            let existing = UURemoteData.shared.data(for: url)
-            { result, err in
-                XCTAssertNotNil(result)
-                XCTAssertNil(err)
-                exp.fulfill()
-                NSLog("Iteration Complete - \(index)")
-            }
-            
-            XCTAssertNil(existing)
-        }
-        
-        waitForExpectations(timeout: 300, handler: nil)
+        do_concurrentDownloadTest(count: 10)
     }
     
     func test_0004_downloadMultiple_100()
     {
-        let count = 100
+        do_concurrentDownloadTest(count: 100)
+    }
+    
+    func test_0004_downloadMultiple_1000()
+    {
+        do_concurrentDownloadTest(count: 1000)
+    }
+    
+    private func do_concurrentDownloadTest(count: Int)
+    {
         let imageUrls = getImageUrls(count: count)
         XCTAssertTrue(imageUrls.count > 0)
         
@@ -174,7 +165,7 @@ fileprivate class ShutterstockApi
         
         var args: UUQueryStringArgs = [:]
         args["page"] = "1"
-        args["per_page"] = "\(count)"
+        args["per_page"] = "500" // 500 is the max allowed
         args["query"] = "forest"
         
         let req = UUHttpRequest(url: url, method: .get, queryArguments: args)
@@ -205,8 +196,16 @@ fileprivate class ShutterstockApi
                             //preview_1000
                             //preview_1500
                             
-                            let key = "preview_1500"
-                            if let d = assets.uuSafeGetDictionary(key),
+                            if let d = assets.uuSafeGetDictionary("preview_1500"),
+                               let url = d.uuSafeGetString("url")
+                            {
+                                if (!results.contains(url))
+                                {
+                                    results.append(url)
+                                }
+                            }
+                            
+                            if let d = assets.uuSafeGetDictionary("small_thumb"),
                                let url = d.uuSafeGetString("url")
                             {
                                 if (!results.contains(url))
