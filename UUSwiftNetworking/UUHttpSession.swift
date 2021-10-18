@@ -22,7 +22,8 @@ public class UUHttpSession: NSObject
     private var urlSession : URLSession? = nil
     private var sessionConfiguration : URLSessionConfiguration? = nil
     private var activeTasks : [URLSessionTask] = []
-    private var threadSafetyBarrier = DispatchQueue(label: "UUHttpSession_SynchronizedArrayAccess", attributes: .concurrent)
+    private var activeTasksLock = NSRecursiveLock()
+    
     private var responseHandlers : [String:UUHttpResponseHandler] = [:]
     
     public static let shared = UUHttpSession()
@@ -315,17 +316,17 @@ public class UUHttpSession: NSObject
     
     private func addActiveTask(_ task : URLSessionTask)
     {
-        self.threadSafetyBarrier.sync
-        {
-            self.activeTasks.append(task)
-        }
+        defer { activeTasksLock.unlock() }
+        activeTasksLock.lock()
+        
+        self.activeTasks.append(task)
     }
     
     private func removeActiveTask(_ task : URLSessionTask)
     {
-        self.threadSafetyBarrier.sync
-        {
-            self.activeTasks.removeAll(where: { $0.taskIdentifier == task.taskIdentifier })
-        }
+        defer { activeTasksLock.unlock() }
+        activeTasksLock.lock()
+        
+        self.activeTasks.removeAll(where: { $0.taskIdentifier == task.taskIdentifier })
     }
 }

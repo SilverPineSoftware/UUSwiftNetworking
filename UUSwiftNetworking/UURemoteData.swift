@@ -59,10 +59,14 @@ public class UURemoteData : NSObject, UURemoteDataProtocol
         public static let Error = "UURemoteDataErrorKey"
     }
 
-	private var threadSafetyBarrier = DispatchQueue(label: "SynchronizedArrayAccess", attributes: .concurrent)
 	private var activeDownloads : [String : UUHttpRequest] = [:]
+    private var activeDownloadsLock = NSRecursiveLock()
+    
     private var pendingDownloads : [String] = []
+    private var pendingDownloadsLock = NSRecursiveLock()
+    
 	private var httpRequestLookups : [String : [UUDataLoadedCompletionBlock]] = [:]
+    private var httpRequestLookupsLock = NSRecursiveLock()
     
     // Default to 4 active requests at a time...
     public var maxActiveRequests: Int = 4
@@ -235,103 +239,104 @@ public class UURemoteData : NSObject, UURemoteDataProtocol
 
 extension UURemoteData {
 
-	private func setActiveDownload(_ request : UUHttpRequest, forKey: String) {
-		self.threadSafetyBarrier.sync {
-			self.activeDownloads[forKey] = request
-		}
+	private func setActiveDownload(_ request : UUHttpRequest, forKey: String)
+    {
+        defer { activeDownloadsLock.unlock() }
+        activeDownloadsLock.lock()
+        
+        self.activeDownloads[forKey] = request
 	}
 
-	private func removeDownload(forKey: String) {
-		self.threadSafetyBarrier.sync {
-			_ = self.activeDownloads.removeValue(forKey: forKey)
-		}
+	private func removeDownload(forKey: String)
+    {
+        defer { activeDownloadsLock.unlock() }
+        activeDownloadsLock.lock()
+        
+        _ = self.activeDownloads.removeValue(forKey: forKey)
 	}
 
 	private func activeDownloadCount() -> Int
 	{
-		var count = 0
-		self.threadSafetyBarrier.sync {
-			count = self.activeDownloads.count
-		}
-
-		return count
+        defer { activeDownloadsLock.unlock() }
+        activeDownloadsLock.lock()
+        
+        return self.activeDownloads.count
 	}
 
 	public func isDownloadActive(for key: String) -> Bool
 	{
-		var active = false
-		self.threadSafetyBarrier.sync {
-			active = (activeDownloads[key] != nil)
-		}
-
-		return active
+        defer { activeDownloadsLock.unlock() }
+        activeDownloadsLock.lock()
+        
+		return (activeDownloads[key] != nil)
 	}
 
 	private func pendingDownloadCount() -> Int
 	{
-		var count = 0
-		self.threadSafetyBarrier.sync {
-			count = self.pendingDownloads.count
-		}
-
-		return count
+        defer { pendingDownloadsLock.unlock() }
+        pendingDownloadsLock.lock()
+        
+		return self.pendingDownloads.count
 	}
 
 	private func dequeuePending() -> String?
 	{
-		var last : String? = nil
-		self.threadSafetyBarrier.sync {
-			last = self.pendingDownloads.popLast()
-		}
-
-		return last
+        defer { pendingDownloadsLock.unlock() }
+        pendingDownloadsLock.lock()
+        
+		return self.pendingDownloads.popLast()
 	}
 
 	private func queuePendingRequest(for key: String, remoteLoadCompletion: UUDataLoadedCompletionBlock?)
 	{
-		self.threadSafetyBarrier.sync {
-			if let index = self.pendingDownloads.firstIndex(of: key) {
-				self.pendingDownloads.remove(at: index)
-			}
-			self.pendingDownloads.insert(key, at: 0)
-		}
-
+        defer { pendingDownloadsLock.unlock() }
+        pendingDownloadsLock.lock()
+        
+        if let index = self.pendingDownloads.firstIndex(of: key)
+        {
+            self.pendingDownloads.remove(at: index)
+        }
+        
+        self.pendingDownloads.insert(key, at: 0)
+		
 		appendRemoteHandler(for: key, handler: remoteLoadCompletion)
 	}
 
 	private func appendRemoteHandler(for key: String, handler: UUDataLoadedCompletionBlock?)
 	{
-		self.threadSafetyBarrier.sync {
-			if let remoteHandler = handler
-			{
-				var handlers = self.httpRequestLookups[key]
-				if (handlers == nil)
-				{
-					handlers = []
-				}
+        defer { httpRequestLookupsLock.unlock() }
+        httpRequestLookupsLock.lock()
+        
+        if let remoteHandler = handler
+        {
+            var handlers = self.httpRequestLookups[key]
+            if (handlers == nil)
+            {
+                handlers = []
+            }
 
-				if (handlers != nil)
-				{
-					handlers!.append(remoteHandler)
-					self.httpRequestLookups[key] = handlers!
-				}
-			}
-		}
+            if (handlers != nil)
+            {
+                handlers!.append(remoteHandler)
+                self.httpRequestLookups[key] = handlers!
+            }
+        }
 	}
 
-	private func removeRemoteHandler(for key: String) {
-		self.threadSafetyBarrier.sync {
-			_ = self.httpRequestLookups.removeValue(forKey: key)
-		}
+	private func removeRemoteHandler(for key: String)
+    {
+        defer { httpRequestLookupsLock.unlock() }
+        httpRequestLookupsLock.lock()
+        
+        _ = self.httpRequestLookups.removeValue(forKey: key)
 	}
 
 	private func getHandlers(for key: String) -> [UUDataLoadedCompletionBlock]?
 	{
-		var handlers : [UUDataLoadedCompletionBlock]? = nil
-		self.threadSafetyBarrier.sync {
-			handlers = self.httpRequestLookups[key]
-		}
-		return handlers
+        defer { httpRequestLookupsLock.unlock() }
+        httpRequestLookupsLock.lock()
+        
+        return self.httpRequestLookups[key]
 	}
 
 }
