@@ -137,6 +137,36 @@ class UURemoteDataTests: XCTestCase
         do_concurrentDownloadTest(count: 1000, large: false, includeDuplicates: false)
     }
     
+    func test_downloadMultiple_largeFiles_withDuplicates_10()
+    {
+        do_concurrentDownloadTest(count: 10, large: true, includeDuplicates: true)
+    }
+    
+    func test_downloadMultiple_largeFiles_withDuplicates_100()
+    {
+        do_concurrentDownloadTest(count: 100, large: true, includeDuplicates: true)
+    }
+    
+    func test_downloadMultiple_largeFiles_withDuplicates_1000()
+    {
+        do_concurrentDownloadTest(count: 1000, large: true, includeDuplicates: true)
+    }
+    
+    func test_downloadMultiple_smallFiles_withDuplicates_10()
+    {
+        do_concurrentDownloadTest(count: 10, large: false, includeDuplicates: true)
+    }
+    
+    func test_downloadMultiple_smallFiles_withDuplicates_100()
+    {
+        do_concurrentDownloadTest(count: 100, large: false, includeDuplicates: true)
+    }
+    
+    func test_downloadMultiple_smallFiles_withDuplicates_1000()
+    {
+        do_concurrentDownloadTest(count: 1000, large: false, includeDuplicates: true)
+    }
+    
     private func do_concurrentDownloadTest(count: Int, large: Bool, includeDuplicates: Bool)
     {
         let imageUrls = getImageUrls(count: count, large: large)
@@ -154,10 +184,33 @@ class UURemoteDataTests: XCTestCase
                 NSLog("Iteration Complete - \(index)")
             }
             
-            XCTAssertNil(existing)
+            if (includeDuplicates)
+            {
+                usleep(50)
+                
+                let expInner = expectation(description: "Iteration_\(index)_inner")
+                let innerResult = UURemoteData.shared.data(for: url)
+                { result, err in
+                    XCTAssertNotNil(result)
+                    XCTAssertNil(err)
+                    expInner.fulfill()
+                    NSLog("Iteration Complete - \(index) - Inner")
+                }
+                
+                if (innerResult != nil)
+                {
+                    expInner.fulfill()
+                }
+            }
+            else
+            {
+                XCTAssertNil(existing)
+            }
+            
+            // The value may or may not be nil, so there is nothing to assert
         }
         
-        waitForExpectations(timeout: 300, handler: nil)
+        waitForExpectations(timeout: 900, handler: nil)
     }
     
     private func getImageUrls(count: Int, large: Bool) -> [String]
