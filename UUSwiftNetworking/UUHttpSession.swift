@@ -59,16 +59,15 @@ public class UUHttpSession: NSObject
     
     private func executeRequest(_ request : UUHttpRequest, _ completion: @escaping (UUHttpResponse) -> Void) -> UUHttpRequest
     {
-        let httpRequest : URLRequest? = buildRequest(request)
-        if (httpRequest == nil)
+        guard let httpRequest = buildRequest(request) else
         {
-            let uuResponse : UUHttpResponse = UUHttpResponse(request, nil)
-            uuResponse.httpError = NSError.init(domain: UUHttpSessionErrorDomain, code: UUHttpSessionError.invalidRequest.rawValue, userInfo: nil)
+            let uuResponse = UUHttpResponse(request, nil)
+            uuResponse.httpError = UUErrorFactory.createInvalidRequestError(request)
             completion(uuResponse)
             return request
         }
         
-        request.httpRequest = httpRequest!
+        request.httpRequest = httpRequest
         
         request.startTime = Date.timeIntervalSinceReferenceDate
         
