@@ -63,15 +63,23 @@ public let UUHttpSessionErrorHttpStatusCodeKey  = "UUHttpSessionErrorHttpStatusC
 
 class UUErrorFactory
 {
+    static func createInvalidRequestError(_ request : UUHttpRequest) -> Error
+    {
+        var md: [String : Any]  = [:]
+        
+        fillFromRequest(&md, request.httpRequest)
+        
+        return createError(.invalidRequest, md)
+    }
+    
     static func wrapNetworkError(_ underlyingError: Error, _ request: UUHttpRequest) -> Error
     {
-        var errCode = UUHttpSessionError.httpFailure
+        var errCode: UUHttpSessionError = .httpFailure
         
-        var userInfo : [String : Any]  = [:]
-        fillFromRequest(&userInfo, request)
+        var md: [String : Any]  = [:]
         
-        userInfo[NSUnderlyingErrorKey] = underlyingError
-        userInfo[NSLocalizedDescriptionKey] = underlyingError.localizedDescription
+        fillFromRequest(&md, request.httpRequest)
+        fillFromUnderlyingError(&md, underlyingError)
         
         let nsError = underlyingError as NSError
         if (nsError.domain == NSURLErrorDomain)
@@ -90,40 +98,55 @@ class UUErrorFactory
                 default:
                     errCode = .httpFailure
             }
+        }
+        
+        return createError(errCode, md)
+    }
+    
+    static func createParseError(_ underlyingError: Error, _ data: Data, _ response: HTTPURLResponse, _ request: URLRequest) -> Error
+    {
+        var md: [String : Any]  = [:]
+        
+        fillFromRequest(&md, request)
+        fillFromResponse(&md, response)
+        fillFromUnderlyingError(&md, underlyingError)
+        
+        return createError(.parseFailure, md)
+    }
+   
+    private static func createError(_ code: UUHttpSessionError, _ userInfo: [String:Any]?) -> Error
+    {
+        return NSError(domain: UUHttpSessionErrorDomain, code: code.rawValue, userInfo: userInfo)
+    }
+    
+    private static func fillFromRequest(_ md: inout [String:Any], _ request: URLRequest?)
+    {
+        if let req = request
+        {
+            md[UUHttpSessionErrorHttpMethodKey] = req.httpMethod
+            md[UUHttpSessionErrorRequestUrlKey] = req.url?.absoluteString
+        }
+    }
+    
+    private static func fillFromResponse(_ md: inout [String:Any], _ response: HTTPURLResponse?)
+    {
+        if let resp = response
+        {
+            md[UUHttpSessionErrorHttpStatusCodeKey] = resp.statusCode
+        }
+    }
+    
+    private static func fillFromUnderlyingError(_ md: inout [String:Any], _ error: Error?)
+    {
+        if let e = error
+        {
+            md[NSUnderlyingErrorKey] = e
+            md[NSLocalizedDescriptionKey] = e.localizedDescription
             
-            userInfo[NSLocalizedRecoverySuggestionErrorKey] = nsError.localizedRecoverySuggestion
-        }
-        
-        return NSError(domain: UUHttpSessionErrorDomain, code: errCode.rawValue, userInfo: userInfo)
-    }
-    
-    static func createParseError(_ underlyingError: Error) -> Error
-    {
-        var d : [String:Any] = [:]
-        //d[UUHttpSessionHttpErrorCodeKey] = NSNumber(value: httpResponseCode)
-        //d[UUHttpSessionHttpErrorMessageKey] = HTTPURLResponse.localizedString(forStatusCode: httpResponseCode)
-        //d[UUHttpSessionAppResponseKey] = parsedResponse
-        //d[NSLocalizedDescriptionKey] = HTTPURLResponse.localizedString(forStatusCode: httpResponseCode)
-
-        return NSError.init(domain: UUHttpSessionErrorDomain, code: UUHttpSessionError.parseFailure.rawValue, userInfo: d)
-    }
-    
-    private static func fillFromRequest(_ md: inout [String:Any], _ request: UUHttpRequest?)
-    {
-        if let httpRequest = request
-        {
-            md[UUHttpSessionErrorHttpMethodKey] = httpRequest.httpMethod.rawValue
-            md[UUHttpSessionErrorRequestUrlKey] = httpRequest.httpRequest?.url?.absoluteString
+            let nsError = e as NSError
+            md[NSLocalizedRecoverySuggestionErrorKey] = nsError.localizedRecoverySuggestion
         }
     }
     
-    private static func fillFromResponse(_ md: inout [String:Any], _ response: UUHttpResponse)
-    {
-        fillFromRequest(&md, response.httpRequest)
-        
-        if let httpResponse = response.httpResponse
-        {
-            md[UUHttpSessionErrorHttpStatusCodeKey] = httpResponse.statusCode
-        }
-    }
+    
 }
