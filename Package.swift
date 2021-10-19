@@ -20,7 +20,11 @@ let package = Package(
 		.package(
 			url: "https://github.com/SilverPineSoftware/UUSwiftCore.git",
 			from: "1.1.3"
-		)
+		),
+        .package(
+            url: "https://github.com/SilverPineSoftware/UUSwiftTestCore.git",
+            from: "0.0.1"
+        )
 	],
 
 	targets: [
@@ -29,10 +33,14 @@ let package = Package(
 			dependencies: ["UUSwiftCore"],
 			path: "UUSwiftNetworking",
 			exclude: ["Info.plist"]),
+        
         .testTarget(
             name: "UUSwiftCoreTests",
-            dependencies: ["UUSwiftCore", "UUSwiftNetworking"],
-            path: "Tests"),
+            dependencies: ["UUSwiftTestCore", "UUSwiftCore", "UUSwiftNetworking"],
+            path: "Tests",
+            resources: [
+                .process("UUNetworkingTestConfig.plist")
+            ]),
 	],
 	swiftLanguageVersions: [
 		.v4_2,

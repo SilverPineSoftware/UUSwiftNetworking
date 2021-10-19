@@ -194,9 +194,10 @@ public class UUHttpSession: NSObject
         }
 		*/
         
-        if (error != nil)
+        if let error = err
         {
-            UUDebugLog("Got an error: %@", String(describing: error!))
+            UUDebugLog("Got an error: %@", String(describing: error))
+            err = UUErrorFactory.wrapNetworkError(error, request)
         }
         else
         {
