@@ -31,7 +31,7 @@ class UUHttpErrorHandlingTests: XCTestCase
         UUHttpSession.get(url: url)
         { response in
             
-            UUAssertError(response, .cannotFindHost)
+            UUAssertResponseError(response, .cannotFindHost)
             
             exp.fulfill()
         }
@@ -56,7 +56,7 @@ class UUHttpErrorHandlingTests: XCTestCase
         _ = UUHttpSession.executeRequest(request)
         { response in
             
-            UUAssertError(response, .timedOut)
+            UUAssertResponseError(response, .timedOut)
             
             exp.fulfill()
         }
@@ -81,12 +81,41 @@ class UUHttpErrorHandlingTests: XCTestCase
     
     func test_invalidRequest()
     {
-        XCTFail("Need to implement this test: \(#function)")
+        let exp = uuExpectationForMethod()
+        
+        UUHttpSession.get(url: "?1234$%*()(")
+        { response in
+            
+            UUAssertResponseError(response, .invalidRequest, expectValidRequest: false)
+            
+            exp.fulfill()
+        }
+        
+        uuWaitForExpectations()
     }
     
     func test_parseFailure_codable()
     {
-        XCTFail("Need to implement this test: \(#function)")
+        let exp = uuExpectationForMethod()
+        
+        let cfg = UULoadNetworkingTestConfig()
+        let url = cfg.invalidJsonUrl
+        
+        var queryArgs = UUQueryStringArgs()
+        queryArgs["stringField"] = "UnitTestString"
+        queryArgs["numberField"] = 57
+        
+        let request = UUHttpRequest(url: url, method: .get, queryArguments: queryArgs)
+        request.responseHandler = UUJsonCodableResponseParser<FakeCodable>()
+        
+        _ = UUHttpSession.executeRequest(request)
+        { response in
+            
+            UUAssertResponseError(response, .parseFailure)
+            exp.fulfill()
+        }
+        
+        uuWaitForExpectations()
     }
     
     
@@ -131,4 +160,12 @@ class UUHttpErrorHandlingTests: XCTestCase
          */
         case parseFailure = 0x2004
     }*/
+    
+    
+}
+
+fileprivate class FakeCodable: Codable
+{
+    var stringField: String
+    var numberField: Int
 }

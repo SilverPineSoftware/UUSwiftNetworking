@@ -36,6 +36,16 @@ class UUNetworkingTestConfig
     {
         return "\(testServerApiHost)/timeout.php"
     }
+    
+    var echoJsonUrl: String
+    {
+        return "\(testServerApiHost)/echo_json.php"
+    }
+    
+    var invalidJsonUrl: String
+    {
+        return "\(testServerApiHost)/invalid_json.php"
+    }
 }
 
 

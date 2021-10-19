@@ -18,24 +18,29 @@ class Constants
     //private static let testUrl : String = "http://publicdomainarchive.com/?ddownload=47473"
 }
 
-func UUAssertError(_ response: UUHttpResponse, _ expectedErrorCode: UUHttpSessionError)
+func UUAssertResponseError(_ response: UUHttpResponse, _ expectedErrorCode: UUHttpSessionError, expectValidRequest: Bool = true)
 {
     XCTAssertNotNil(response.httpError)
     XCTAssertNil(response.parsedResponse)
-    
-    guard let err = response.httpError else
-    {
-        XCTFail("Expect error to be non nil")
-        return
-    }
+    UUAssertError(response.httpError, expectedErrorCode, expectValidRequest: expectValidRequest)
+}
+
+func UUAssertError(_ error: Error?, _ expectedErrorCode: UUHttpSessionError, expectValidRequest: Bool = true)
+{
+    XCTAssertNotNil(error)
+    let err = error!
     
     let e = err as NSError
     XCTAssertEqual(e.domain, UUHttpSessionErrorDomain, "Error domain does not match")
     XCTAssertEqual(e.code, expectedErrorCode.rawValue, "Error code does not match")
     
-    let requestMethod = e.userInfo[UUHttpSessionErrorHttpMethodKey] as? String
-    XCTAssertNotNil(requestMethod)
+    if (expectValidRequest)
+    {
+        let requestMethod = e.userInfo[UUHttpSessionErrorHttpMethodKey] as? String
+        XCTAssertNotNil(requestMethod)
     
-    let requestUrl = e.userInfo[UUHttpSessionErrorRequestUrlKey] as? String
-    XCTAssertNotNil(requestUrl)
+        let requestUrl = e.userInfo[UUHttpSessionErrorRequestUrlKey] as? String
+        XCTAssertNotNil(requestUrl)
+    }
 }
+
