@@ -15,339 +15,15 @@
 
 import UUSwiftCore
 
-public typealias UUQueryStringArgs = [AnyHashable:Any]
-public typealias UUHttpHeaders = [AnyHashable:Any]
-
-public enum UUHttpMethod : String
-{
-    case get = "GET"
-    case post = "POST"
-    case put = "PUT"
-    case delete = "DELETE"
-    case head = "HEAD"
-    case patch = "PATCH"
-}
-
-public enum UUHttpSessionError : Int
-{
-    // Returned when URLSession returns a non-nil error and the underlying
-    // error domain is NSURLErrorDomain and the underlying error code is
-    // NSURLErrorNotConnectedToInternet
-    case noInternet = 0x1000
-    
-    // Returned when URLSession returns a non-nil error and the underlying
-    // error domain is NSURLErrorDomain and the underlying error code is
-    // NSURLErrorCannotFindHost
-    case cannotFindHost = 0x1001
-    
-    // Returned when URLSession returns a non-nil error and the underlying
-    // error domain is NSURLErrorDomain and the underlying error code is
-    // NSURLErrorTimedOut
-    case timedOut = 0x1002
-    
-    // Returned when URLSession completion block returns a non-nil Error, and
-    // that error is not specifically mapped to a more common UUHttpSessionError
-    // In this case, the underlying NSError is wrapped in the user info block
-    // using the NSUnderlyingError key
-    case httpFailure = 0x2000
-    
-    // Returned when the URLSession completion block returns with a nil Error
-    // and an HTTP return code that is not 2xx
-    case httpError = 0x2001
-    
-    // Returned when a user cancels an operation
-    case userCancelled = 0x2002
-    
-    // The request URL and/or query string parameters resulted in an invalid
-    // URL.
-    case invalidRequest = 0x2003
-}
-
-public let UUHttpSessionErrorDomain           = "UUHttpSessionErrorDomain"
-public let UUHttpSessionHttpErrorCodeKey      = "UUHttpSessionHttpErrorCodeKey"
-public let UUHttpSessionHttpErrorMessageKey   = "UUHttpSessionHttpErrorMessageKey"
-public let UUHttpSessionAppResponseKey        = "UUHttpSessionAppResponseKey"
-
-public struct UUContentType
-{
-    public static let applicationJson  = "application/json"
-    public static let textJson         = "text/json"
-    public static let textHtml         = "text/html"
-    public static let textPlain        = "text/plain"
-    public static let binary           = "application/octet-stream"
-    public static let imagePng         = "image/png"
-	public static let imageJpeg        = "image/jpeg"
-	public static let formEncoded      = "application/x-www-form-urlencoded"
-}
-
-public struct UUHeader
-{
-    public static let contentLength = "Content-Length"
-    public static let contentType = "Content-Type"
-}
-
-public class UUHttpRequest: NSObject
-{
-	public static var defaultTimeout : TimeInterval = 60.0
-	public static var defaultCachePolicy : URLRequest.CachePolicy = .useProtocolCachePolicy
-	
-    public var url : String = ""
-    public var httpMethod : UUHttpMethod = .get
-    public var queryArguments : UUQueryStringArgs = [:]
-    public var headerFields : UUHttpHeaders = [:]
-    public var body : Data? = nil
-    public var bodyContentType : String? = nil
-	public var timeout : TimeInterval = UUHttpRequest.defaultTimeout
-	public var cachePolicy : URLRequest.CachePolicy = UUHttpRequest.defaultCachePolicy
-    public var credentials : URLCredential? = nil
-    public var processMimeTypes : Bool = true
-    public var startTime : TimeInterval = 0
-    public var httpRequest : URLRequest? = nil
-	public var httpTask : URLSessionTask? = nil
-    public var responseHandler : UUHttpResponseHandler? = nil
-    public var form : UUHttpForm? = nil
-    
-    public init(url : String, method: UUHttpMethod = .get, queryArguments: UUQueryStringArgs = [:], headers: UUHttpHeaders = [:], body : Data? = nil, contentType : String? = nil)
-    {
-        super.init()
-        
-        self.url = url
-        self.httpMethod = method
-        self.queryArguments = queryArguments
-        self.headerFields = headers
-        self.body = body
-        self.bodyContentType = contentType
-    }
-    
-    public convenience init(url : String, method: UUHttpMethod = .post, queryArguments: UUQueryStringArgs = [:], headers: UUHttpHeaders = [:], form : UUHttpForm)
-    {
-        self.init(url: url, method: method, queryArguments: queryArguments, headers: headers, body: nil, contentType: nil)
-        self.form = form
-    }
-	
-	public func cancel() {
-		self.httpTask?.cancel()
-	}
-}
-
-public class UUHttpResponse : NSObject
-{
-    public var httpError : Error? = nil
-    public var httpRequest : UUHttpRequest? = nil
-    public var httpResponse : HTTPURLResponse? = nil
-    public var parsedResponse : Any?
-    public var rawResponse : Data? = nil
-    public var rawResponsePath : String = ""
-    public var downloadTime : TimeInterval = 0
-    
-    init(_ request : UUHttpRequest, _ response : HTTPURLResponse?)
-    {
-        httpRequest = request
-        httpResponse = response
-    }
-}
-
-public class UUHttpForm : NSObject
-{
-    public var formBoundary: String = "UUForm_PostBoundary"
-    private var formBuilder: NSMutableData = NSMutableData()
-    
-    public func add(field: String, value: String, contentType: String = UUContentType.textPlain, encoding: String.Encoding = .utf8)
-    {
-        appendNewLineIfNeeded()
-        
-        if let boundaryBytes = boundaryBytes(),
-           let fieldNameBytes = "Content-Disposition: form-data; name=\"\(field)\"\r\n\r\n".data(using: .utf8),
-           let contentTypeBytes = contentTypeBytes(contentType),
-           let fieldValueBytes = value.data(using: encoding)
-        {
-            formBuilder.append(boundaryBytes)
-            formBuilder.append(fieldNameBytes)
-            formBuilder.append(contentTypeBytes)
-            formBuilder.append(fieldValueBytes)
-        }
-    }
-    
-    public func addFile(fieldName: String, fileName: String, contentType: String, fileData: Data)
-    {
-        appendNewLineIfNeeded()
-        
-        if let boundaryBytes = boundaryBytes(),
-            let fieldNameBytes = "Content-Disposition: form-data; name=\"\(fieldName)\"; filename=\"\(fileName)\"\r\n".data(using: .utf8),
-            let contentTypeBytes = contentTypeBytes(contentType)
-        {
-            formBuilder.append(boundaryBytes)
-            formBuilder.append(fieldNameBytes)
-            formBuilder.append(contentTypeBytes)
-            formBuilder.append(fileData)
-        }
-    }
-    
-    private func boundaryBytes() -> Data?
-    {
-        return "--\(formBoundary)\r\n".data(using: .utf8)
-    }
-    
-    private func endBoundaryBytes() -> Data?
-    {
-        return "\r\n--\(formBoundary)--\r\n".data(using: .utf8)
-    }
-    
-    private func contentTypeBytes(_ contentType: String) -> Data?
-    {
-        return "Content-Type: \(contentType)\r\n\r\n".data(using: .utf8)
-    }
-    
-    private func appendNewLineIfNeeded()
-    {
-        if (formBuilder.length > 0)
-        {
-            if let bytes = "\r\n".data(using: .utf8)
-            {
-                formBuilder.append(bytes)
-            }
-        }
-    }
-    
-    public func formData() -> Data?
-    {
-        guard let tmp = formBuilder.mutableCopy() as? NSMutableData, let endBoundaryBytes = endBoundaryBytes() else
-        {
-            return nil
-        }
-        
-        tmp.append(endBoundaryBytes)
-        return tmp as Data
-    }
-    
-    public func formContentType() -> String
-    {
-        return "multipart/form-data; boundary=\(formBoundary)"
-    }
-}
-
-public protocol UUHttpResponseHandler
-{
-    var supportedMimeTypes : [String] { get }
-    func parseResponse(_ data : Data, _ response: HTTPURLResponse, _ request: URLRequest) -> Any?
-}
-
-open class UUTextResponseHandler : NSObject, UUHttpResponseHandler
-{
-    public var supportedMimeTypes: [String]
-    {
-        return [UUContentType.textHtml, UUContentType.textPlain]
-    }
-    
-    open func parseResponse(_ data: Data, _ response: HTTPURLResponse, _ request: URLRequest) -> Any?
-    {
-        var parsed : Any? = nil
-        
-        var responseEncoding : String.Encoding = .utf8
-        
-        if (response.textEncodingName != nil)
-        {
-            let cfEncoding = CFStringConvertIANACharSetNameToEncoding(response.textEncodingName as CFString?)
-            responseEncoding = String.Encoding(rawValue: CFStringConvertEncodingToNSStringEncoding(cfEncoding))
-        }
-        
-        let stringResult : String? = String.init(data: data, encoding: responseEncoding)
-        if (stringResult != nil)
-        {
-            parsed = stringResult
-        }
-        
-        return parsed
-    }
-}
-
-open class UUBinaryResponseHandler : NSObject, UUHttpResponseHandler
-{
-    open var supportedMimeTypes: [String]
-    {
-        return [UUContentType.binary]
-    }
-    
-    open func parseResponse(_ data: Data, _ response: HTTPURLResponse, _ request: URLRequest) -> Any?
-    {
-        return data
-    }
-}
-
-open class UUJsonResponseHandler : NSObject, UUHttpResponseHandler
-{
-    open var supportedMimeTypes: [String]
-    {
-        return [UUContentType.applicationJson, UUContentType.textJson]
-    }
-    
-    open func parseResponse(_ data: Data, _ response: HTTPURLResponse, _ request: URLRequest) -> Any?
-    {
-        do
-        {
-            return try JSONSerialization.jsonObject(with: data, options: [])
-        }
-        catch (let err)
-        {
-            UUDebugLog("Error deserializing JSON: %@", String(describing: err))
-        }
-        
-        return nil
-    }
-}
-
-open class UUImageResponseHandler : NSObject, UUHttpResponseHandler
-{
-    public var supportedMimeTypes: [String]
-    {
-        return [UUContentType.imagePng, UUContentType.imageJpeg]
-    }
-    
-    open func parseResponse(_ data: Data, _ response: HTTPURLResponse, _ request: URLRequest) -> Any?
-    {
-		#if os(macOS)
-			return NSImage.init(data: data)
-		#else
-			return UIImage.init(data: data)
-		#endif
-    }
-}
-
-open class UUFormEncodedResponseHandler : NSObject, UUHttpResponseHandler
-{
-	public var supportedMimeTypes: [String]
-	{
-		return [UUContentType.formEncoded]
-	}
-	
-	open func parseResponse(_ data: Data, _ response: HTTPURLResponse, _ request: URLRequest) -> Any?
-	{
-		var parsed: [ String: Any ] = [:]
-		
-		if let s = String.init(data: data, encoding: .utf8) {
-			let components = s.components(separatedBy: "&")
-			for c in components {
-				let pair = c.components(separatedBy: "=")
-				if pair.count == 2 {
-					if let key = pair.first {
-						if let val = pair.last {
-							parsed[key] = val.removingPercentEncoding
-						}
-					}
-				}
-			}
-		}
-		
-		return parsed
-	}
-}
 
 @objc
 public class UUHttpSession: NSObject
 {
     private var urlSession : URLSession? = nil
     private var sessionConfiguration : URLSessionConfiguration? = nil
-    private var activeTasks : UUThreadSafeArray<URLSessionTask> = UUThreadSafeArray()
+    private var activeTasks : [URLSessionTask] = []
+    private var activeTasksLock = NSRecursiveLock()
+    
     private var responseHandlers : [String:UUHttpResponseHandler] = [:]
     
     public static let shared = UUHttpSession()
@@ -419,14 +95,16 @@ public class UUHttpSession: NSObject
         let task = urlSession!.dataTask(with: request.httpRequest!)
         { (data : Data?, response: URLResponse?, error : Error?) in
 			
-			if let httpTask = request.httpTask {
-				self.activeTasks.remove(httpTask)
+			if let httpTask = request.httpTask
+            {
+                self.removeActiveTask(httpTask)
 			}
+            
             self.handleResponse(request, data, response, error, completion)
         }
 		request.httpTask = task
 		
-        activeTasks.append(task)
+        addActiveTask(task)
         task.resume()
         return request
     }
@@ -634,5 +312,21 @@ public class UUHttpSession: NSObject
     public static func registerResponseHandler(_ handler : UUHttpResponseHandler)
     {
         shared.registerResponseHandler(handler)
+    }
+    
+    private func addActiveTask(_ task : URLSessionTask)
+    {
+        defer { activeTasksLock.unlock() }
+        activeTasksLock.lock()
+        
+        self.activeTasks.append(task)
+    }
+    
+    private func removeActiveTask(_ task : URLSessionTask)
+    {
+        defer { activeTasksLock.unlock() }
+        activeTasksLock.lock()
+        
+        self.activeTasks.removeAll(where: { $0.taskIdentifier == task.taskIdentifier })
     }
 }
