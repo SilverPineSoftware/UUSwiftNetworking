@@ -6,7 +6,7 @@
 [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fsilverpinesoftware%2Fuuswiftnetworking%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/silverpinesoftware/uuswiftnetworking)
 [![Carthage compatible](https://img.shields.io/badge/Carthage-compatible-4BC51D.svg?style=flat)](https://github.com/Carthage/Carthage)
 
-Useful Utilities is a collection of helper classes that extend or complement existing UIKit framework classes. This is the core library that extends native Foundation objects.
+Useful Utilities is a collection of helper classes that extend or complement existing UIKit framework classes. UUSwiftNetworking provides a clean, simple interface for requesting remote objects via an HTTP interface.
 
 ## Installation
 
