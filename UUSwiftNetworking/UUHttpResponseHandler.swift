@@ -92,11 +92,7 @@ open class UUImageResponseHandler : NSObject, UUHttpResponseHandler
 
 	open func parseResponse(_ data: Data, _ response: HTTPURLResponse, _ request: URLRequest) -> Any?
 	{
-#if os(macOS)
-		return NSImage.init(data: data)
-#else
-		return UIImage.init(data: data)
-#endif
+		return UUImage.init(data: data)
 	}
 }
 
@@ -156,3 +152,4 @@ open class UUJsonCodableResponseParser<T: Codable>: UUJsonResponseHandler
         return result
     }
 }
+

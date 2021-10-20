@@ -18,6 +18,7 @@
 		C5E0AC9C271DC5B9001DDAD7 /* UUHttpForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5E0AC9B271DC5B9001DDAD7 /* UUHttpForm.swift */; };
 		C5E0AC9E271DC601001DDAD7 /* UUHttp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5E0AC9D271DC601001DDAD7 /* UUHttp.swift */; };
 		C5E0ACA0271DC667001DDAD7 /* UUHttpError.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5E0AC9F271DC667001DDAD7 /* UUHttpError.swift */; };
+		C5E0ACA2271FC932001DDAD7 /* UUHttpResponseHandlerLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5E0ACA1271FC932001DDAD7 /* UUHttpResponseHandlerLibrary.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -36,6 +37,7 @@
 		C5E0AC9B271DC5B9001DDAD7 /* UUHttpForm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UUHttpForm.swift; sourceTree = "<group>"; };
 		C5E0AC9D271DC601001DDAD7 /* UUHttp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UUHttp.swift; sourceTree = "<group>"; };
 		C5E0AC9F271DC667001DDAD7 /* UUHttpError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UUHttpError.swift; sourceTree = "<group>"; };
+		C5E0ACA1271FC932001DDAD7 /* UUHttpResponseHandlerLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UUHttpResponseHandlerLibrary.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -77,6 +79,7 @@
 				C5E0AC97271DC54E001DDAD7 /* UUHttpRequest.swift */,
 				C5E0AC99271DC582001DDAD7 /* UUHttpResponse.swift */,
 				C5E0AC93271DC46A001DDAD7 /* UUHttpResponseHandler.swift */,
+				C5E0ACA1271FC932001DDAD7 /* UUHttpResponseHandlerLibrary.swift */,
 				C5E0AC9B271DC5B9001DDAD7 /* UUHttpForm.swift */,
 				C574962626BB5EE200CECCC0 /* UUHttpSession.swift */,
 				C574962526BB5EE200CECCC0 /* UURemoteData.swift */,
@@ -179,6 +182,7 @@
 				C5E0AC98271DC54E001DDAD7 /* UUHttpRequest.swift in Sources */,
 				C574962726BB5EE200CECCC0 /* UURemoteImage.swift in Sources */,
 				C5E0AC9C271DC5B9001DDAD7 /* UUHttpForm.swift in Sources */,
+				C5E0ACA2271FC932001DDAD7 /* UUHttpResponseHandlerLibrary.swift in Sources */,
 				C5E0ACA0271DC667001DDAD7 /* UUHttpError.swift in Sources */,
 				C574962826BB5EE200CECCC0 /* UURemoteData.swift in Sources */,
 			);

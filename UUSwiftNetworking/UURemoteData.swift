@@ -114,7 +114,6 @@ public class UURemoteData : NSObject, UURemoteDataProtocol
         }
         
         let request = UUHttpRequest(url: key)
-        request.processMimeTypes  = false
         
         let client = UUHttpSession.executeRequest(request)
         { (response: UUHttpResponse) in
@@ -151,10 +150,11 @@ public class UURemoteData : NSObject, UURemoteDataProtocol
         UUDataCache.shared.set(metaData: metaData, for: key)
     }
 
-    ////////////////////////////////////////////////////////////////////////////
-    // Private Implementation
-    ////////////////////////////////////////////////////////////////////////////
-    private func handleDownloadResponse(_ response: UUHttpResponse, _ key: String)
+	// //////////////////////////////////////////////////////////////////////////////////////////// //
+	// Private interface
+	// //////////////////////////////////////////////////////////////////////////////////////////// //
+
+	private func handleDownloadResponse(_ response: UUHttpResponse, _ key: String)
     {
         var md : [String:Any] = [:]
         md[UURemoteData.NotificationKeys.RemotePath] = key

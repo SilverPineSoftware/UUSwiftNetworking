@@ -50,6 +50,27 @@ public class UUHttpForm : NSObject
 		}
 	}
 
+	public func formData() -> Data?
+	{
+		guard let tmp = formBuilder.mutableCopy() as? NSMutableData, let endBoundaryBytes = endBoundaryBytes() else
+		{
+			return nil
+		}
+
+		tmp.append(endBoundaryBytes)
+		return tmp as Data
+	}
+
+	public func formContentType() -> String
+	{
+		return "multipart/form-data; boundary=\(formBoundary)"
+	}
+
+
+	// //////////////////////////////////////////////////////////////////////////////////////////// //
+	// Private interface
+	// //////////////////////////////////////////////////////////////////////////////////////////// //
+
 	private func boundaryBytes() -> Data?
 	{
 		return "--\(formBoundary)\r\n".data(using: .utf8)
@@ -76,20 +97,5 @@ public class UUHttpForm : NSObject
 		}
 	}
 
-	public func formData() -> Data?
-	{
-		guard let tmp = formBuilder.mutableCopy() as? NSMutableData, let endBoundaryBytes = endBoundaryBytes() else
-		{
-			return nil
-		}
-
-		tmp.append(endBoundaryBytes)
-		return tmp as Data
-	}
-
-	public func formContentType() -> String
-	{
-		return "multipart/form-data; boundary=\(formBoundary)"
-	}
 }
 

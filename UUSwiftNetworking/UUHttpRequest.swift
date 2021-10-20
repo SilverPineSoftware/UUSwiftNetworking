@@ -28,7 +28,6 @@ public class UUHttpRequest: NSObject
 	public var timeout : TimeInterval = UUHttpRequest.defaultTimeout
 	public var cachePolicy : URLRequest.CachePolicy = UUHttpRequest.defaultCachePolicy
 	public var credentials : URLCredential? = nil
-	public var processMimeTypes : Bool = true
 	public var startTime : TimeInterval = 0
 	public var httpRequest : URLRequest? = nil
 	public var httpTask : URLSessionTask? = nil
