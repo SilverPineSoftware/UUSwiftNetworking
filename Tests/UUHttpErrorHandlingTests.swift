@@ -76,7 +76,32 @@ class UUHttpErrorHandlingTests: XCTestCase
     
     func test_userCanceled()
     {
-        XCTFail("Need to implement this test: \(#function)")
+        let exp = uuExpectationForMethod()
+        
+        let cfg = UULoadNetworkingTestConfig()
+        let url = cfg.timeoutUrl
+        
+        let timeout = 30
+        var queryArgs = UUQueryStringArgs()
+        queryArgs["timeout"] = (timeout * 60)
+        
+        let request = UUHttpRequest(url: url, method: .get, queryArguments: queryArgs)
+        
+        let task = UUHttpSession.executeRequest(request)
+        { response in
+            
+            UUAssertResponseError(response, .userCancelled)
+            
+            exp.fulfill()
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5)
+        {
+            NSLog("Canceling task")
+            task.cancel()
+        }
+        
+        uuWaitForExpectations()
     }
     
     func test_invalidRequest()

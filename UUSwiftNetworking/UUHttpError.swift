@@ -95,6 +95,9 @@ class UUErrorFactory
                 case NSURLErrorTimedOut:
                     errCode = .timedOut
                     
+                case NSURLErrorCancelled:
+                    errCode = .userCancelled
+                    
                 default:
                     errCode = .httpFailure
             }
