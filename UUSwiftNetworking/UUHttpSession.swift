@@ -214,18 +214,12 @@ public class UUHttpSession: NSObject
             // When callers parse response JSON and return Errors, we will honor that.
             if (err == nil && !isHttpSuccessResponseCode(httpResponseCode))
             {
-                var d : [String:Any] = [:]
-                d[UUHttpSessionHttpErrorCodeKey] = NSNumber(value: httpResponseCode)
-                d[UUHttpSessionHttpErrorMessageKey] = HTTPURLResponse.localizedString(forStatusCode: httpResponseCode)
-                d[UUHttpSessionAppResponseKey] = parsedResponse
-                d[NSLocalizedDescriptionKey] = HTTPURLResponse.localizedString(forStatusCode: httpResponseCode)
-
-                err = NSError.init(domain:UUHttpSessionErrorDomain, code:UUHttpSessionError.httpError.rawValue, userInfo:d)
+                err = UUErrorFactory.createHttpError(request, uuResponse, parsedResponse)
             }
         }
         
-        uuResponse.httpError = err;
-        uuResponse.parsedResponse = parsedResponse;
+        uuResponse.httpError = err
+        uuResponse.parsedResponse = parsedResponse
         uuResponse.downloadTime = Date.timeIntervalSinceReferenceDate - request.startTime
         
         completion(uuResponse)
