@@ -10,6 +10,8 @@ import Foundation
 
 open class UURemoteApi
 {
+    private var session: UUHttpSession!
+    
     private var isAuthorizingFlag: Bool = false
     private var isAuthorizingFlagLock = NSRecursiveLock()
     
@@ -19,7 +21,7 @@ open class UURemoteApi
     // MARK: Public Methods
     public init()
     {
-        
+        session = UUHttpSession()
     }
     
     /**
@@ -74,7 +76,8 @@ open class UURemoteApi
      */
     public func executeOneRequest(_ request: UUHttpRequest, _ completion: @escaping (UUHttpResponse)->())
     {
-        _ = UUHttpSession.executeRequest(request, completion)
+        self.addCommonHeaders(request)
+        _ = session.executeRequest(request, completion)
     }
     
     // MARK: Public Overridable Methods
@@ -114,6 +117,14 @@ open class UURemoteApi
         return (errorCode == .authorizationNeeded)
     }
     
+    /**
+     Returns common headers that will be applied to every UUHttpRequest.  Authorization headers should be returned here, so that when
+     the api does an authorization renewal, if any locally storage information changes from the original call to the retry, it will get picked up
+     */
+    open func getCommonHeaders() -> UUHttpHeaders?
+    {
+        return nil
+    }
     
     // MARK: Private Implementation
     
@@ -196,6 +207,21 @@ open class UURemoteApi
             {
                 listener(error)
             }
+        }
+    }
+    
+    private func addCommonHeaders(_ request: UUHttpRequest)
+    {
+        if let headers = getCommonHeaders()
+        {
+            var existingHeaders = request.headerFields
+            
+            for (key, value) in headers.enumerated()
+            {
+                existingHeaders[key] = value
+            }
+            
+            request.headerFields = existingHeaders
         }
     }
 }
