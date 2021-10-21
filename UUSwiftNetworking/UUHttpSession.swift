@@ -57,7 +57,7 @@ public class UUHttpSession: NSObject
         }
     }
     
-    private func executeRequest(_ request : UUHttpRequest, _ completion: @escaping (UUHttpResponse) -> Void) -> UUHttpRequest
+    public func executeRequest(_ request : UUHttpRequest, _ completion: @escaping (UUHttpResponse) -> Void) -> UUHttpRequest
     {
         guard let httpRequest = buildRequest(request) else
         {
