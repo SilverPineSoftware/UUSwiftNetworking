@@ -71,7 +71,8 @@ public class UUHttpSession: NSObject
         
         request.startTime = Date.timeIntervalSinceReferenceDate
         
-        /*UUDebugLog("Begin Request\n\nMethod: %@\nURL: %@\nHeaders: %@)",
+        /*
+        UUDebugLog("Begin Request\n\nMethod: %@\nURL: %@\nHeaders: %@)",
             String(describing: request.httpRequest?.httpMethod),
             String(describing: request.httpRequest?.url),
             String(describing: request.httpRequest?.allHTTPHeaderFields))
@@ -89,8 +90,8 @@ public class UUHttpSession: NSObject
                     UUDebugLog("Raw Body: %@", request.body!.uuToHexString())
                 }
             }
-        }
-        */
+        }*/
+        
         let task = urlSession!.dataTask(with: request.httpRequest!)
         { (data : Data?, response: URLResponse?, error : Error?) in
 			
@@ -195,7 +196,7 @@ public class UUHttpSession: NSObject
         
         if let error = err
         {
-            UUDebugLog("Got an error: %@", String(describing: error))
+            //UUDebugLog("Got an error: %@", String(describing: error))
             err = UUErrorFactory.wrapNetworkError(error, request)
         }
         else
@@ -227,43 +228,50 @@ public class UUHttpSession: NSObject
     
     private func parseResponse(_ request : UUHttpRequest, _ httpResponse : HTTPURLResponse?, _ data : Data?) -> Any?
     {
-        if (httpResponse != nil)
+        guard let httpResponse = httpResponse else
         {
-            let httpRequest = request.httpRequest
-            
-            let mimeType = httpResponse!.mimeType
-            
-            /*UUDebugLog("Parsing response,\n%@ %@", String(describing: httpRequest?.httpMethod), String(describing: httpRequest?.url))
-            UUDebugLog("Response Mime: %@", String(describing: mimeType))
-            
-            if let responseData = data
+            return nil
+        }
+        
+        guard let data = data, !data.isEmpty else
+        {
+            return nil
+        }
+
+        let httpRequest = request.httpRequest
+        
+        let mimeType = httpResponse.mimeType
+        
+        /*UUDebugLog("Parsing response,\n%@ %@", String(describing: httpRequest?.httpMethod), String(describing: httpRequest?.url))
+        UUDebugLog("Response Mime: %@", String(describing: mimeType))
+        
+        if let responseData = data
+        {
+            let logLimit = 10000
+            var responseStr : String? = nil
+            if (responseData.count > logLimit)
             {
-                let logLimit = 10000
-                var responseStr : String? = nil
-                if (responseData.count > logLimit)
-                {
-                    responseStr = String(data: responseData.subdata(in: 0..<logLimit), encoding: .utf8)
-                }
-                else
-                {
-                    responseStr = String(data: responseData, encoding: .utf8)
-                }
-                
-                //UUDebugLog("Raw Response: %@", String(describing: responseStr))
+                responseStr = String(data: responseData.subdata(in: 0..<logLimit), encoding: .utf8)
             }
-            */
-            var handler = request.responseHandler
-            
-            if (handler == nil && mimeType != nil)
+            else
             {
-                handler = responseHandlers[mimeType!]
+                responseStr = String(data: responseData, encoding: .utf8)
             }
             
-            if (handler != nil && data != nil && httpRequest != nil)
-            {
-                let parsedResponse = handler!.parseResponse(data!, httpResponse!, httpRequest!)
-                return parsedResponse
-            }
+            //UUDebugLog("Raw Response: %@", String(describing: responseStr))
+        }
+        */
+        var handler = request.responseHandler
+        
+        if (handler == nil && mimeType != nil)
+        {
+            handler = responseHandlers[mimeType!]
+        }
+        
+        if let handler = handler,
+           let httpRequest = httpRequest
+        {
+            return handler.parseResponse(data, httpResponse, httpRequest)
         }
         
         return nil
