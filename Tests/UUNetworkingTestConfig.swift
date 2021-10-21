@@ -46,6 +46,11 @@ class UUNetworkingTestConfig
     {
         return "\(testServerApiHost)/invalid_json.php"
     }
+    
+    var redirectUrl: String
+    {
+        return "\(testServerApiHost)/redirect.php"
+    }
 }
 
 

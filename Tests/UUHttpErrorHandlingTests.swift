@@ -13,6 +13,11 @@ import UUSwiftTestCore
 
 class UUHttpErrorHandlingTests: XCTestCase
 {
+    private var uuHttpSessionForTest: UUHttpSession
+    {
+        return UUHttpSession.shared
+    }
+    
     func test_noInternet()
     {
         // TODO: Write this test
@@ -23,12 +28,15 @@ class UUHttpErrorHandlingTests: XCTestCase
     
     func test_cannotFindHost()
     {
+        let session = uuHttpSessionForTest
+        
         let exp = uuExpectationForMethod()
         
         let cfg = UULoadNetworkingTestConfig()
         let url = cfg.doesNotExistUrl
         
-        UUHttpSession.get(url: url)
+        let request = UUHttpRequest(url: url)
+        _ = session.executeRequest(request)
         { response in
             
             UUAssertResponseError(response, .cannotFindHost)
@@ -41,6 +49,8 @@ class UUHttpErrorHandlingTests: XCTestCase
     
     func test_timedOut()
     {
+        let session = uuHttpSessionForTest
+        
         let exp = uuExpectationForMethod()
         
         let cfg = UULoadNetworkingTestConfig()
@@ -53,7 +63,7 @@ class UUHttpErrorHandlingTests: XCTestCase
         let request = UUHttpRequest(url: url, method: .get, queryArguments: queryArgs)
         request.timeout = TimeInterval(timeout / 2)
         
-        _ = UUHttpSession.executeRequest(request)
+        _ = session.executeRequest(request)
         { response in
             
             UUAssertResponseError(response, .timedOut)
@@ -66,16 +76,34 @@ class UUHttpErrorHandlingTests: XCTestCase
     
     func test_httpFailure()
     {
-        XCTFail("Need to implement this test: \(#function)")
+        let session = uuHttpSessionForTest
+        
+        let exp = uuExpectationForMethod()
+        
+        let cfg = UULoadNetworkingTestConfig()
+        let url = cfg.redirectUrl
+        
+        let request = UUHttpRequest(url: url)
+        _ = session.executeRequest(request)
+        { response in
+            
+            UUAssertResponseError(response, .httpFailure)
+            
+            exp.fulfill()
+        }
+        
+        uuWaitForExpectations()
     }
     
     func test_httpError()
     {
-        XCTFail("Need to implement this test: \(#function)")
+        doStatusCodeTest(statusCode: 500, expectedError: .httpError)
     }
     
     func test_userCanceled()
     {
+        let session = uuHttpSessionForTest
+        
         let exp = uuExpectationForMethod()
         
         let cfg = UULoadNetworkingTestConfig()
@@ -87,7 +115,7 @@ class UUHttpErrorHandlingTests: XCTestCase
         
         let request = UUHttpRequest(url: url, method: .get, queryArguments: queryArgs)
         
-        let task = UUHttpSession.executeRequest(request)
+        let task = session.executeRequest(request)
         { response in
             
             UUAssertResponseError(response, .userCancelled)
@@ -106,9 +134,12 @@ class UUHttpErrorHandlingTests: XCTestCase
     
     func test_invalidRequest()
     {
+        let session = uuHttpSessionForTest
+        
         let exp = uuExpectationForMethod()
         
-        UUHttpSession.get(url: "?1234$%*()(")
+        let request = UUHttpRequest(url: "?1234$%*()(")
+        _ = session.executeRequest(request)
         { response in
             
             UUAssertResponseError(response, .invalidRequest, expectValidRequest: false)
@@ -121,6 +152,9 @@ class UUHttpErrorHandlingTests: XCTestCase
     
     func test_parseFailure_codable()
     {
+        let session = uuHttpSessionForTest
+        XCTAssertNotNil(session)
+        
         let exp = uuExpectationForMethod()
         
         let cfg = UULoadNetworkingTestConfig()
@@ -133,7 +167,7 @@ class UUHttpErrorHandlingTests: XCTestCase
         let request = UUHttpRequest(url: url, method: .get, queryArguments: queryArgs)
         request.responseHandler = UUJsonCodableResponseParser<FakeCodable>()
         
-        _ = UUHttpSession.executeRequest(request)
+        _ = session.executeRequest(request)
         { response in
             
             UUAssertResponseError(response, .parseFailure)
@@ -143,54 +177,86 @@ class UUHttpErrorHandlingTests: XCTestCase
         uuWaitForExpectations()
     }
     
-    
-    
-    /*
-    public enum UUHttpSessionError : Int
+    func test_parseFailure_parserError()
     {
-        // Returned when URLSession returns a non-nil error and the underlying
-        // error domain is NSURLErrorDomain and the underlying error code is
-        // NSURLErrorNotConnectedToInternet
-        case noInternet = 0x1000
-
-        // Returned when URLSession returns a non-nil error and the underlying
-        // error domain is NSURLErrorDomain and the underlying error code is
-        // NSURLErrorCannotFindHost
-        case cannotFindHost = 0x1001
-
-        // Returned when URLSession returns a non-nil error and the underlying
-        // error domain is NSURLErrorDomain and the underlying error code is
-        // NSURLErrorTimedOut
-        case timedOut = 0x1002
-
-        // Returned when URLSession completion block returns a non-nil Error, and
-        // that error is not specifically mapped to a more common UUHttpSessionError
-        // In this case, the underlying NSError is wrapped in the user info block
-        // using the NSUnderlyingError key
-        case httpFailure = 0x2000
-
-        // Returned when the URLSession completion block returns with a nil Error
-        // and an HTTP return code that is not 2xx
-        case httpError = 0x2001
-
-        // Returned when a user cancels an operation
-        case userCancelled = 0x2002
-
-        // The request URL and/or query string parameters resulted in an invalid
-        // URL.
-        case invalidRequest = 0x2003
+        let session = uuHttpSessionForTest
+        XCTAssertNotNil(session)
         
-        /**
-         UU failed to parse a response.  See underlying error for more details
-         */
-        case parseFailure = 0x2004
-    }*/
+        let exp = uuExpectationForMethod()
+        
+        let cfg = UULoadNetworkingTestConfig()
+        let url = cfg.echoJsonUrl
+        
+        let request = UUHttpRequest(url: url, method: .get)
+        
+        let err = NSError(domain: "UnitTest", code: 1234, userInfo: nil)
+        request.responseHandler = PassthroughResponseParser(err)
+        
+        _ = session.executeRequest(request)
+        { response in
+            
+            XCTAssertNotNil(response.httpError)
+            XCTAssertEqual((response.httpError! as NSError).domain, "UnitTest")
+            XCTAssertEqual((response.httpError! as NSError).code, 1234)
+            exp.fulfill()
+        }
+        
+        uuWaitForExpectations()
+    }
     
+    func test_authorizationNeeded()
+    {
+        doStatusCodeTest(statusCode: 401, expectedError: .authorizationNeeded)
+    }
     
+    func doStatusCodeTest(statusCode: Int, expectedError: UUHttpSessionError)
+    {
+        let session = uuHttpSessionForTest
+        XCTAssertNotNil(session)
+        
+        let exp = uuExpectationForMethod()
+        
+        let cfg = UULoadNetworkingTestConfig()
+        let url = cfg.echoJsonUrl
+        
+        var headers = UUHttpHeaders()
+        headers["UU-Status-Code"] = statusCode
+        
+        let request = UUHttpRequest(url: url, method: .get, headers: headers)
+        
+        _ = session.executeRequest(request)
+        { response in
+            
+            XCTAssertNotNil(response.httpError)
+            XCTAssertNotNil(response.parsedResponse)
+            UUAssertError(response.httpError, expectedError, expectValidRequest: true)
+            
+            exp.fulfill()
+        }
+        
+        uuWaitForExpectations()
+    }
 }
 
 fileprivate class FakeCodable: Codable
 {
     var stringField: String
     var numberField: Int
+}
+
+fileprivate class PassthroughResponseParser: UUJsonResponseHandler
+{
+    private var passthroughResponse: Any? = nil
+    
+    required init(_ response: Any?)
+    {
+        self.passthroughResponse = response
+        super.init()
+    }
+    
+    override func parseResponse(_ data: Data, _ response: HTTPURLResponse, _ request: URLRequest) -> Any?
+    {
+        return self.passthroughResponse
+    }
+    
 }
