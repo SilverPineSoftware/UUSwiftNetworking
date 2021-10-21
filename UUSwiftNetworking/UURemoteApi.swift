@@ -214,14 +214,8 @@ open class UURemoteApi
     {
         if let headers = getCommonHeaders()
         {
-            var existingHeaders = request.headerFields
-            
-            for (key, value) in headers.enumerated()
-            {
-                existingHeaders[key] = value
-            }
-            
-            request.headerFields = existingHeaders
+            // Merge common headers into the request.  If the request already has a value, keep it
+            request.headerFields.merge(headers) { (current, _) in current }
         }
     }
 }
