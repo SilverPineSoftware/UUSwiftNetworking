@@ -53,7 +53,8 @@ public class UUHttpRequest: NSObject
 		self.form = form
 	}
 
-	public func cancel() {
+	public func cancel()
+    {
 		self.httpTask?.cancel()
 	}
 }
