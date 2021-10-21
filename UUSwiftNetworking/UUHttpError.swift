@@ -51,6 +51,17 @@ public enum UUHttpSessionError : Int
      UU failed to parse a response.  See underlying error for more details
      */
     case parseFailure = 0x2004
+    
+    /**
+     Error code returned when server authorization is needed.  By default this happens on a 401 error, but
+     applications can emit this error from custom parsers to trigger authorization renewal for other error conditions.
+     */
+    case authorizationNeeded = 0x2005
+    
+    /**
+     Error code returned when an unkown error occurs.  This is typically a developer error. Contact the Api developers.
+     */
+    case unkownError = 0xFFFF
 }
 
 public let UUHttpSessionErrorDomain         = "UUHttpSessionErrorDomain"
@@ -116,6 +127,30 @@ class UUErrorFactory
         
         return createError(.parseFailure, md)
     }
+    
+    static func createHttpError(_ request: UUHttpRequest, _ response: UUHttpResponse, _ parsedResponse: Any?) -> Error
+    {
+        var md: [String : Any]  = [:]
+        fillFromRequest(&md, request.httpRequest)
+        md[UUHttpSessionAppResponseKey] = parsedResponse
+        
+        guard let httpResponseCode = response.httpResponse?.statusCode else
+        {
+            return createError(.unkownError, md)
+        }
+        
+        md[UUHttpSessionHttpErrorCodeKey] = NSNumber(value: httpResponseCode)
+        md[UUHttpSessionHttpErrorMessageKey] = HTTPURLResponse.localizedString(forStatusCode: httpResponseCode)
+        md[NSLocalizedDescriptionKey] = HTTPURLResponse.localizedString(forStatusCode: httpResponseCode)
+        
+        var errorCode = UUHttpSessionError.httpError
+        if (httpResponseCode == 401)
+        {
+            errorCode = .authorizationNeeded
+        }
+        
+        return createError(errorCode, md)
+    }
    
     private static func createError(_ code: UUHttpSessionError, _ userInfo: [String:Any]?) -> Error
     {
@@ -150,6 +185,26 @@ class UUErrorFactory
             md[NSLocalizedRecoverySuggestionErrorKey] = nsError.localizedRecoverySuggestion
         }
     }
-    
-    
+}
+
+
+public extension NSError
+{
+    var uuHttpErrorCode: UUHttpSessionError?
+    {
+        if (domain == UUHttpSessionErrorDomain)
+        {
+            return UUHttpSessionError(rawValue: code)
+        }
+        
+        return nil
+    }
+}
+
+public extension Error
+{
+    var uuHttpErrorCode: UUHttpSessionError?
+    {
+        return (self as NSError).uuHttpErrorCode
+    }
 }
