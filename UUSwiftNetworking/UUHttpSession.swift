@@ -19,8 +19,8 @@ import UUSwiftCore
 @objc
 public class UUHttpSession: NSObject
 {
-    private var urlSession : URLSession? = nil
-    private var sessionConfiguration : URLSessionConfiguration? = nil
+    private let urlSession: URLSession
+    private let sessionConfiguration: URLSessionConfiguration
     private var activeTasks : [URLSessionTask] = []
     private var activeTasksLock = NSRecursiveLock()
     
@@ -28,14 +28,20 @@ public class UUHttpSession: NSObject
     
     public static let shared = UUHttpSession()
     
-    required override public init()
+    public static var defaultConfiguration: URLSessionConfiguration
     {
+        let cfg = URLSessionConfiguration.default
+        cfg.timeoutIntervalForRequest = UUHttpRequest.defaultTimeout
+        cfg.timeoutIntervalForResource = UUHttpRequest.defaultTimeout
+        return cfg
+    }
+    
+    required public init(configuration: URLSessionConfiguration = UUHttpSession.defaultConfiguration)
+    {
+        sessionConfiguration = configuration
+        urlSession = URLSession(configuration: sessionConfiguration)
+        
         super.init()
-        
-        sessionConfiguration = URLSessionConfiguration.default
-		sessionConfiguration?.timeoutIntervalForRequest = UUHttpRequest.defaultTimeout
-        
-        urlSession = URLSession.init(configuration: sessionConfiguration!)
         
         installDefaultResponseHandlers()
     }
@@ -92,7 +98,7 @@ public class UUHttpSession: NSObject
             }
         }*/
         
-        let task = urlSession!.dataTask(with: request.httpRequest!)
+        let task = urlSession.dataTask(with: httpRequest)
         { (data : Data?, response: URLResponse?, error : Error?) in
 			
 			if let httpTask = request.httpTask
@@ -102,6 +108,7 @@ public class UUHttpSession: NSObject
             
             self.handleResponse(request, data, response, error, completion)
         }
+        
 		request.httpTask = task
 		
         addActiveTask(task)
