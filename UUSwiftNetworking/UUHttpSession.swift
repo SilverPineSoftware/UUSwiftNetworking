@@ -33,7 +33,27 @@ public class UUHttpSession: NSObject
         cfg.timeoutIntervalForResource = UUHttpRequest.defaultTimeout
         return cfg
     }
-    
+
+	public static func getObject<T:Codable>(_ url : String, _ completion: @escaping(T?, Error?)->())
+	{
+		UUHttpSession.get(url: url)
+		{ response in
+			let error = response.httpError
+			let object : T? = response.parsedObject()
+			completion(object, error)
+		}
+	}
+
+	public static func getArray<T:Codable>(_ url : String, _ completion: @escaping([T]?, Error?)->())
+	{
+		UUHttpSession.get(url: url)
+		{ response in
+			let error = response.httpError
+			let array : [T]? = response.parsedArray()
+			completion(array, error)
+		}
+	}
+
     required public init(configuration: URLSessionConfiguration = UUHttpSession.defaultConfiguration)
     {
         sessionConfiguration = configuration
