@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>test_server_api_host</key>
+	<string>https://spsw.io/uu</string>
+	<key>does_not_exist_url</key>
+	<string>http://this.is.a.fake.url</string>
+</dict>
+</plist>

@@ -111,13 +111,20 @@ open class UUFormEncodedResponseHandler : NSObject, UUHttpResponseHandler
 	{
 		var parsed: [ String: Any ] = [:]
 
-		if let s = String.init(data: data, encoding: .utf8) {
+		if let s = String.init(data: data, encoding: .utf8)
+        {
 			let components = s.components(separatedBy: "&")
-			for c in components {
+            
+			for c in components
+            {
 				let pair = c.components(separatedBy: "=")
-				if pair.count == 2 {
-					if let key = pair.first {
-						if let val = pair.last {
+                
+				if pair.count == 2
+                {
+					if let key = pair.first
+                    {
+						if let val = pair.last
+                        {
 							parsed[key] = val.removingPercentEncoding
 						}
 					}
@@ -127,4 +134,25 @@ open class UUFormEncodedResponseHandler : NSObject, UUHttpResponseHandler
 
 		return parsed
 	}
+}
+
+open class UUJsonCodableResponseParser<T: Codable>: UUJsonResponseHandler
+{
+    open override func parseResponse(_ data: Data, _ response: HTTPURLResponse, _ request: URLRequest) -> Any?
+    {
+        var result: Any? = nil
+        
+        let decoder = JSONDecoder()
+        
+        do
+        {
+            result = try decoder.decode(T.self, from: data)
+        }
+        catch let err
+        {
+            result = UUErrorFactory.createParseError(err, data, response, request)
+        }
+        
+        return result
+    }
 }

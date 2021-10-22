@@ -19,8 +19,8 @@ import UUSwiftCore
 @objc
 public class UUHttpSession: NSObject
 {
-    private var urlSession : URLSession? = nil
-    private var sessionConfiguration : URLSessionConfiguration? = nil
+    private let urlSession: URLSession
+    private let sessionConfiguration: URLSessionConfiguration
     private var activeTasks : [URLSessionTask] = []
     private var activeTasksLock = NSRecursiveLock()
     
@@ -28,14 +28,20 @@ public class UUHttpSession: NSObject
     
     public static let shared = UUHttpSession()
     
-    required override public init()
+    public static var defaultConfiguration: URLSessionConfiguration
     {
+        let cfg = URLSessionConfiguration.default
+        cfg.timeoutIntervalForRequest = UUHttpRequest.defaultTimeout
+        cfg.timeoutIntervalForResource = UUHttpRequest.defaultTimeout
+        return cfg
+    }
+    
+    required public init(configuration: URLSessionConfiguration = UUHttpSession.defaultConfiguration)
+    {
+        sessionConfiguration = configuration
+        urlSession = URLSession(configuration: sessionConfiguration)
+        
         super.init()
-        
-        sessionConfiguration = URLSessionConfiguration.default
-		sessionConfiguration?.timeoutIntervalForRequest = UUHttpRequest.defaultTimeout
-        
-        urlSession = URLSession.init(configuration: sessionConfiguration!)
         
         installDefaultResponseHandlers()
     }
@@ -57,22 +63,22 @@ public class UUHttpSession: NSObject
         }
     }
     
-    private func executeRequest(_ request : UUHttpRequest, _ completion: @escaping (UUHttpResponse) -> Void) -> UUHttpRequest
+    public func executeRequest(_ request : UUHttpRequest, _ completion: @escaping (UUHttpResponse) -> Void) -> UUHttpRequest
     {
-        let httpRequest : URLRequest? = buildRequest(request)
-        if (httpRequest == nil)
+        guard let httpRequest = request.buildURLRequest() else
         {
-            let uuResponse : UUHttpResponse = UUHttpResponse(request, nil)
-            uuResponse.httpError = NSError.init(domain: UUHttpSessionErrorDomain, code: UUHttpSessionError.invalidRequest.rawValue, userInfo: nil)
+            let uuResponse = UUHttpResponse(request, nil)
+            uuResponse.httpError = UUErrorFactory.createInvalidRequestError(request)
             completion(uuResponse)
             return request
         }
         
-        request.httpRequest = httpRequest!
+        request.httpRequest = httpRequest
         
         request.startTime = Date.timeIntervalSinceReferenceDate
         
-        /*UUDebugLog("Begin Request\n\nMethod: %@\nURL: %@\nHeaders: %@)",
+        /*
+        UUDebugLog("Begin Request\n\nMethod: %@\nURL: %@\nHeaders: %@)",
             String(describing: request.httpRequest?.httpMethod),
             String(describing: request.httpRequest?.url),
             String(describing: request.httpRequest?.allHTTPHeaderFields))
@@ -90,9 +96,9 @@ public class UUHttpSession: NSObject
                     UUDebugLog("Raw Body: %@", request.body!.uuToHexString())
                 }
             }
-        }
-        */
-        let task = urlSession!.dataTask(with: request.httpRequest!)
+        }*/
+        
+        let task = urlSession.dataTask(with: httpRequest)
         { (data : Data?, response: URLResponse?, error : Error?) in
 			
 			if let httpTask = request.httpTask
@@ -102,65 +108,12 @@ public class UUHttpSession: NSObject
             
             self.handleResponse(request, data, response, error, completion)
         }
+        
 		request.httpTask = task
 		
         addActiveTask(task)
         task.resume()
         return request
-    }
-    
-    private func buildRequest(_ request : UUHttpRequest) -> URLRequest?
-    {
-        var fullUrl = request.url;
-        if (request.queryArguments.count > 0)
-        {
-			let startingURL = request.url
-			var queryString = request.queryArguments.uuBuildQueryString()
-			if startingURL.contains("?") {
-				queryString = queryString.replacingOccurrences(of: "?", with: "&")
-			}
-            fullUrl = "\(startingURL)\(queryString)"
-        }
-        
-        guard let url = URL.init(string: fullUrl) else
-        {
-            return nil
-        }
-        
-        var req : URLRequest = URLRequest(url: url)
-        req.httpMethod = request.httpMethod.rawValue
-        req.timeoutInterval = request.timeout
-		req.cachePolicy = request.cachePolicy
-        
-        for key in request.headerFields.keys
-        {
-            let strKey = (key as? String) ?? String(describing: key)
-            
-            if let val = request.headerFields[key]
-            {
-                let strVal = (val as? String) ?? String(describing: val)
-                req.addValue(strVal, forHTTPHeaderField: strKey)
-            }
-        }
-        
-        if let form = request.form
-        {
-            request.body = form.formData()
-            request.bodyContentType = form.formContentType()
-        }
-        
-        if (request.body != nil)
-        {
-            req.setValue(String.init(format: "%lu", request.body!.count), forHTTPHeaderField: UUHeader.contentLength)
-            req.httpBody = request.body
-            
-            if (request.bodyContentType != nil && request.bodyContentType!.count > 0)
-            {
-                req.addValue(request.bodyContentType!, forHTTPHeaderField: UUHeader.contentType)
-            }
-        }
-        
-        return req
     }
     
     private func handleResponse(
@@ -194,9 +147,10 @@ public class UUHttpSession: NSObject
         }
 		*/
         
-        if (error != nil)
+        if let error = err
         {
-            UUDebugLog("Got an error: %@", String(describing: error!))
+            //UUDebugLog("Got an error: %@", String(describing: error))
+            err = UUErrorFactory.wrapNetworkError(error, request)
         }
         else
         {
@@ -214,18 +168,12 @@ public class UUHttpSession: NSObject
             // When callers parse response JSON and return Errors, we will honor that.
             if (err == nil && !isHttpSuccessResponseCode(httpResponseCode))
             {
-                var d : [String:Any] = [:]
-                d[UUHttpSessionHttpErrorCodeKey] = NSNumber(value: httpResponseCode)
-                d[UUHttpSessionHttpErrorMessageKey] = HTTPURLResponse.localizedString(forStatusCode: httpResponseCode)
-                d[UUHttpSessionAppResponseKey] = parsedResponse
-                d[NSLocalizedDescriptionKey] = HTTPURLResponse.localizedString(forStatusCode: httpResponseCode)
-
-                err = NSError.init(domain:UUHttpSessionErrorDomain, code:UUHttpSessionError.httpError.rawValue, userInfo:d)
+                err = UUErrorFactory.createHttpError(request, uuResponse, parsedResponse)
             }
         }
         
-        uuResponse.httpError = err;
-        uuResponse.parsedResponse = parsedResponse;
+        uuResponse.httpError = err
+        uuResponse.parsedResponse = parsedResponse
         uuResponse.downloadTime = Date.timeIntervalSinceReferenceDate - request.startTime
         
         completion(uuResponse)
@@ -233,43 +181,50 @@ public class UUHttpSession: NSObject
     
     private func parseResponse(_ request : UUHttpRequest, _ httpResponse : HTTPURLResponse?, _ data : Data?) -> Any?
     {
-        if (httpResponse != nil)
+        guard let httpResponse = httpResponse else
         {
-            let httpRequest = request.httpRequest
-            
-            let mimeType = httpResponse!.mimeType
-            
-            /*UUDebugLog("Parsing response,\n%@ %@", String(describing: httpRequest?.httpMethod), String(describing: httpRequest?.url))
-            UUDebugLog("Response Mime: %@", String(describing: mimeType))
-            
-            if let responseData = data
+            return nil
+        }
+        
+        guard let data = data, !data.isEmpty else
+        {
+            return nil
+        }
+
+        let httpRequest = request.httpRequest
+        
+        let mimeType = httpResponse.mimeType
+        
+        /*UUDebugLog("Parsing response,\n%@ %@", String(describing: httpRequest?.httpMethod), String(describing: httpRequest?.url))
+        UUDebugLog("Response Mime: %@", String(describing: mimeType))
+        
+        if let responseData = data
+        {
+            let logLimit = 10000
+            var responseStr : String? = nil
+            if (responseData.count > logLimit)
             {
-                let logLimit = 10000
-                var responseStr : String? = nil
-                if (responseData.count > logLimit)
-                {
-                    responseStr = String(data: responseData.subdata(in: 0..<logLimit), encoding: .utf8)
-                }
-                else
-                {
-                    responseStr = String(data: responseData, encoding: .utf8)
-                }
-                
-                //UUDebugLog("Raw Response: %@", String(describing: responseStr))
+                responseStr = String(data: responseData.subdata(in: 0..<logLimit), encoding: .utf8)
             }
-            */
-            var handler = request.responseHandler
-            
-            if (handler == nil && mimeType != nil)
+            else
             {
-                handler = responseHandlers[mimeType!]
+                responseStr = String(data: responseData, encoding: .utf8)
             }
             
-            if (handler != nil && data != nil && httpRequest != nil)
-            {
-                let parsedResponse = handler!.parseResponse(data!, httpResponse!, httpRequest!)
-                return parsedResponse
-            }
+            //UUDebugLog("Raw Response: %@", String(describing: responseStr))
+        }
+        */
+        var handler = request.responseHandler
+        
+        if (handler == nil && mimeType != nil)
+        {
+            handler = responseHandlers[mimeType!]
+        }
+        
+        if let handler = handler,
+           let httpRequest = httpRequest
+        {
+            return handler.parseResponse(data, httpResponse, httpRequest)
         }
         
         return nil
