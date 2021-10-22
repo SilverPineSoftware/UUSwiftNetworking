@@ -36,8 +36,7 @@ open class UURemoteApi
             
             if (authorizationRenewalError != nil)
             {
-                let response = UUHttpResponse(request, nil)
-                response.httpError = authorizationRenewalError
+				let response = UUHttpResponse(request: request, response: nil, data: nil, error: authorizationRenewalError)
                 completion(response)
                 return
             }
@@ -53,8 +52,7 @@ open class UURemoteApi
                         
                         if (innerAuthorizationRenewalError != nil)
                         {
-                            let response = UUHttpResponse(request, nil)
-                            response.httpError = innerAuthorizationRenewalError
+							let response = UUHttpResponse(request: request, response: nil, data: nil, error: innerAuthorizationRenewalError)
                             completion(response)
                         }
                         else

@@ -128,13 +128,13 @@ class UUErrorFactory
         return createError(.parseFailure, md)
     }
     
-    static func createHttpError(_ request: UUHttpRequest, _ response: UUHttpResponse, _ parsedResponse: Any?) -> Error
+    static func createHttpError(_ request: UUHttpRequest, _ response: HTTPURLResponse?) -> Error
     {
         var md: [String : Any]  = [:]
         fillFromRequest(&md, request.httpRequest)
-        md[UUHttpSessionAppResponseKey] = parsedResponse
+        //md[UUHttpSessionAppResponseKey] = parsedResponse
         
-        guard let httpResponseCode = response.httpResponse?.statusCode else
+        guard let httpResponseCode = response?.statusCode else
         {
             return createError(.unkownError, md)
         }
