@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C56E4E78272279A5005E1EA4 /* UUHttpResponseHandlerLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = C56E4E77272279A5005E1EA4 /* UUHttpResponseHandlerLibrary.swift */; };
+		C56E4E7B272279BB005E1EA4 /* UURemoteApi.swift in Sources */ = {isa = PBXBuildFile; fileRef = C56E4E79272279BB005E1EA4 /* UURemoteApi.swift */; };
+		C56E4E7C272279BB005E1EA4 /* UUHttpAuthorization.swift in Sources */ = {isa = PBXBuildFile; fileRef = C56E4E7A272279BB005E1EA4 /* UUHttpAuthorization.swift */; };
 		C574961E26BB5E7A00CECCC0 /* UUSwiftNetworking.h in Headers */ = {isa = PBXBuildFile; fileRef = C574961C26BB5E7A00CECCC0 /* UUSwiftNetworking.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		C574962726BB5EE200CECCC0 /* UURemoteImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C574962426BB5EE200CECCC0 /* UURemoteImage.swift */; };
 		C574962826BB5EE200CECCC0 /* UURemoteData.swift in Sources */ = {isa = PBXBuildFile; fileRef = C574962526BB5EE200CECCC0 /* UURemoteData.swift */; };
@@ -21,6 +24,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		C56E4E77272279A5005E1EA4 /* UUHttpResponseHandlerLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UUHttpResponseHandlerLibrary.swift; sourceTree = "<group>"; };
+		C56E4E79272279BB005E1EA4 /* UURemoteApi.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UURemoteApi.swift; sourceTree = "<group>"; };
+		C56E4E7A272279BB005E1EA4 /* UUHttpAuthorization.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UUHttpAuthorization.swift; sourceTree = "<group>"; };
 		C574961926BB5E7A00CECCC0 /* UUSwiftNetworking.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = UUSwiftNetworking.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C574961C26BB5E7A00CECCC0 /* UUSwiftNetworking.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = UUSwiftNetworking.h; sourceTree = "<group>"; };
 		C574961D26BB5E7A00CECCC0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -72,13 +78,16 @@
 		C574961B26BB5E7A00CECCC0 /* UUSwiftNetworking */ = {
 			isa = PBXGroup;
 			children = (
+				C56E4E7A272279BB005E1EA4 /* UUHttpAuthorization.swift */,
 				C5E0AC9D271DC601001DDAD7 /* UUHttp.swift */,
 				C5E0AC9F271DC667001DDAD7 /* UUHttpError.swift */,
 				C5E0AC97271DC54E001DDAD7 /* UUHttpRequest.swift */,
 				C5E0AC99271DC582001DDAD7 /* UUHttpResponse.swift */,
 				C5E0AC93271DC46A001DDAD7 /* UUHttpResponseHandler.swift */,
+				C56E4E77272279A5005E1EA4 /* UUHttpResponseHandlerLibrary.swift */,
 				C5E0AC9B271DC5B9001DDAD7 /* UUHttpForm.swift */,
 				C574962626BB5EE200CECCC0 /* UUHttpSession.swift */,
+				C56E4E79272279BB005E1EA4 /* UURemoteApi.swift */,
 				C574962526BB5EE200CECCC0 /* UURemoteData.swift */,
 				C574962426BB5EE200CECCC0 /* UURemoteImage.swift */,
 				C574961C26BB5E7A00CECCC0 /* UUSwiftNetworking.h */,
@@ -177,10 +186,13 @@
 				C574962926BB5EE200CECCC0 /* UUHttpSession.swift in Sources */,
 				C5E0AC94271DC46A001DDAD7 /* UUHttpResponseHandler.swift in Sources */,
 				C5E0AC98271DC54E001DDAD7 /* UUHttpRequest.swift in Sources */,
+				C56E4E7B272279BB005E1EA4 /* UURemoteApi.swift in Sources */,
 				C574962726BB5EE200CECCC0 /* UURemoteImage.swift in Sources */,
 				C5E0AC9C271DC5B9001DDAD7 /* UUHttpForm.swift in Sources */,
+				C56E4E78272279A5005E1EA4 /* UUHttpResponseHandlerLibrary.swift in Sources */,
 				C5E0ACA0271DC667001DDAD7 /* UUHttpError.swift in Sources */,
 				C574962826BB5EE200CECCC0 /* UURemoteData.swift in Sources */,
+				C56E4E7C272279BB005E1EA4 /* UUHttpAuthorization.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
