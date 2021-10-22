@@ -27,13 +27,15 @@ public class UUHttpRequest: NSObject
 	public var bodyContentType : String? = nil
 	public var timeout : TimeInterval = UUHttpRequest.defaultTimeout
 	public var cachePolicy : URLRequest.CachePolicy = UUHttpRequest.defaultCachePolicy
-	public var credentials : URLCredential? = nil
 	public var processMimeTypes : Bool = true
 	public var startTime : TimeInterval = 0
 	public var httpRequest : URLRequest? = nil
 	public var httpTask : URLSessionTask? = nil
 	public var responseHandler : UUHttpResponseHandler? = nil
 	public var form : UUHttpForm? = nil
+    public var authorizationProvider: UUHttpAuthorizationProvider? = nil
+    
+    //public var credentials : URLCredential? = nil
 
 	public init(url : String, method: UUHttpMethod = .get, queryArguments: UUQueryStringArgs = [:], headers: UUHttpHeaders = [:], body : Data? = nil, contentType : String? = nil)
 	{
@@ -57,4 +59,65 @@ public class UUHttpRequest: NSObject
     {
 		self.httpTask?.cancel()
 	}
+    
+    func buildURLRequest() -> URLRequest?
+    {
+        let request = self
+        
+        var fullUrl = request.url
+        
+        if (request.queryArguments.count > 0)
+        {
+            let startingURL = request.url
+            var queryString = request.queryArguments.uuBuildQueryString()
+            if startingURL.contains("?")
+            {
+                queryString = queryString.replacingOccurrences(of: "?", with: "&")
+            }
+            
+            fullUrl = "\(startingURL)\(queryString)"
+        }
+        
+        guard let url = URL.init(string: fullUrl) else
+        {
+            return nil
+        }
+        
+        var req : URLRequest = URLRequest(url: url)
+        req.httpMethod = request.httpMethod.rawValue
+        req.timeoutInterval = request.timeout
+        req.cachePolicy = request.cachePolicy
+        
+        self.authorizationProvider?.attachAuthorization(to: self)
+        
+        for key in request.headerFields.keys
+        {
+            let strKey = (key as? String) ?? String(describing: key)
+            
+            if let val = request.headerFields[key]
+            {
+                let strVal = (val as? String) ?? String(describing: val)
+                req.addValue(strVal, forHTTPHeaderField: strKey)
+            }
+        }
+        
+        if let form = request.form
+        {
+            request.body = form.formData()
+            request.bodyContentType = form.formContentType()
+        }
+        
+        if (request.body != nil)
+        {
+            req.setValue(String.init(format: "%lu", request.body!.count), forHTTPHeaderField: UUHeader.contentLength)
+            req.httpBody = request.body
+            
+            if (request.bodyContentType != nil && request.bodyContentType!.count > 0)
+            {
+                req.addValue(request.bodyContentType!, forHTTPHeaderField: UUHeader.contentType)
+            }
+        }
+        
+        return req
+    }
 }

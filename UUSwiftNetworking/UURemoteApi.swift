@@ -76,7 +76,6 @@ open class UURemoteApi
      */
     public func executeOneRequest(_ request: UUHttpRequest, _ completion: @escaping (UUHttpResponse)->())
     {
-        self.addCommonHeaders(request)
         _ = session.executeRequest(request, completion)
     }
     
@@ -115,15 +114,6 @@ open class UURemoteApi
         }
         
         return (errorCode == .authorizationNeeded)
-    }
-    
-    /**
-     Returns common headers that will be applied to every UUHttpRequest.  Authorization headers should be returned here, so that when
-     the api does an authorization renewal, if any locally storage information changes from the original call to the retry, it will get picked up
-     */
-    open func getCommonHeaders() -> UUHttpHeaders?
-    {
-        return nil
     }
     
     // MARK: Private Implementation
@@ -207,15 +197,6 @@ open class UURemoteApi
             {
                 listener(error)
             }
-        }
-    }
-    
-    private func addCommonHeaders(_ request: UUHttpRequest)
-    {
-        if let headers = getCommonHeaders()
-        {
-            // Merge common headers into the request.  If the request already has a value, keep it
-            request.headerFields.merge(headers) { (current, _) in current }
         }
     }
 }

@@ -59,7 +59,7 @@ public class UUHttpSession: NSObject
     
     public func executeRequest(_ request : UUHttpRequest, _ completion: @escaping (UUHttpResponse) -> Void) -> UUHttpRequest
     {
-        guard let httpRequest = buildRequest(request) else
+        guard let httpRequest = request.buildURLRequest() else
         {
             let uuResponse = UUHttpResponse(request, nil)
             uuResponse.httpError = UUErrorFactory.createInvalidRequestError(request)
@@ -107,60 +107,6 @@ public class UUHttpSession: NSObject
         addActiveTask(task)
         task.resume()
         return request
-    }
-    
-    private func buildRequest(_ request : UUHttpRequest) -> URLRequest?
-    {
-        var fullUrl = request.url;
-        if (request.queryArguments.count > 0)
-        {
-			let startingURL = request.url
-			var queryString = request.queryArguments.uuBuildQueryString()
-			if startingURL.contains("?") {
-				queryString = queryString.replacingOccurrences(of: "?", with: "&")
-			}
-            fullUrl = "\(startingURL)\(queryString)"
-        }
-        
-        guard let url = URL.init(string: fullUrl) else
-        {
-            return nil
-        }
-        
-        var req : URLRequest = URLRequest(url: url)
-        req.httpMethod = request.httpMethod.rawValue
-        req.timeoutInterval = request.timeout
-		req.cachePolicy = request.cachePolicy
-        
-        for key in request.headerFields.keys
-        {
-            let strKey = (key as? String) ?? String(describing: key)
-            
-            if let val = request.headerFields[key]
-            {
-                let strVal = (val as? String) ?? String(describing: val)
-                req.addValue(strVal, forHTTPHeaderField: strKey)
-            }
-        }
-        
-        if let form = request.form
-        {
-            request.body = form.formData()
-            request.bodyContentType = form.formContentType()
-        }
-        
-        if (request.body != nil)
-        {
-            req.setValue(String.init(format: "%lu", request.body!.count), forHTTPHeaderField: UUHeader.contentLength)
-            req.httpBody = request.body
-            
-            if (request.bodyContentType != nil && request.bodyContentType!.count > 0)
-            {
-                req.addValue(request.bodyContentType!, forHTTPHeaderField: UUHeader.contentType)
-            }
-        }
-        
-        return req
     }
     
     private func handleResponse(
