@@ -16,7 +16,7 @@ class UUHttpReponseHandlerTests: XCTestCase
 {
     func test_codableError()
     {
-        let parser = UUJsonCodableResponseParser<TestCodable>()
+        let parser = UUJsonCodableDataParser<TestCodable>()
         
         let nsData = "00AA".uuToHexData()
         XCTAssertNotNil(nsData, "Unable to create raw response data")
@@ -30,16 +30,23 @@ class UUHttpReponseHandlerTests: XCTestCase
         let response = HTTPURLResponse(url: url!, statusCode: 200, httpVersion: "2.0", headerFields: nil)
         XCTAssertNotNil(response)
         
-        let parsed = parser.parseResponse(data, response!, request)
-        XCTAssertNotNil(parsed)
+        let exp = uuExpectationForMethod()
+        parser.parse(data: data, response: response!, request: request)
+        { parsedResult in
         
-        let parsedError = parsed as? Error
-        UUAssertError(parsedError, .parseFailure)
+            XCTAssertNotNil(parsedResult)
+            
+            let parsedError = parsedResult as? Error
+            UUAssertError(parsedError, .parseFailure)
+            exp.fulfill()
+        }
+            
+        uuWaitForExpectations()
     }
     
     func test_codableSuccess()
     {
-        let parser = UUJsonCodableResponseParser<TestCodable>()
+        let parser = UUJsonCodableDataParser<TestCodable>()
         
         let obj = TestCodable(fieldOne: "HelloWorld", fieldTwo: 2021)
         let data = obj.toJsonData()
@@ -52,15 +59,23 @@ class UUHttpReponseHandlerTests: XCTestCase
         let response = HTTPURLResponse(url: url!, statusCode: 200, httpVersion: "2.0", headerFields: nil)
         XCTAssertNotNil(response)
         
-        let parsed = parser.parseResponse(data!, response!, request)
-        XCTAssertNotNil(parsed)
+        let exp = uuExpectationForMethod()
+        parser.parse(data: data!, response: response!, request: request)
+        { parsedResult in
         
-        let parsedError = parsed as? Error
-        XCTAssertNil(parsedError, "Do not expect an error to be returned after success parsing")
-        
-        let decodedObject = parsed as? TestCodable
-        XCTAssertNotNil(decodedObject, "Expect decoded object to be non-nil")
-        XCTAssertEqual(decodedObject!, obj, "Expect object to decode and be equal")
+            XCTAssertNotNil(parsedResult)
+            
+            let parsedError = parsedResult as? Error
+            XCTAssertNil(parsedError, "Do not expect an error to be returned after success parsing")
+            
+            let decodedObject = parsedResult as? TestCodable
+            XCTAssertNotNil(decodedObject, "Expect decoded object to be non-nil")
+            XCTAssertEqual(decodedObject!, obj, "Expect object to decode and be equal")
+            
+            exp.fulfill()
+        }
+            
+        uuWaitForExpectations()
     }
 }
 
