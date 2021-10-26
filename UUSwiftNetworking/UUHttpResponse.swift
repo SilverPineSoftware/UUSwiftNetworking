@@ -24,9 +24,14 @@ public class UUHttpResponse : NSObject
 	public var rawResponsePath : String = ""
 	public var downloadTime : TimeInterval = 0
 
-	init(_ request : UUHttpRequest, _ response : HTTPURLResponse?)
+	required init(_ request : UUHttpRequest, _ response : HTTPURLResponse?)
 	{
 		httpRequest = request
 		httpResponse = response
 	}
+    
+    public var httpStatusCode: Int
+    {
+        return httpResponse?.statusCode ?? 0
+    }
 }

@@ -15,144 +15,105 @@ import UUSwiftCore
 
 public protocol UUHttpResponseHandler
 {
-	var supportedMimeTypes : [String] { get }
-	func parseResponse(_ data : Data, _ response: HTTPURLResponse, _ request: URLRequest) -> Any?
+    func handleResponse(request: UUHttpRequest, data: Data?, response: URLResponse?, error: Error?, completion: @escaping (UUHttpResponse)->())
+    
+    var dataParser: UUHttpDataParser { get }
 }
 
-open class UUTextResponseHandler : NSObject, UUHttpResponseHandler
+open class UUBaseResponseHandler: UUHttpResponseHandler
 {
-	public var supportedMimeTypes: [String]
-	{
-		return [UUContentType.textHtml, UUContentType.textPlain]
-	}
-
-	open func parseResponse(_ data: Data, _ response: HTTPURLResponse, _ request: URLRequest) -> Any?
-	{
-		var parsed : Any? = nil
-
-		var responseEncoding : String.Encoding = .utf8
-
-		if (response.textEncodingName != nil)
-		{
-			let cfEncoding = CFStringConvertIANACharSetNameToEncoding(response.textEncodingName as CFString?)
-			responseEncoding = String.Encoding(rawValue: CFStringConvertEncodingToNSStringEncoding(cfEncoding))
-		}
-
-		let stringResult : String? = String.init(data: data, encoding: responseEncoding)
-		if (stringResult != nil)
-		{
-			parsed = stringResult
-		}
-
-		return parsed
-	}
-}
-
-open class UUBinaryResponseHandler : NSObject, UUHttpResponseHandler
-{
-	open var supportedMimeTypes: [String]
-	{
-		return [UUContentType.binary]
-	}
-
-	open func parseResponse(_ data: Data, _ response: HTTPURLResponse, _ request: URLRequest) -> Any?
-	{
-		return data
-	}
-}
-
-open class UUJsonResponseHandler : NSObject, UUHttpResponseHandler
-{
-	open var supportedMimeTypes: [String]
-	{
-		return [UUContentType.applicationJson, UUContentType.textJson]
-	}
-
-	open func parseResponse(_ data: Data, _ response: HTTPURLResponse, _ request: URLRequest) -> Any?
-	{
-		do
-		{
-			return try JSONSerialization.jsonObject(with: data, options: [])
-		}
-		catch (let err)
-		{
-			UUDebugLog("Error deserializing JSON: %@", String(describing: err))
-		}
-
-		return nil
-	}
-}
-
-open class UUImageResponseHandler : NSObject, UUHttpResponseHandler
-{
-	public var supportedMimeTypes: [String]
-	{
-		return [UUContentType.imagePng, UUContentType.imageJpeg]
-	}
-
-	open func parseResponse(_ data: Data, _ response: HTTPURLResponse, _ request: URLRequest) -> Any?
-	{
-#if os(macOS)
-		return NSImage.init(data: data)
-#else
-		return UIImage.init(data: data)
-#endif
-	}
-}
-
-open class UUFormEncodedResponseHandler : NSObject, UUHttpResponseHandler
-{
-	public var supportedMimeTypes: [String]
-	{
-		return [UUContentType.formEncoded]
-	}
-
-	open func parseResponse(_ data: Data, _ response: HTTPURLResponse, _ request: URLRequest) -> Any?
-	{
-		var parsed: [ String: Any ] = [:]
-
-		if let s = String.init(data: data, encoding: .utf8)
-        {
-			let components = s.components(separatedBy: "&")
-            
-			for c in components
-            {
-				let pair = c.components(separatedBy: "=")
-                
-				if pair.count == 2
-                {
-					if let key = pair.first
-                    {
-						if let val = pair.last
-                        {
-							parsed[key] = val.removingPercentEncoding
-						}
-					}
-				}
-			}
-		}
-
-		return parsed
-	}
-}
-
-open class UUJsonCodableResponseParser<T: Codable>: UUJsonResponseHandler
-{
-    open override func parseResponse(_ data: Data, _ response: HTTPURLResponse, _ request: URLRequest) -> Any?
+    open var dataParser: UUHttpDataParser
     {
-        var result: Any? = nil
+        return UUMimeTypeDataParser()
+    }
+    
+    open func handleResponse(request: UUHttpRequest, data: Data?, response: URLResponse?, error: Error?, completion: @escaping (UUHttpResponse)->())
+    {
+        let httpResponse : HTTPURLResponse? = response as? HTTPURLResponse
         
-        let decoder = JSONDecoder()
+        let uuResponse : UUHttpResponse = UUHttpResponse(request, httpResponse)
+        uuResponse.rawResponse = data
         
-        do
+        var err : Error? = error
+        //var parsedResponse : Any? = nil
+        
+        let httpResponseCode = uuResponse.httpStatusCode
+
+        NSLog("Http Response Code: %d", httpResponseCode)
+        
+        if let responseHeaders = httpResponse?.allHeaderFields
         {
-            result = try decoder.decode(T.self, from: data)
-        }
-        catch let err
-        {
-            result = UUErrorFactory.createParseError(err, data, response, request)
+            NSLog("Response Headers: %@", responseHeaders)
         }
         
-        return result
+        if let error = err
+        {
+            //UUDebugLog("Got an error: %@", String(describing: error))
+            err = UUErrorFactory.wrapNetworkError(error, request)
+            finishHandleResponse(request: request, response: uuResponse, result: err, completion: completion)
+            return
+        }
+        
+        // Verify there is response data to parse, if not, just finish the operation
+        guard let data = data,
+              let httpResponse = httpResponse,
+              let urlRequest = request.httpRequest else
+          {
+              finishHandleResponse(request: request, response: uuResponse, result: nil, completion: completion)
+              return
+          }
+        
+        
+        dataParser.parse(data: data, response: httpResponse, request: urlRequest)
+        { parseResult in
+            
+            self.finishHandleResponse(request: request, response: uuResponse, result: parseResult, completion: completion)
+        }
+    }
+    
+    private func finishHandleResponse(request: UUHttpRequest, response: UUHttpResponse, result: Any?, completion: @escaping (UUHttpResponse)->())
+    {
+        var err: Error? = nil
+        var parsedResponse: Any? = result
+        
+        if let parseError = result as? Error
+        {
+            err = parseError
+            parsedResponse = nil
+        }
+         
+        // By default, the standard response parsers won't emit an Error, but custom response handlers might.
+        // When callers parse response JSON and return Errors, we will honor that.
+        if (err == nil && !isHttpSuccessResponseCode(response.httpStatusCode))
+        {
+            err = UUErrorFactory.createHttpError(request, response, parsedResponse)
+        }
+        
+        response.httpError = err
+        response.parsedResponse = parsedResponse
+        response.downloadTime = Date.timeIntervalSinceReferenceDate - (response.httpRequest?.startTime ?? 0)
+        
+        completion(response)
+    }
+    
+    private func isHttpSuccessResponseCode(_ responseCode : Int) -> Bool
+    {
+        return (responseCode >= 200 && responseCode < 300)
+    }
+}
+
+open class UUJsonCodableResponseHandler<T: Codable>: UUBaseResponseHandler
+{
+    open override var dataParser: UUHttpDataParser
+    {
+        return UUJsonCodableDataParser<T>()
+    }
+}
+
+open class UUPassthroughResponseHandler: UUBaseResponseHandler
+{
+    open override var dataParser: UUHttpDataParser
+    {
+        return UUBinaryDataParser()
     }
 }

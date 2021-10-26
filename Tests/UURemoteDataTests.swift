@@ -284,11 +284,11 @@ fileprivate class ShutterstockApi
             if (response.httpError == nil)
             {
                 if let parsed = response.parsedResponse as? [AnyHashable:Any],
-                   let data = parsed.uuSafeGetDictionaryArray("data")
+                   let data = parsed.uuGetDictionaryArray("data")
                 {
                     for item in data
                     {
-                        if let assets = item.uuSafeGetDictionary("assets")
+                        if let assets = item.uuGetDictionary("assets")
                         {
                             //small_thumb
                             //large_thumb
@@ -297,8 +297,8 @@ fileprivate class ShutterstockApi
                             //preview_1000
                             //preview_1500
                             
-                            if let d = assets.uuSafeGetDictionary(assetKey),
-                               let url = d.uuSafeGetString("url")
+                            if let d = assets.uuGetDictionary(assetKey),
+                               let url = d.uuGetString("url")
                             {
                                 if (!results.contains(url))
                                 {

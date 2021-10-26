@@ -114,7 +114,7 @@ public class UURemoteData : NSObject, UURemoteDataProtocol
         }
         
         let request = UUHttpRequest(url: key)
-        request.processMimeTypes  = false
+        request.responseHandler = UUPassthroughResponseHandler()
         
         let client = UUHttpSession.executeRequest(request)
         { (response: UUHttpResponse) in

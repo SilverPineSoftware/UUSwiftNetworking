@@ -6,5 +6,7 @@
 	<string>https://spsw.io/uu</string>
 	<key>does_not_exist_url</key>
 	<string>http://this.is.a.fake.url</string>
+	<key>upload_image_file_name</key>
+	<string>TestJpeg_0001.JPG</string>
 </dict>
 </plist>

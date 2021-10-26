@@ -27,11 +27,11 @@ public class UUHttpRequest: NSObject
 	public var bodyContentType : String? = nil
 	public var timeout : TimeInterval = UUHttpRequest.defaultTimeout
 	public var cachePolicy : URLRequest.CachePolicy = UUHttpRequest.defaultCachePolicy
-	public var processMimeTypes : Bool = true
+	//public var processMimeTypes : Bool = true
 	public var startTime : TimeInterval = 0
 	public var httpRequest : URLRequest? = nil
 	public var httpTask : URLSessionTask? = nil
-	public var responseHandler : UUHttpResponseHandler? = nil
+	public var responseHandler : UUHttpResponseHandler = UUBaseResponseHandler()
 	public var form : UUHttpForm? = nil
     public var authorizationProvider: UUHttpAuthorizationProvider? = nil
     
@@ -119,5 +119,10 @@ public class UUHttpRequest: NSObject
         }
         
         return req
+    }
+    
+    func handleResponse(data: Data?, response: URLResponse?, error: Error?, completion: @escaping (UUHttpResponse)->())
+    {
+        responseHandler.handleResponse(request: self, data: data, response: response, error: error, completion: completion)
     }
 }

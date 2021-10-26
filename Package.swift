@@ -19,7 +19,7 @@ let package = Package(
 	dependencies: [
 		.package(
 			url: "https://github.com/SilverPineSoftware/UUSwiftCore.git",
-			from: "1.1.3"
+			from: "1.1.4"
 		),
         .package(
             url: "https://github.com/SilverPineSoftware/UUSwiftTestCore.git",
@@ -39,7 +39,8 @@ let package = Package(
             dependencies: ["UUSwiftTestCore", "UUSwiftCore", "UUSwiftNetworking"],
             path: "Tests",
             resources: [
-                .process("UUNetworkingTestConfig.plist")
+                .process("UUNetworkingTestConfig.plist"),
+                .process("Shelby_0001.JPG")
             ]),
 	],
 	swiftLanguageVersions: [
