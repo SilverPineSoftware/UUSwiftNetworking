@@ -19,22 +19,28 @@ public class UUHttpForm : NSObject
 	public var formBoundary: String = "UUForm_PostBoundary"
 	private var formBuilder: NSMutableData = NSMutableData()
 
-	public func add(field: String, value: String, contentType: String = UUContentType.textPlain, encoding: String.Encoding = .utf8)
+	public func add(field: String, value: String, contentType: String? = UUContentType.textPlain, encoding: String.Encoding = .utf8)
 	{
 		appendNewLineIfNeeded()
 
 		if let boundaryBytes = boundaryBytes(),
-		   let fieldNameBytes = "Content-Disposition: form-data; name=\"\(field)\"\r\n\r\n".data(using: .utf8),
-		   let contentTypeBytes = contentTypeBytes(contentType),
+		   let fieldNameBytes = "Content-Disposition: form-data; name=\"\(field)\"\r\n".data(using: .utf8),
 		   let fieldValueBytes = value.data(using: encoding)
 		{
 			formBuilder.append(boundaryBytes)
 			formBuilder.append(fieldNameBytes)
-			formBuilder.append(contentTypeBytes)
+            
+            if let contentType = contentType,
+               let contentTypeBytes = contentTypeBytes(contentType)
+            {
+                formBuilder.append(contentTypeBytes)
+            }
+            
+            appendNewLineIfNeeded()
 			formBuilder.append(fieldValueBytes)
 		}
 	}
-
+    
 	public func addFile(fieldName: String, fileName: String, contentType: String, fileData: Data)
 	{
 		appendNewLineIfNeeded()
