@@ -75,6 +75,73 @@ class UUHttpSessionInstanceTests: XCTestCase
         
         uuWaitForExpectations()
     }
+    
+    func test_formPost()
+    {
+        let session = uuHttpSessionForTest
+        
+        let exp = uuExpectationForMethod()
+        
+        let cfg = UULoadNetworkingTestConfig()
+        let url = cfg.formPostUrl
+        
+        let request = UUHttpRequest(url: url, method: .post)
+        
+        let form = UUHttpForm()
+        form.add(field: "FileType", value: "Image", contentType: "text/plain")
+        
+        let fileName = "uploadFileTest.jpg"
+        
+        if let filePath = cfg.uploadFilePath,
+           let data = try? Data(contentsOf: filePath)
+        {
+            form.addFile(fieldName: "uu_file", fileName: fileName, contentType: "image/jpeg", fileData: data)
+        }
+        
+        request.form = form
+        
+        if let data = form.formData(),
+           let str = String(data: data, encoding: .ascii)?.uuSubString(0, 1000)
+        {
+            NSLog("Form:\n\n\(str))\n\n")
+        }
+        
+        _ = session.executeRequest(request)
+        { response in
+            
+            XCTAssertNil(response.httpError)
+            exp.fulfill()
+        }
+        
+        uuWaitForExpectations()
+        
+        verifyUploadedFile(fileName)
+    }
+    
+    private func verifyUploadedFile(_ fileName: String)
+    {
+        let session = uuHttpSessionForTest
+        
+        let exp = uuExpectationForMethod()
+        let cfg = UULoadNetworkingTestConfig()
+        let url = "\(cfg.downloadFileUrl)?uu_file=\(fileName)"
+        
+        let request = UUHttpRequest(url: url, method: .get)
+        
+        _ = session.executeRequest(request)
+        { response in
+            
+            XCTAssertNotNil(response.parsedResponse)
+            XCTAssertNil(response.httpError)
+            
+            let img = response.parsedResponse as? UIImage
+            XCTAssertNotNil(img)
+            
+            exp.fulfill()
+        }
+        
+        uuWaitForExpectations()
+    }
 }
 
 
