@@ -61,6 +61,7 @@ open class UUBaseResponseHandler: UUHttpResponseHandler
         
         // Verify there is response data to parse, if not, just finish the operation
         guard let data = data,
+              !data.isEmpty,
               let httpResponse = httpResponse,
               let urlRequest = request.httpRequest else
           {
