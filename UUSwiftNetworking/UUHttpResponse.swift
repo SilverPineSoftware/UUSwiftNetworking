@@ -16,19 +16,45 @@ import UUSwiftCore
 
 public class UUHttpResponse : NSObject
 {
-	public var httpError : Error? = nil
-	public var httpRequest : UUHttpRequest? = nil
-	public var httpResponse : HTTPURLResponse? = nil
-	public var parsedResponse : Any?
-	public var rawResponse : Data? = nil
-	public var rawResponsePath : String = ""
-	public var downloadTime : TimeInterval = 0
+    public let httpRequest: UUHttpRequest
+    public let httpResponse: HTTPURLResponse?
+    
+	private(set) public var httpError: Error? = nil
+	private(set) public var parsedResponse: Any?
+    private(set) public var rawResponse: Data? = nil
+    //private(set) public var rawResponsePath: String = ""
+    private(set) public var endTime: TimeInterval = 0
 
-	required init(_ request : UUHttpRequest, _ response : HTTPURLResponse?)
+    required init(request : UUHttpRequest, response: HTTPURLResponse?, error: Error?)
 	{
 		httpRequest = request
 		httpResponse = response
+        httpError = error
 	}
+    
+    // MARK: Internal Setters
+    
+    func set(error: Error?)
+    {
+        self.httpError = error
+    }
+    
+    func set(rawResponse: Data?)
+    {
+        self.rawResponse = rawResponse
+    }
+    
+    func set(parsedResponse: Any?)
+    {
+        self.parsedResponse = parsedResponse
+    }
+    
+    func set(endTime: TimeInterval)
+    {
+        self.endTime = endTime
+    }
+    
+    // MARK: Computed Variables
     
     public var httpStatusCode: Int
     {

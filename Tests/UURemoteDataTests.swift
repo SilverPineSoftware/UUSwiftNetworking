@@ -7,19 +7,37 @@
 
 import XCTest
 import UUSwiftCore
+import UUSwiftTestCore
+
 @testable import UUSwiftNetworking
 
 class UURemoteDataTests: XCTestCase
 {
-    private static let testUrl : String = "http://publicdomainarchive.com/?ddownload=47473"
-
+    private let testFileName = "uu_remote_data_test.jpg"
+    
     override func setUp()
     {
         super.setUp()
         
-        UUDataCache.shared.clearCache()
-        UURemoteData.shared.maxActiveRequests = 50
-        UUDataCache.shared.contentExpirationLength = 30 * 24 * 60 * 60
+        remoteDataForTest.dataCache.clearCache()
+        remoteDataForTest.maxActiveRequests = 50
+        remoteDataForTest.dataCache.contentExpirationLength = 30 * 24 * 60 * 60
+    }
+    
+    open var remoteDataForTest: UURemoteData
+    {
+        return UURemoteData.shared
+    }
+    
+    open var concurrentDownloadCount: Int
+    {
+        return 10
+    }
+    
+    private var testUrl: String
+    {
+        let cfg = UULoadNetworkingTestConfig()
+        return "\(cfg.downloadFileUrl)?uu_file=\(testFileName)"
     }
     
     override func tearDown()
@@ -29,15 +47,17 @@ class UURemoteDataTests: XCTestCase
     
     func test_fetchNoLocal()
     {
-        let key = UURemoteDataTests.testUrl
+        let key = testUrl
+        
+        let remoteData = remoteDataForTest
         
         expectation(forNotification: NSNotification.Name(rawValue: UURemoteData.Notifications.DataDownloaded.rawValue), object: nil)
         { (notification: Notification) -> Bool in
             
-            let md = UURemoteData.shared.metaData(for: key)
+            let md = remoteData.metaData(for: key)
             XCTAssertNotNil(md)
             
-            let data = UURemoteData.shared.data(for: key)
+            let data = remoteData.data(for: key)
             XCTAssertNotNil(data)
             
             let nKey = notification.uuRemoteDataPath
@@ -49,7 +69,7 @@ class UURemoteDataTests: XCTestCase
             return true
         }
         
-        var data = UURemoteData.shared.data(for: key)
+        var data = remoteData.data(for: key)
         XCTAssertNil(data)
         
         waitForExpectations(timeout: .infinity)
@@ -62,19 +82,21 @@ class UURemoteDataTests: XCTestCase
         }
  
 
-        let md = UURemoteData.shared.metaData(for: key)
-        data = UURemoteData.shared.data(for: key)
+        let md = remoteData.metaData(for: key)
+        data = remoteData.data(for: key)
         XCTAssertNotNil(data)
         XCTAssertNotNil(md)
     }
     
     func test_fetchFromBadUrl()
     {
+        let remoteData = remoteDataForTest
+        
         expectation(forNotification: NSNotification.Name(rawValue: UURemoteData.Notifications.DataDownloadFailed.rawValue), object: nil)
         
         let key = "http://this.is.a.fake.url/non_existent.jpg"
         
-        let data = UURemoteData.shared.data(for: key)
+        let data = remoteData.data(for: key)
         XCTAssertNil(data)
         
         waitForExpectations(timeout: .infinity)
@@ -89,11 +111,14 @@ class UURemoteDataTests: XCTestCase
     
     func test_fetchExisting()
     {
-        let key = UURemoteDataTests.testUrl
+        uploadTestPhoto()
+        
+        let remoteData = remoteDataForTest
+        let key = testUrl
         
         let exp = expectation(description: #function)
    
-        let existing = UURemoteData.shared.data(for: key)
+        let existing = remoteData.data(for: key)
         { result, err in
             exp.fulfill()
         }
@@ -102,73 +127,34 @@ class UURemoteDataTests: XCTestCase
         
         waitForExpectations(timeout: 60, handler: nil)
         
-        
-        let data = UURemoteData.shared.data(for: key)
+        let data = remoteData.data(for: key)
         XCTAssertNotNil(data)
     }
     
-    func test_downloadMultiple_largeFiles_noDuplicates_10()
+    func test_downloadMultiple_largeFiles_noDuplicates()
     {
-        do_concurrentDownloadTest(count: 10, large: true, includeDuplicates: false)
+        do_concurrentDownloadTest(count: concurrentDownloadCount, large: true, includeDuplicates: false)
     }
     
-    func test_downloadMultiple_largeFiles_noDuplicates_100()
+    func test_downloadMultiple_smallFiles_noDuplicates()
     {
-        do_concurrentDownloadTest(count: 100, large: true, includeDuplicates: false)
+        do_concurrentDownloadTest(count: concurrentDownloadCount, large: false, includeDuplicates: false)
     }
     
-    func test_downloadMultiple_largeFiles_noDuplicates_1000()
+    func test_downloadMultiple_largeFiles_withDuplicates()
     {
-        do_concurrentDownloadTest(count: 1000, large: true, includeDuplicates: false)
+        do_concurrentDownloadTest(count: concurrentDownloadCount, large: true, includeDuplicates: true)
     }
     
-    func test_downloadMultiple_smallFiles_noDuplicates_10()
+    func test_downloadMultiple_smallFiles_withDuplicates()
     {
-        do_concurrentDownloadTest(count: 10, large: false, includeDuplicates: false)
-    }
-    
-    func test_downloadMultiple_smallFiles_noDuplicates_100()
-    {
-        do_concurrentDownloadTest(count: 100, large: false, includeDuplicates: false)
-    }
-    
-    func test_downloadMultiple_smallFiles_noDuplicates_1000()
-    {
-        do_concurrentDownloadTest(count: 1000, large: false, includeDuplicates: false)
-    }
-    
-    func test_downloadMultiple_largeFiles_withDuplicates_10()
-    {
-        do_concurrentDownloadTest(count: 10, large: true, includeDuplicates: true)
-    }
-    
-    func test_downloadMultiple_largeFiles_withDuplicates_100()
-    {
-        do_concurrentDownloadTest(count: 100, large: true, includeDuplicates: true)
-    }
-    
-    func test_downloadMultiple_largeFiles_withDuplicates_1000()
-    {
-        do_concurrentDownloadTest(count: 1000, large: true, includeDuplicates: true)
-    }
-    
-    func test_downloadMultiple_smallFiles_withDuplicates_10()
-    {
-        do_concurrentDownloadTest(count: 10, large: false, includeDuplicates: true)
-    }
-    
-    func test_downloadMultiple_smallFiles_withDuplicates_100()
-    {
-        do_concurrentDownloadTest(count: 100, large: false, includeDuplicates: true)
-    }
-    
-    func test_downloadMultiple_smallFiles_withDuplicates_1000()
-    {
-        do_concurrentDownloadTest(count: 1000, large: false, includeDuplicates: true)
+        do_concurrentDownloadTest(count: concurrentDownloadCount, large: false, includeDuplicates: true)
     }
     
     private func do_concurrentDownloadTest(count: Int, large: Bool, includeDuplicates: Bool)
     {
+        let remoteData = remoteDataForTest
+        
         let imageUrls = getImageUrls(count: count, large: large)
         XCTAssertTrue(imageUrls.count > 0)
         
@@ -176,7 +162,7 @@ class UURemoteDataTests: XCTestCase
         {
             let exp = expectation(description: "Iteration_\(index)")
             
-            let existing = UURemoteData.shared.data(for: url)
+            let existing = remoteData.data(for: url)
             { result, err in
                 XCTAssertNotNil(result)
                 XCTAssertNil(err)
@@ -189,7 +175,7 @@ class UURemoteDataTests: XCTestCase
                 usleep(50)
                 
                 let expInner = expectation(description: "Iteration_\(index)_inner")
-                let innerResult = UURemoteData.shared.data(for: url)
+                let innerResult = remoteData.data(for: url)
                 { result, err in
                     XCTAssertNotNil(result)
                     XCTAssertNil(err)
@@ -219,7 +205,7 @@ class UURemoteDataTests: XCTestCase
         
         var results: [String] = []
         
-        ShutterstockApi.fetchImageUrls(count: count, large: large)
+        UUShutterstockApi.fetchImageUrls(count: count, large: large)
         { list in
             results.append(contentsOf: list)
             exp.fulfill()
@@ -231,86 +217,62 @@ class UURemoteDataTests: XCTestCase
         XCTAssertEqual(truncated.count, count)
         return truncated
     }
-}
-
-fileprivate class ShutterstockApi
-{
-    private static let maxPerPage = 500
     
-    class func fetchImageUrls(count: Int, large: Bool, callback: @escaping (([String])->()))
-    {
-        fetchAssets(workingResults: [], page: 1, count: count, query: "forest", assetKey: large ? "preview_1500" : "small_thumb", callback: callback)
-    }
     
-    private class func fetchAssets(workingResults: [String], page: Int, count: Int, query: String, assetKey: String, callback: @escaping (([String])->()))
+    private func uploadTestPhoto()
     {
-        if (workingResults.count >= count)
+        let exp = uuExpectationForMethod()
+        
+        let cfg = UULoadNetworkingTestConfig()
+        let url = cfg.formPostUrl
+        
+        let request = UUHttpRequest(url: url, method: .post)
+        
+        let form = UUHttpForm()
+        form.add(field: "FileType", value: "Image", contentType: "text/plain")
+        
+        let fileName = testFileName
+        
+        if let filePath = cfg.uploadFilePath,
+           let data = try? Data(contentsOf: filePath)
         {
-            callback(workingResults)
-            return
+            form.addFile(fieldName: "uu_file", fileName: fileName, contentType: "image/jpeg", fileData: data)
         }
         
-        fetchAssetPage(page: page, perPage: min(count, maxPerPage), query: query, assetKey: assetKey)
-        { pageResult in
+        request.form = form
+        
+        remoteDataForTest.remoteApi.executeOneRequest(request)
+        { response in
             
-            var tmp = workingResults
-            tmp.append(contentsOf: pageResult)
-            fetchAssets(workingResults: tmp, page: page + 1, count: count, query: query, assetKey: assetKey, callback: callback)
+            XCTAssertNil(response.httpError)
+            exp.fulfill()
         }
+        
+        uuWaitForExpectations()
+        
+        verifyUploadedFile(fileName)
     }
     
-    private class func fetchAssetPage(page: Int, perPage: Int, query: String, assetKey: String, callback: @escaping (([String])->()))
+    private func verifyUploadedFile(_ fileName: String)
     {
-        let url = "https://api.shutterstock.com/v2/images/search"
+        let exp = uuExpectationForMethod()
+        let cfg = UULoadNetworkingTestConfig()
+        let url = "\(cfg.downloadFileUrl)?uu_file=\(fileName)"
         
-        var args: UUQueryStringArgs = [:]
-        args["page"] = "\(page)"
-        args["per_page"] = "\(perPage)" // 500 is the max allowed
-        args["query"] = query
+        let request = UUHttpRequest(url: url, method: .get)
         
-        let req = UUHttpRequest(url: url, method: .get, queryArguments: args)
-        
-        let username = "d4a89-1400b-04251-4faee-f7a23-12271:61764-d9c3c-8a832-a7bdf-098e4-0b382"
-        let usernameData = username.data(using: .utf8)
-        let usernameEncoded = usernameData!.base64EncodedString(options: Data.Base64EncodingOptions.init(rawValue: 0))
-        req.headerFields["Authorization"] = "Basic \(usernameEncoded)"
-        
-        NSLog("Fetching page \(page)")
-        _ = UUHttpSession.executeRequest(req)
-        { (response: UUHttpResponse) in
-        
-            var results: [String] = []
+        remoteDataForTest.remoteApi.executeOneRequest(request)
+        { response in
             
-            if (response.httpError == nil)
-            {
-                if let parsed = response.parsedResponse as? [AnyHashable:Any],
-                   let data = parsed.uuGetDictionaryArray("data")
-                {
-                    for item in data
-                    {
-                        if let assets = item.uuGetDictionary("assets")
-                        {
-                            //small_thumb
-                            //large_thumb
-                            //huge_thumb
-                            //preview
-                            //preview_1000
-                            //preview_1500
-                            
-                            if let d = assets.uuGetDictionary(assetKey),
-                               let url = d.uuGetString("url")
-                            {
-                                if (!results.contains(url))
-                                {
-                                    results.append(url)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            XCTAssertNotNil(response.parsedResponse)
+            XCTAssertNil(response.httpError)
             
-            callback(results)
+            let img = response.parsedResponse as? UIImage
+            XCTAssertNotNil(img)
+            
+            exp.fulfill()
         }
+        
+        uuWaitForExpectations()
     }
 }

@@ -46,8 +46,7 @@ public class UUHttpSession: NSObject
     {
         guard let httpRequest = request.buildURLRequest() else
         {
-            let uuResponse = UUHttpResponse(request, nil)
-            uuResponse.httpError = UUErrorFactory.createInvalidRequestError(request)
+            let uuResponse = UUHttpResponse(request: request, response: nil, error: UUErrorFactory.createInvalidRequestError(request))
             completion(uuResponse)
             return request
         }

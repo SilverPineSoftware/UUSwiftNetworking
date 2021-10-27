@@ -36,8 +36,8 @@ open class UUBaseResponseHandler: UUHttpResponseHandler
     {
         let httpResponse : HTTPURLResponse? = response as? HTTPURLResponse
         
-        let uuResponse : UUHttpResponse = UUHttpResponse(request, httpResponse)
-        uuResponse.rawResponse = data
+        let uuResponse = UUHttpResponse(request: request, response: httpResponse, error: nil)
+        uuResponse.set(rawResponse: data)
         
         var err : Error? = error
         //var parsedResponse : Any? = nil
@@ -95,9 +95,9 @@ open class UUBaseResponseHandler: UUHttpResponseHandler
             err = UUErrorFactory.createHttpError(request, response, parsedResponse)
         }
         
-        response.httpError = err
-        response.parsedResponse = parsedResponse
-        response.downloadTime = Date.timeIntervalSinceReferenceDate - (response.httpRequest?.startTime ?? 0)
+        response.set(error: err)
+        response.set(parsedResponse: parsedResponse)
+        response.set(endTime: Date.timeIntervalSinceReferenceDate)
         
         completion(response)
     }

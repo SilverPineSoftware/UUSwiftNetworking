@@ -26,10 +26,17 @@ import UUSwiftCore
 public typealias UUImageLoadedCompletionBlock = (UUImage?, Error?) -> Void
 
 
-public class UURemoteImage: NSObject
+public class UURemoteImage
 {
-	public static let shared = UURemoteImage()
-
+    public static let shared = UURemoteImage(remoteData: UURemoteData.shared)
+    
+    private let remoteData: UURemoteData
+    
+    required init(remoteData: UURemoteData)
+    {
+        self.remoteData = remoteData
+    }
+	
 	public struct Notifications
     {
         public static let ImageDownloaded = Notification.Name("UUImageDownloadedNotification")
@@ -37,7 +44,7 @@ public class UURemoteImage: NSObject
 
     public func imageSize(for path: String) -> CGSize?
     {
-        let md = UUDataCache.shared.metaData(for: path)
+        let md = remoteData.dataCache.metaData(for: path)
         
         if let w = md[MetaData.ImageWidth] as? NSNumber,
            let h = md[MetaData.ImageHeight] as? NSNumber
@@ -64,7 +71,7 @@ public class UURemoteImage: NSObject
             return true
         }
         
-        return UUDataCache.shared.dataExists(for: key)
+        return remoteData.dataCache.dataExists(for: key)
     }
     
     public func image(for key: String) -> UUImage?
@@ -79,7 +86,7 @@ public class UURemoteImage: NSObject
             return image
         }
         else {
-            let data = UURemoteData.shared.data(for: key, remoteLoadCompletion:
+            let data = remoteData.data(for: key, remoteLoadCompletion:
             { (data, error) in
                 let image = self.processImageData(for: key, data: data)
                 
@@ -104,10 +111,10 @@ public class UURemoteImage: NSObject
         {
             self.systemImageCache.setObject(image, forKey: key as NSString)
             
-            var md = UUDataCache.shared.metaData(for: key)
+            var md = remoteData.dataCache.metaData(for: key)
             md[MetaData.ImageWidth] = NSNumber(value: Float(image.size.width))
             md[MetaData.ImageHeight] = NSNumber(value: Float(image.size.height))
-            UUDataCache.shared.set(metaData: md, for: key)
+            remoteData.dataCache.set(metaData: md, for: key)
 
             var metaData : [String:Any] = [:]
             metaData[UURemoteData.NotificationKeys.RemotePath] = key
