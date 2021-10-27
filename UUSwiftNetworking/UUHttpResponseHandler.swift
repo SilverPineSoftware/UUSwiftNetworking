@@ -42,14 +42,14 @@ open class UUBaseResponseHandler: UUHttpResponseHandler
         var err : Error? = error
         //var parsedResponse : Any? = nil
         
-        let httpResponseCode = uuResponse.httpStatusCode
+        //let httpResponseCode = uuResponse.httpStatusCode
 
-        NSLog("Http Response Code: %d", httpResponseCode)
-        
-        if let responseHeaders = httpResponse?.allHeaderFields
-        {
-            NSLog("Response Headers: %@", responseHeaders)
-        }
+//        NSLog("Http Response Code: %d", httpResponseCode)
+//
+//        if let responseHeaders = httpResponse?.allHeaderFields
+//        {
+//            NSLog("Response Headers: %@", responseHeaders)
+//        }
         
         if let error = err
         {

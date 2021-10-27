@@ -56,7 +56,7 @@ public class UUHttpSession: NSObject
         
         request.startTime = Date.timeIntervalSinceReferenceDate
         
-        
+        /*
         NSLog("Begin Request\n\nMethod: %@\nURL: %@\nHeaders: %@)",
             String(describing: request.httpRequest?.httpMethod),
             String(describing: request.httpRequest?.url),
@@ -75,7 +75,7 @@ public class UUHttpSession: NSObject
                     NSLog("Raw Body: %@", request.body!.uuToHexString())
                 }
             }
-        }
+        }*/
         
         let task = urlSession.dataTask(with: httpRequest)
         { (data : Data?, response: URLResponse?, error : Error?) in
