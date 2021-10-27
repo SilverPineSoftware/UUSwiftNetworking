@@ -40,7 +40,7 @@ let package = Package(
             path: "Tests",
             resources: [
                 .process("UUNetworkingTestConfig.plist"),
-                .process("Shelby_0001.JPG")
+                .process("TestJpeg_0001.JPG")
             ]),
 	],
 	swiftLanguageVersions: [

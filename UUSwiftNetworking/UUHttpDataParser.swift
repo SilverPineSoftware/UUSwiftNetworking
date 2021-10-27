@@ -15,6 +15,11 @@ public protocol UUHttpDataParser
 
 open class UUTextDataParser: UUHttpDataParser
 {
+    public required init()
+    {
+        
+    }
+    
     open func parse(data: Data, response: HTTPURLResponse, request: URLRequest, completion: @escaping (Any?)->())
     {
         var parsed : Any? = nil
@@ -39,6 +44,11 @@ open class UUTextDataParser: UUHttpDataParser
 
 open class UUBinaryDataParser: UUHttpDataParser
 {
+    public required init()
+    {
+        
+    }
+    
     open func parse(data: Data, response: HTTPURLResponse, request: URLRequest, completion: @escaping (Any?)->())
     {
         completion(data)
@@ -47,6 +57,11 @@ open class UUBinaryDataParser: UUHttpDataParser
 
 open class UUJsonDataParser: UUHttpDataParser
 {
+    public required init()
+    {
+        
+    }
+    
     open func parse(data: Data, response: HTTPURLResponse, request: URLRequest, completion: @escaping (Any?)->())
     {
         var result: Any? = nil
@@ -66,6 +81,11 @@ open class UUJsonDataParser: UUHttpDataParser
 
 open class UUImageDataParser: UUHttpDataParser
 {
+    public required init()
+    {
+        
+    }
+    
     open func parse(data: Data, response: HTTPURLResponse, request: URLRequest, completion: @escaping (Any?)->())
     {
         completion(UUImage(data: data))
@@ -74,6 +94,11 @@ open class UUImageDataParser: UUHttpDataParser
 
 open class UUFormEncodedDataParser: UUHttpDataParser
 {
+    public required init()
+    {
+        
+    }
+    
     open func parse(data: Data, response: HTTPURLResponse, request: URLRequest, completion: @escaping (Any?)->())
     {
         var parsed: [ String: Any ] = [:]
@@ -145,6 +170,11 @@ open class UUMimeTypeDataParser: UUHttpDataParser
 
 open class UUJsonCodableDataParser<T: Codable>: UUHttpDataParser
 {
+    public required init()
+    {
+        
+    }
+    
     open func parse(data: Data, response: HTTPURLResponse, request: URLRequest, completion: @escaping (Any?)->())
     {
         var result: Any? = nil

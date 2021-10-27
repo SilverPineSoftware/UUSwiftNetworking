@@ -265,6 +265,12 @@ fileprivate class PassthroughResponseHandler: UUBaseResponseHandler
     required init(_ response: Any?)
     {
         self.passthroughResponse = response
+        super.init()
+    }
+    
+    required init()
+    {
+        super.init()
     }
     
     override var dataParser: UUHttpDataParser

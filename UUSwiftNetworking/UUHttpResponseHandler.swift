@@ -22,6 +22,11 @@ public protocol UUHttpResponseHandler
 
 open class UUBaseResponseHandler: UUHttpResponseHandler
 {
+    public required init()
+    {
+        
+    }
+    
     open var dataParser: UUHttpDataParser
     {
         return UUMimeTypeDataParser()
@@ -104,6 +109,11 @@ open class UUBaseResponseHandler: UUHttpResponseHandler
 
 open class UUJsonCodableResponseHandler<T: Codable>: UUBaseResponseHandler
 {
+    public required init()
+    {
+        super.init()
+    }
+    
     open override var dataParser: UUHttpDataParser
     {
         return UUJsonCodableDataParser<T>()
@@ -112,6 +122,11 @@ open class UUJsonCodableResponseHandler<T: Codable>: UUBaseResponseHandler
 
 open class UUPassthroughResponseHandler: UUBaseResponseHandler
 {
+    public required init()
+    {
+        super.init()
+    }
+    
     open override var dataParser: UUHttpDataParser
     {
         return UUBinaryDataParser()
