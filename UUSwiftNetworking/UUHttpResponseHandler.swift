@@ -34,16 +34,6 @@ open class UUBaseResponseHandler: UUHttpResponseHandler
     
     open func handleResponse(request: UUHttpRequest, data: Data?, response: URLResponse?, error: Error?, completion: @escaping (UUHttpResponse)->())
     {
-        let httpResponse : HTTPURLResponse? = response as? HTTPURLResponse
-        
-        let uuResponse = UUHttpResponse(request: request, response: httpResponse, error: nil)
-        uuResponse.set(rawResponse: data)
-        
-        var err : Error? = error
-        //var parsedResponse : Any? = nil
-        
-        //let httpResponseCode = uuResponse.httpStatusCode
-
 //        NSLog("Http Response Code: %d", httpResponseCode)
 //
 //        if let responseHeaders = httpResponse?.allHeaderFields
@@ -51,33 +41,32 @@ open class UUBaseResponseHandler: UUHttpResponseHandler
 //            NSLog("Response Headers: %@", responseHeaders)
 //        }
         
-        if let error = err
+        if let e = error
         {
             //UUDebugLog("Got an error: %@", String(describing: error))
-            err = UUErrorFactory.wrapNetworkError(error, request)
-            finishHandleResponse(request: request, response: uuResponse, result: err, completion: completion)
+            let err = UUErrorFactory.wrapNetworkError(e, request)
+            finishHandleResponse(request: request, response: response, data: data, result: err, completion: completion)
             return
         }
         
         // Verify there is response data to parse, if not, just finish the operation
         guard let data = data,
               !data.isEmpty,
-              let httpResponse = httpResponse,
+              let httpResponse = response as? HTTPURLResponse,
               let urlRequest = request.httpRequest else
           {
-              finishHandleResponse(request: request, response: uuResponse, result: nil, completion: completion)
+              finishHandleResponse(request: request, response: response, data: data, result: nil, completion: completion)
               return
           }
-        
         
         dataParser.parse(data: data, response: httpResponse, request: urlRequest)
         { parseResult in
             
-            self.finishHandleResponse(request: request, response: uuResponse, result: parseResult, completion: completion)
+            self.finishHandleResponse(request: request, response: httpResponse, data: data, result: parseResult, completion: completion)
         }
     }
     
-    private func finishHandleResponse(request: UUHttpRequest, response: UUHttpResponse, result: Any?, completion: @escaping (UUHttpResponse)->())
+    private func finishHandleResponse(request: UUHttpRequest, response: URLResponse?, data: Data?, result: Any?, completion: @escaping (UUHttpResponse)->())
     {
         var err: Error? = nil
         var parsedResponse: Any? = result
@@ -87,19 +76,19 @@ open class UUBaseResponseHandler: UUHttpResponseHandler
             err = parseError
             parsedResponse = nil
         }
+        
+        let httpResponse = (response as? HTTPURLResponse)
+        let httpStatusCode = httpResponse?.statusCode ?? 0
          
         // By default, the standard response parsers won't emit an Error, but custom response handlers might.
         // When callers parse response JSON and return Errors, we will honor that.
-        if (err == nil && !isHttpSuccessResponseCode(response.httpStatusCode))
+        if (err == nil && !isHttpSuccessResponseCode(httpStatusCode))
         {
-            err = UUErrorFactory.createHttpError(request, response, parsedResponse)
+            err = UUErrorFactory.createHttpError(request, httpStatusCode, parsedResponse)
         }
         
-        response.set(error: err)
-        response.set(parsedResponse: parsedResponse)
-        response.set(endTime: Date.timeIntervalSinceReferenceDate)
-        
-        completion(response)
+        let uuResponse = UUHttpResponse(request: request, response: httpResponse, error: err, rawResponse: data, parsedResponse: parsedResponse)
+        completion(uuResponse)
     }
     
     private func isHttpSuccessResponseCode(_ responseCode : Int) -> Bool

@@ -35,7 +35,7 @@ let package = Package(
 			exclude: ["Info.plist"]),
         
         .testTarget(
-            name: "UUSwiftCoreTests",
+            name: "UUSwiftNetworkingTests",
             dependencies: ["UUSwiftTestCore", "UUSwiftCore", "UUSwiftNetworking"],
             path: "Tests",
             resources: [
