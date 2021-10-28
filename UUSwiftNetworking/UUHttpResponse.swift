@@ -13,22 +13,31 @@ import UIKit
 
 import UUSwiftCore
 
-
 public class UUHttpResponse : NSObject
 {
-	public var httpError : Error? = nil
-	public var httpRequest : UUHttpRequest? = nil
-	public var httpResponse : HTTPURLResponse? = nil
-	public var parsedResponse : Any?
-	public var rawResponse : Data? = nil
-	public var rawResponsePath : String = ""
-	public var downloadTime : TimeInterval = 0
+    public let httpRequest: UUHttpRequest
+    public let httpResponse: HTTPURLResponse?
+    public let httpError: Error?
+	public let parsedResponse: Any?
+    public let rawResponse: Data?
+    public let endTime: TimeInterval
 
-	required init(_ request : UUHttpRequest, _ response : HTTPURLResponse?)
+    required init(
+        request: UUHttpRequest,
+        response: HTTPURLResponse? = nil,
+        error: Error? = nil,
+        rawResponse: Data? = nil,
+        parsedResponse: Any? = nil)
 	{
-		httpRequest = request
-		httpResponse = response
+        self.httpRequest = request
+        self.httpResponse = response
+        self.httpError = error
+        self.rawResponse = rawResponse
+        self.parsedResponse = parsedResponse
+        self.endTime = Date.timeIntervalSinceReferenceDate
 	}
+    
+    // MARK: Computed Variables
     
     public var httpStatusCode: Int
     {

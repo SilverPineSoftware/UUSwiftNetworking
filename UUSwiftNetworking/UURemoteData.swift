@@ -39,7 +39,7 @@ public protocol UURemoteDataProtocol
 
 public typealias UUDataLoadedCompletionBlock = (Data?, Error?) -> Void
 
-public class UURemoteData : NSObject, UURemoteDataProtocol
+public class UURemoteData: UURemoteDataProtocol
 {
     public struct Notifications
     {
@@ -71,7 +71,18 @@ public class UURemoteData : NSObject, UURemoteDataProtocol
     // Default to 4 active requests at a time...
     public var maxActiveRequests: Int = 4
     
-    static public let shared : UURemoteData = UURemoteData()
+    // Optional hook to provide an instance of UURemoteApi.  When set UURemoteData sends
+    // requests through the remoteApi
+    let remoteApi: UURemoteApi
+    let dataCache: UUDataCache
+    
+    static public let shared = UURemoteData(dataCache: UUDataCache.shared, remoteApi: UURemoteApi())
+    
+    required init(dataCache: UUDataCache, remoteApi: UURemoteApi)
+    {
+        self.dataCache = dataCache
+        self.remoteApi = remoteApi
+    }
     
     ////////////////////////////////////////////////////////////////////////////
     // UURemoteDataProtocol Implementation
@@ -89,8 +100,9 @@ public class UURemoteData : NSObject, UURemoteDataProtocol
             return nil
         }
         
-		if UUDataCache.shared.dataExists(for: key) {
-			let data = UUDataCache.shared.data(for: key)
+		if dataCache.dataExists(for: key)
+        {
+			let data = dataCache.data(for: key)
 			if (data != nil)
 			{
 				return data
@@ -116,13 +128,13 @@ public class UURemoteData : NSObject, UURemoteDataProtocol
         let request = UUHttpRequest(url: key)
         request.responseHandler = UUPassthroughResponseHandler()
         
-        let client = UUHttpSession.executeRequest(request)
-        { (response: UUHttpResponse) in
+        remoteApi.executeRequest(request)
+        { response in
             self.handleDownloadResponse(response, key)
             self.checkForPendingRequests()
         }
 
-		self.setActiveDownload(client, forKey: key)
+		self.setActiveDownload(request, forKey: key)
         self.appendRemoteHandler(for: key, handler: remoteLoadCompletion)
         
         return nil
@@ -143,12 +155,12 @@ public class UURemoteData : NSObject, UURemoteDataProtocol
 
     public func metaData(for key: String) -> [String:Any]
     {
-        return UUDataCache.shared.metaData(for: key)
+        return dataCache.metaData(for: key)
     }
     
     public func set(metaData: [String:Any], for key: String)
     {
-        UUDataCache.shared.set(metaData: metaData, for: key)
+        dataCache.set(metaData: metaData, for: key)
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -163,7 +175,7 @@ public class UURemoteData : NSObject, UURemoteDataProtocol
         {
             let responseData = response.rawResponse!
             
-            UUDataCache.shared.set(data: responseData, for: key)
+            dataCache.set(data: responseData, for: key)
             updateMetaDataFromResponse(response, for: key)
             notifyDataDownloaded(metaData: md)
             
@@ -195,23 +207,23 @@ public class UURemoteData : NSObject, UURemoteDataProtocol
     
     private func updateMetaDataFromResponse(_ response: UUHttpResponse, for key: String)
     {
-        var md = UUDataCache.shared.metaData(for: key)
+        var md = dataCache.metaData(for: key)
         md[MetaData.MimeType] = response.httpResponse!.mimeType!
         md[MetaData.DownloadTimestamp] = Date()
         
-        UUDataCache.shared.set(metaData: md, for: key)
+        dataCache.set(metaData: md, for: key)
     }
     
     public func save(data: Data, key: String)
     {
-        UUDataCache.shared.set(data: data, for: key)
+        dataCache.set(data: data, for: key)
         
-        var md = UUDataCache.shared.metaData(for: key)
+        var md = dataCache.metaData(for: key)
         md[MetaData.MimeType] = "raw"
         md[MetaData.DownloadTimestamp] = Date()
         md[UURemoteData.NotificationKeys.RemotePath] = key
         
-        UUDataCache.shared.set(metaData: md, for: key)
+        dataCache.set(metaData: md, for: key)
         
         notifyDataDownloaded(metaData: md)
     }
@@ -237,8 +249,8 @@ public class UURemoteData : NSObject, UURemoteDataProtocol
     
 }
 
-extension UURemoteData {
-
+extension UURemoteData
+{
 	private func setActiveDownload(_ request : UUHttpRequest, forKey: String)
     {
         defer { activeDownloadsLock.unlock() }
