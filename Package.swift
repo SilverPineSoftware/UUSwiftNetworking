@@ -23,7 +23,7 @@ let package = Package(
 		),
         .package(
             url: "https://github.com/SilverPineSoftware/UUSwiftTestCore.git",
-            from: "0.0.1"
+            from: "0.0.2"
         )
 	],
 
