@@ -19,7 +19,7 @@ open class UUTokenAuthorizationProvider: UUHttpAuthorizationProvider
         
     }
     
-    public func attachAuthorization(to request: UUHttpRequest)
+    open func attachAuthorization(to request: UUHttpRequest)
     {
         if let token = authorizationToken
         {
