@@ -109,6 +109,15 @@ public class UUHttpSession: NSObject
         
         self.activeTasks.removeAll(where: { $0.taskIdentifier == task.taskIdentifier })
     }
+    
+    public func cancelAll()
+    {
+        defer { activeTasksLock.unlock() }
+        activeTasksLock.lock()
+        
+        activeTasks.forEach({ $0.cancel() })
+        activeTasks.removeAll()
+    }
 }
 
 // MARK: Codable Convenience Methods

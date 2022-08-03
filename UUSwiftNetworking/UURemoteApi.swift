@@ -114,6 +114,11 @@ open class UURemoteApi
         return (errorCode == .authorizationNeeded)
     }
     
+    open func cancelAll()
+    {
+        session.cancelAll()
+    }
+    
     // MARK: Private Implementation
     
     private func renewApiAuthorizationIfNeeded(_ completion: @escaping (Error?)->())
