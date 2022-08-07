@@ -29,6 +29,7 @@ public typealias UUImageLoadedCompletionBlock = (UUImage?, Error?) -> Void
 public class UURemoteImage
 {
     public static let shared = UURemoteImage(remoteData: UURemoteData.shared)
+    public static var useDiskCache = true
     
     private let remoteData: UURemoteData
     
@@ -44,12 +45,15 @@ public class UURemoteImage
 
     public func imageSize(for path: String) -> CGSize?
     {
-        let md = remoteData.dataCache.metaData(for: path)
-        
-        if let w = md[MetaData.ImageWidth] as? NSNumber,
-           let h = md[MetaData.ImageHeight] as? NSNumber
+        if UURemoteImage.useDiskCache
         {
-            return CGSize(width: CGFloat(w.floatValue), height: CGFloat(h.floatValue))
+            let md = remoteData.dataCache.metaData(for: path)
+            
+            if let w = md[MetaData.ImageWidth] as? NSNumber,
+               let h = md[MetaData.ImageHeight] as? NSNumber
+            {
+                return CGSize(width: CGFloat(w.floatValue), height: CGFloat(h.floatValue))
+            }
         }
         
         return nil
@@ -67,11 +71,17 @@ public class UURemoteImage
     
     public func isDownloaded( for key: String) -> Bool
     {
-        if self.systemImageCache.object(forKey: key as NSString) != nil {
+        if self.systemImageCache.object(forKey: key as NSString) != nil
+        {
             return true
         }
         
-        return remoteData.dataCache.dataExists(for: key)
+        if UURemoteImage.useDiskCache
+        {
+            return remoteData.dataCache.dataExists(for: key)
+        }
+        
+        return false
     }
     
     public func image(for key: String) -> UUImage?
@@ -111,10 +121,13 @@ public class UURemoteImage
         {
             self.systemImageCache.setObject(image, forKey: key as NSString)
             
-            var md = remoteData.dataCache.metaData(for: key)
-            md[MetaData.ImageWidth] = NSNumber(value: Float(image.size.width))
-            md[MetaData.ImageHeight] = NSNumber(value: Float(image.size.height))
-            remoteData.dataCache.set(metaData: md, for: key)
+            if UURemoteImage.useDiskCache
+            {
+                var md = remoteData.dataCache.metaData(for: key)
+                md[MetaData.ImageWidth] = NSNumber(value: Float(image.size.width))
+                md[MetaData.ImageHeight] = NSNumber(value: Float(image.size.height))
+                remoteData.dataCache.set(metaData: md, for: key)
+            }
 
             var metaData : [String:Any] = [:]
             metaData[UURemoteData.NotificationKeys.RemotePath] = key
