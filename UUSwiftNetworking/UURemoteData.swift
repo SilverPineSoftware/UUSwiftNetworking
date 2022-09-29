@@ -171,6 +171,9 @@ public class UURemoteData: UURemoteDataProtocol
     ////////////////////////////////////////////////////////////////////////////
     private func handleDownloadResponse(_ response: UUHttpResponse, _ key: String)
     {
+        defer { httpRequestLookupsLock.unlock() }
+        httpRequestLookupsLock.lock()
+        
         var md : [String:Any] = [:]
         md[UURemoteData.NotificationKeys.RemotePath] = key
         
@@ -182,7 +185,7 @@ public class UURemoteData: UURemoteDataProtocol
             updateMetaDataFromResponse(response, for: key)
             notifyDataDownloaded(metaData: md)
             
-            if let handlers = self.getHandlers(for: key)
+            if let handlers = self.httpRequestLookups[key]
             {
                 notifyRemoteDownloadHandlers(key: key, data: responseData, error: nil, handlers: handlers)
             }
@@ -198,7 +201,7 @@ public class UURemoteData: UURemoteDataProtocol
                 NotificationCenter.default.post(name: Notifications.DataDownloadFailed, object: nil, userInfo: md)
             }
             
-            if let handlers = self.getHandlers(for: key)
+            if let handlers = self.httpRequestLookups[key]
             {
                 notifyRemoteDownloadHandlers(key: key, data: nil, error: response.httpError, handlers: handlers)
             }
@@ -337,23 +340,6 @@ extension UURemoteData
             }
         }
 	}
-
-	private func removeRemoteHandler(for key: String)
-    {
-        defer { httpRequestLookupsLock.unlock() }
-        httpRequestLookupsLock.lock()
-        
-        _ = self.httpRequestLookups.removeValue(forKey: key)
-	}
-
-	private func getHandlers(for key: String) -> [UUDataLoadedCompletionBlock]?
-	{
-        defer { httpRequestLookupsLock.unlock() }
-        httpRequestLookupsLock.lock()
-        
-        return self.httpRequestLookups[key]
-	}
-
 }
 
 extension Notification
