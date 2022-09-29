@@ -26,7 +26,9 @@ class UURemoteDataTests: XCTestCase
     
     open var remoteDataForTest: UURemoteData
     {
-        return UURemoteData.shared
+        let api = UURemoteData.shared
+        api.networkTimeout = 300.0
+        return api
     }
     
     open var concurrentDownloadCount: Int
