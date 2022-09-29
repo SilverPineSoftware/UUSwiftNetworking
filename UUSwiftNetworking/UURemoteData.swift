@@ -71,6 +71,8 @@ public class UURemoteData: UURemoteDataProtocol
     // Default to 4 active requests at a time...
     public var maxActiveRequests: Int = 4
     
+    public var networkTimeout: TimeInterval = UUHttpRequest.defaultTimeout
+    
     // Optional hook to provide an instance of UURemoteApi.  When set UURemoteData sends
     // requests through the remoteApi
     let remoteApi: UURemoteApi
@@ -127,6 +129,7 @@ public class UURemoteData: UURemoteDataProtocol
         
         let request = UUHttpRequest(url: key)
         request.responseHandler = UUPassthroughResponseHandler()
+        request.timeout = networkTimeout
         
         remoteApi.executeRequest(request)
         { response in
