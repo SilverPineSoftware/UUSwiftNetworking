@@ -68,7 +68,7 @@ open class UUJsonDataParser: UUHttpDataParser
         
         do
         {
-            result = try JSONSerialization.jsonObject(with: data, options: [])
+            result = try JSONSerialization.jsonObject(with: data, options: [.fragmentsAllowed])
         }
         catch (let err)
         {
