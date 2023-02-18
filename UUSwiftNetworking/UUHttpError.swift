@@ -146,7 +146,7 @@ class UUErrorFactory
         return createError(errorCode, md)
     }
    
-    private static func createError(_ code: UUHttpSessionError, _ userInfo: [String:Any]?) -> Error
+    static func createError(_ code: UUHttpSessionError, _ userInfo: [String:Any]?) -> Error
     {
         return NSError(domain: UUHttpSessionErrorDomain, code: code.rawValue, userInfo: userInfo)
     }

@@ -18,6 +18,7 @@ public protocol UUHttpResponseHandler
     func handleResponse(request: UUHttpRequest, data: Data?, response: URLResponse?, error: Error?, completion: @escaping (UUHttpResponse)->())
     
     var dataParser: UUHttpDataParser { get }
+    var errorParser: UUHttpDataParser { get }
 }
 
 open class UUBaseResponseHandler: UUHttpResponseHandler
@@ -32,14 +33,26 @@ open class UUBaseResponseHandler: UUHttpResponseHandler
         return UUMimeTypeDataParser()
     }
     
+    open var errorParser: UUHttpDataParser
+    {
+        return UUMimeTypeDataParser()
+    }
+    
     open func handleResponse(request: UUHttpRequest, data: Data?, response: URLResponse?, error: Error?, completion: @escaping (UUHttpResponse)->())
     {
-//        NSLog("Http Response Code: %d", httpResponseCode)
-//
-//        if let responseHeaders = httpResponse?.allHeaderFields
-//        {
-//            NSLog("Response Headers: %@", responseHeaders)
-//        }
+        guard let httpResponse = response as? HTTPURLResponse else
+        {
+            let err = UUErrorFactory.createError(UUHttpSessionError.unkownError, [:])
+            finishHandleResponse(request: request, response: response, data: data, result: err, completion: completion)
+            return
+        }
+        
+        NSLog("HTTP Response Code: \(httpResponse.statusCode))")
+        
+        httpResponse.allHeaderFields.forEach()
+        { (key: AnyHashable, value: Any) in
+            NSLog("ResponseHeader: \(key) - \(value)")
+        }
         
         if let e = error
         {
@@ -58,6 +71,8 @@ open class UUBaseResponseHandler: UUHttpResponseHandler
               finishHandleResponse(request: request, response: response, data: data, result: nil, completion: completion)
               return
           }
+        
+        NSLog("ResponseBody: \(String(describing: String(bytes: data, encoding: .utf8)))")
         
         dataParser.parse(data: data, response: httpResponse, request: urlRequest)
         { parseResult in
@@ -97,7 +112,7 @@ open class UUBaseResponseHandler: UUHttpResponseHandler
     }
 }
 
-open class UUJsonCodableResponseHandler<T: Codable>: UUBaseResponseHandler
+open class UUJsonCodableResponseHandler<SuccessType: Codable, ErrorType: Codable>: UUBaseResponseHandler
 {
     public required init()
     {
@@ -106,7 +121,12 @@ open class UUJsonCodableResponseHandler<T: Codable>: UUBaseResponseHandler
     
     open override var dataParser: UUHttpDataParser
     {
-        return UUJsonCodableDataParser<T>()
+        return UUJsonCodableDataParser<SuccessType>()
+    }
+    
+    open override var errorParser: UUHttpDataParser
+    {
+        return UUJsonCodableDataParser<ErrorType>()
     }
 }
 

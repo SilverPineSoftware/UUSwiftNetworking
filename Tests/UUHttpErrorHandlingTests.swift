@@ -164,7 +164,7 @@ class UUHttpErrorHandlingTests: XCTestCase
         queryArgs["numberField"] = 57
         
         let request = UUHttpRequest(url: url, method: .get, queryArguments: queryArgs)
-        request.responseHandler = UUJsonCodableResponseHandler<FakeCodable>()
+        request.responseHandler = UUJsonCodableResponseHandler<FakeCodable, UUEmptyResponse>()
         
         _ = session.executeRequest(request)
         { response in

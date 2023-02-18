@@ -44,3 +44,11 @@ public struct UUHeader
 	public static let contentLength = "Content-Length"
 	public static let contentType = "Content-Type"
 }
+
+public extension Int
+{
+    func uuIsHttpSuccess() -> Bool
+    {
+        return self >= 200 && self <= 299
+    }
+}
