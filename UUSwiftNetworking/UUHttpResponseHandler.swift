@@ -40,6 +40,14 @@ open class UUBaseResponseHandler: UUHttpResponseHandler
     
     open func handleResponse(request: UUHttpRequest, data: Data?, response: URLResponse?, error: Error?, completion: @escaping (UUHttpResponse)->())
     {
+        if let e = error
+        {
+            NSLog("Got an error: %@", String(describing: error))
+            let err = UUErrorFactory.wrapNetworkError(e, request)
+            finishHandleResponse(request: request, response: response, data: data, result: err, completion: completion)
+            return
+        }
+        
         guard let httpResponse = response as? HTTPURLResponse else
         {
             let err = UUErrorFactory.createError(UUHttpSessionError.unkownError, [:])
@@ -47,19 +55,11 @@ open class UUBaseResponseHandler: UUHttpResponseHandler
             return
         }
         
-        NSLog("HTTP Response Code: \(httpResponse.statusCode))")
+        NSLog("HTTP Response Code: \(httpResponse.statusCode)")
         
         httpResponse.allHeaderFields.forEach()
         { (key: AnyHashable, value: Any) in
             NSLog("ResponseHeader: \(key) - \(value)")
-        }
-        
-        if let e = error
-        {
-            //UUDebugLog("Got an error: %@", String(describing: error))
-            let err = UUErrorFactory.wrapNetworkError(e, request)
-            finishHandleResponse(request: request, response: response, data: data, result: err, completion: completion)
-            return
         }
         
         // Verify there is response data to parse, if not, just finish the operation
