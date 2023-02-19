@@ -162,6 +162,8 @@ class UURemoteDataTests: XCTestCase
         
         for (index, url) in imageUrls.enumerated()
         {
+            NSLog("Fetching Data for URL: \(url)")
+            
             let exp = expectation(description: "Iteration_\(index)")
             
             let existing = remoteData.data(for: url)
