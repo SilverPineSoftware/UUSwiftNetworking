@@ -17,7 +17,7 @@ public protocol UUHttpResponseHandler
 {
     func handleResponse(request: UUHttpRequest, data: Data?, response: URLResponse?, error: Error?, completion: @escaping (UUHttpResponse)->())
     
-    var dataParser: UUHttpDataParser { get }
+    var successParser: UUHttpDataParser { get }
     var errorParser: UUHttpDataParser { get }
 }
 
@@ -28,7 +28,7 @@ open class UUBaseResponseHandler: UUHttpResponseHandler
         
     }
     
-    open var dataParser: UUHttpDataParser
+    open var successParser: UUHttpDataParser
     {
         return UUMimeTypeDataParser()
     }
@@ -74,7 +74,9 @@ open class UUBaseResponseHandler: UUHttpResponseHandler
         
         NSLog("ResponseBody: \(String(describing: String(bytes: data, encoding: .utf8)))")
         
-        dataParser.parse(data: data, response: httpResponse, request: urlRequest)
+        let parser = httpResponse.statusCode.uuIsHttpSuccess() ? successParser : errorParser
+        
+        parser.parse(data: data, response: httpResponse, request: urlRequest)
         { parseResult in
             
             self.finishHandleResponse(request: request, response: httpResponse, data: data, result: parseResult, completion: completion)
@@ -119,7 +121,7 @@ open class UUJsonCodableResponseHandler<SuccessType: Codable, ErrorType: Codable
         super.init()
     }
     
-    open override var dataParser: UUHttpDataParser
+    open override var successParser: UUHttpDataParser
     {
         return UUJsonCodableDataParser<SuccessType>()
     }
@@ -137,7 +139,12 @@ open class UUPassthroughResponseHandler: UUBaseResponseHandler
         super.init()
     }
     
-    open override var dataParser: UUHttpDataParser
+    open override var successParser: UUHttpDataParser
+    {
+        return UUBinaryDataParser()
+    }
+    
+    open override var errorParser: UUHttpDataParser
     {
         return UUBinaryDataParser()
     }

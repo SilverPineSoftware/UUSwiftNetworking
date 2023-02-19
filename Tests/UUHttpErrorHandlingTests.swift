@@ -273,7 +273,12 @@ fileprivate class PassthroughResponseHandler: UUBaseResponseHandler
         super.init()
     }
     
-    override var dataParser: UUHttpDataParser
+    override var successParser: UUHttpDataParser
+    {
+        return PassthroughDataParser(passthroughResponse)
+    }
+    
+    override var errorParser: UUHttpDataParser
     {
         return PassthroughDataParser(passthroughResponse)
     }
