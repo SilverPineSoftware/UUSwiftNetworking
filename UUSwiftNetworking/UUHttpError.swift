@@ -65,7 +65,6 @@ public enum UUHttpSessionError : Int
 }
 
 public let UUHttpSessionErrorDomain         = "UUHttpSessionErrorDomain"
-public let UUHttpSessionHttpErrorCodeKey    = "UUHttpSessionHttpErrorCode"
 public let UUHttpSessionHttpErrorMessageKey = "UUHttpSessionHttpErrorMessage"
 public let UUHttpSessionAppResponseKey      = "UUHttpSessionAppResponse"
 public let UUHttpSessionErrorHttpMethodKey      = "UUHttpSessionErrorHttpMethod"
@@ -133,7 +132,7 @@ class UUErrorFactory
         var md: [String : Any]  = [:]
         fillFromRequest(&md, request.httpRequest)
         md[UUHttpSessionAppResponseKey] = parsedResponse
-        md[UUHttpSessionHttpErrorCodeKey] = NSNumber(value: httpResponseCode)
+        md[UUHttpSessionErrorHttpStatusCodeKey] = NSNumber(value: httpResponseCode)
         md[UUHttpSessionHttpErrorMessageKey] = HTTPURLResponse.localizedString(forStatusCode: httpResponseCode)
         md[NSLocalizedDescriptionKey] = HTTPURLResponse.localizedString(forStatusCode: httpResponseCode)
         
@@ -193,6 +192,11 @@ public extension NSError
         
         return nil
     }
+    
+    var uuHttpStatusCode: Int?
+    {
+        return userInfo.uuGetInt(UUHttpSessionErrorHttpStatusCodeKey)
+    }
 }
 
 public extension Error
@@ -200,5 +204,10 @@ public extension Error
     var uuHttpErrorCode: UUHttpSessionError?
     {
         return (self as NSError).uuHttpErrorCode
+    }
+    
+    var uuHttpStatusCode: Int?
+    {
+        return (self as NSError).uuHttpStatusCode
     }
 }
