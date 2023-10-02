@@ -26,8 +26,8 @@ fileprivate class CustomRemoteApi: UURemoteApi
         completion(true)
     }
     
-    override func renewApiAuthorization(_ completion: @escaping (Error?) -> ())
+    override func renewApiAuthorization(_ completion: @escaping (Bool,Error?) -> ())
     {
-        completion(nil)
+        completion(false, nil)
     }
 }

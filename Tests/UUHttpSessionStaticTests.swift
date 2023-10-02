@@ -27,7 +27,13 @@ class UUHttpSessionStaticTests: XCTestCase
         var headers = UUHttpHeaders()
         headers["UU-Return-Object-Count"] = 1
         
-        UUHttpSession.get(url: url, queryArguments: queryArgs, headers: headers)
+        let req = UUCodableHttpRequest<SimpleObject, UUEmptyResponse>(
+            url: url,
+            method: .get,
+            queryArguments: queryArgs,
+            headers: headers)
+        
+        UUHttpSession.executeCodableRequest(req)
         { (response: SimpleObject?, err: Error?) in
             
             XCTAssertNotNil(response)
@@ -52,7 +58,13 @@ class UUHttpSessionStaticTests: XCTestCase
         var headers = UUHttpHeaders()
         headers["UU-Return-Object-Count"] = 3
         
-        UUHttpSession.get(url: url, queryArguments: queryArgs, headers: headers)
+        let req = UUCodableHttpRequest<[SimpleObject], UUEmptyResponse>(
+            url: url,
+            method: .get,
+            queryArguments: queryArgs,
+            headers: headers)
+        
+        UUHttpSession.executeCodableRequest(req)
         { (response: [SimpleObject]?, err: Error?) in
             
             XCTAssertNotNil(response)

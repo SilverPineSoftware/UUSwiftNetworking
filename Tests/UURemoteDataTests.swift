@@ -162,12 +162,23 @@ class UURemoteDataTests: XCTestCase
         
         for (index, url) in imageUrls.enumerated()
         {
+            NSLog("Fetching Data for URL: \(url)")
+            
             let exp = expectation(description: "Iteration_\(index)")
             
             let existing = remoteData.data(for: url)
             { result, err in
-                XCTAssertNotNil(result)
-                XCTAssertNil(err)
+                
+                NSLog("HTTP Code: \(String(describing: err?.uuHttpStatusCode))")
+                
+                // Special case - sometimes, randomly shutterstock will give a URL that doesn't exist, so
+                // we just ignore that condition and let the test proceed
+                if (err?.uuHttpStatusCode != 404)
+                {
+                    XCTAssertNotNil(result)
+                    XCTAssertNil(err)
+                }
+                
                 exp.fulfill()
                 NSLog("Iteration Complete - \(index)")
             }
@@ -179,8 +190,15 @@ class UURemoteDataTests: XCTestCase
                 let expInner = expectation(description: "Iteration_\(index)_inner")
                 let innerResult = remoteData.data(for: url)
                 { result, err in
-                    XCTAssertNotNil(result)
-                    XCTAssertNil(err)
+                    
+                    // Special case - sometimes, randomly shutterstock will give a URL that doesn't exist, so
+                    // we just ignore that condition and let the test proceed
+                    if (err?.uuHttpStatusCode != 404)
+                    {
+                        XCTAssertNotNil(result)
+                        XCTAssertNil(err)
+                    }
+                    
                     expInner.fulfill()
                     NSLog("Iteration Complete - \(index) - Inner")
                 }

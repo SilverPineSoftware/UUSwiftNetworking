@@ -34,7 +34,11 @@ class UUHttpSessionInstanceTests: XCTestCase
         var headers = UUHttpHeaders()
         headers["UU-Return-Object-Count"] = 1
         
-        let request = UUHttpRequest(url: url, method: .get, queryArguments: queryArgs, headers: headers)
+        let request = UUCodableHttpRequest<SimpleObject, UUEmptyResponse>(
+            url: url,
+            method: .get,
+            queryArguments: queryArgs,
+            headers: headers)
         
         _ = session.executeCodableRequest(request)
         { (response: SimpleObject?, err: Error?) in
@@ -63,7 +67,11 @@ class UUHttpSessionInstanceTests: XCTestCase
         var headers = UUHttpHeaders()
         headers["UU-Return-Object-Count"] = 3
         
-        let request = UUHttpRequest(url: url, method: .get, queryArguments: queryArgs, headers: headers)
+        let request = UUCodableHttpRequest<[SimpleObject], UUEmptyResponse>(
+            url: url,
+            method: .get,
+            queryArguments: queryArgs,
+            headers: headers)
         
         _ = session.executeCodableRequest(request)
         { (response: [SimpleObject]?, err: Error?) in

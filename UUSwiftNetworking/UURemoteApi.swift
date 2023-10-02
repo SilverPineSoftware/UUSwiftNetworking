@@ -15,7 +15,7 @@ open class UURemoteApi
     private var isAuthorizingFlag: Bool = false
     private var isAuthorizingFlagLock = NSRecursiveLock()
     
-    private var authorizeListeners : [(Error?)->()] = []
+    private var authorizeListeners : [(Bool,Error?)->()] = []
     private var authorizeListenersLock = NSRecursiveLock()
     
     // MARK: Public Methods
@@ -32,7 +32,7 @@ open class UURemoteApi
     public func executeRequest(_ request: UUHttpRequest, _ completion: @escaping (UUHttpResponse)->())
     {
         renewApiAuthorizationIfNeeded
-        { authorizationRenewalError in
+        { _, authorizationRenewalError in
             
             if (authorizationRenewalError != nil)
             {
@@ -48,7 +48,7 @@ open class UURemoteApi
                    self.shouldRenewApiAuthorization(err)
                 {
                     self.internalRenewApiAuthorization
-                    { innerAuthorizationRenewalError in
+                    { didAttempt, innerAuthorizationRenewalError in
                         
                         if (innerAuthorizationRenewalError != nil)
                         {
@@ -57,7 +57,14 @@ open class UURemoteApi
                         }
                         else
                         {
-                            self.executeOneRequest(request, completion)
+                            if (didAttempt)
+                            {
+                                self.executeOneRequest(request, completion)
+                            }
+                            else
+                            {
+                                completion(response)
+                            }
                         }
                     }
                 }
@@ -84,9 +91,9 @@ open class UURemoteApi
      
      Default behavior is to just return nil
      */
-    open func renewApiAuthorization(_ completion: @escaping (Error?)->())
+    open func renewApiAuthorization(_ completion: @escaping (Bool,Error?)->())
     {
-        completion(nil)
+        completion(false, nil)
     }
 
     /**
@@ -121,7 +128,7 @@ open class UURemoteApi
     
     // MARK: Private Implementation
     
-    private func renewApiAuthorizationIfNeeded(_ completion: @escaping (Error?)->())
+    private func renewApiAuthorizationIfNeeded(_ completion: @escaping (Bool, Error?)->())
     {
         isApiAuthorizationNeeded
         { authorizationNeeded in
@@ -132,12 +139,12 @@ open class UURemoteApi
             }
             else
             {
-                completion(nil)
+                completion(false, nil)
             }
         }
     }
     
-    private func internalRenewApiAuthorization(_ completion: @escaping (Error?)->())
+    private func internalRenewApiAuthorization(_ completion: @escaping (Bool, Error?)->())
     {
         addAuthorizeListener(completion)
         
@@ -151,8 +158,8 @@ open class UURemoteApi
         setAuthorizing(true)
         
         renewApiAuthorization
-        { error in
-            self.notifyAuthorizeListeners(error)
+        { didAttempt, error in
+            self.notifyAuthorizeListeners(didAttempt, error)
         }
     }
     
@@ -172,7 +179,7 @@ open class UURemoteApi
         return isAuthorizingFlag
     }
     
-    private func addAuthorizeListener(_ listener: @escaping (Error?)->())
+    private func addAuthorizeListener(_ listener: @escaping (Bool,Error?)->())
     {
         defer { authorizeListenersLock.unlock() }
         authorizeListenersLock.lock()
@@ -180,12 +187,12 @@ open class UURemoteApi
         authorizeListeners.append(listener)
     }
     
-    private func notifyAuthorizeListeners(_ error: Error?)
+    private func notifyAuthorizeListeners(_ didAttempt: Bool, _ error: Error?)
     {
         defer { authorizeListenersLock.unlock() }
         authorizeListenersLock.lock()
         
-        var listenersToNotify: [(Error?)->()] = []
+        var listenersToNotify: [(Bool, Error?)->()] = []
         listenersToNotify.append(contentsOf: authorizeListeners)
         authorizeListeners.removeAll()
         
@@ -198,7 +205,7 @@ open class UURemoteApi
             
             DispatchQueue.global(qos: .default).async
             {
-                listener(error)
+                listener(didAttempt, error)
             }
         }
     }

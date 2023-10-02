@@ -13,8 +13,7 @@ import UIKit
 
 import UUSwiftCore
 
-
-public class UUHttpRequest: NSObject
+open class UUHttpRequest: NSObject
 {
 	public static var defaultTimeout : TimeInterval = 60.0
 	public static var defaultCachePolicy : URLRequest.CachePolicy = .useProtocolCachePolicy
@@ -125,4 +124,19 @@ public class UUHttpRequest: NSObject
     {
         responseHandler.handleResponse(request: self, data: data, response: response, error: error, completion: completion)
     }
+}
+
+
+open class UUCodableHttpRequest<SuccessType: Codable, ErrorType: Codable>: UUHttpRequest
+{
+    public var successHandler: UUHttpDataParser = UUJsonCodableDataParser<SuccessType>()
+    public var errorHandler: UUHttpDataParser = UUJsonCodableDataParser<ErrorType>()
+    
+    public override init(url: String, method: UUHttpMethod = .get, queryArguments: UUQueryStringArgs = [:], headers: UUHttpHeaders = [:], body: Data? = nil, contentType: String? = nil)
+    {
+        super.init(url: url, method: method, queryArguments: queryArguments, headers: headers, body: body, contentType: contentType)
+        
+        responseHandler = UUJsonCodableResponseHandler<SuccessType, ErrorType>()
+    }
+    
 }

@@ -17,7 +17,8 @@ public protocol UUHttpResponseHandler
 {
     func handleResponse(request: UUHttpRequest, data: Data?, response: URLResponse?, error: Error?, completion: @escaping (UUHttpResponse)->())
     
-    var dataParser: UUHttpDataParser { get }
+    var successParser: UUHttpDataParser { get }
+    var errorParser: UUHttpDataParser { get }
 }
 
 open class UUBaseResponseHandler: UUHttpResponseHandler
@@ -27,26 +28,38 @@ open class UUBaseResponseHandler: UUHttpResponseHandler
         
     }
     
-    open var dataParser: UUHttpDataParser
+    open var successParser: UUHttpDataParser
+    {
+        return UUMimeTypeDataParser()
+    }
+    
+    open var errorParser: UUHttpDataParser
     {
         return UUMimeTypeDataParser()
     }
     
     open func handleResponse(request: UUHttpRequest, data: Data?, response: URLResponse?, error: Error?, completion: @escaping (UUHttpResponse)->())
     {
-//        NSLog("Http Response Code: %d", httpResponseCode)
-//
-//        if let responseHeaders = httpResponse?.allHeaderFields
-//        {
-//            NSLog("Response Headers: %@", responseHeaders)
-//        }
-        
         if let e = error
         {
-            //UUDebugLog("Got an error: %@", String(describing: error))
+            NSLog("Got an error: %@", String(describing: error))
             let err = UUErrorFactory.wrapNetworkError(e, request)
             finishHandleResponse(request: request, response: response, data: data, result: err, completion: completion)
             return
+        }
+        
+        guard let httpResponse = response as? HTTPURLResponse else
+        {
+            let err = UUErrorFactory.createError(UUHttpSessionError.unkownError, [:])
+            finishHandleResponse(request: request, response: response, data: data, result: err, completion: completion)
+            return
+        }
+        
+        NSLog("HTTP Response Code: \(httpResponse.statusCode)")
+        
+        httpResponse.allHeaderFields.forEach()
+        { (key: AnyHashable, value: Any) in
+            NSLog("ResponseHeader: \(key) - \(value)")
         }
         
         // Verify there is response data to parse, if not, just finish the operation
@@ -59,7 +72,11 @@ open class UUBaseResponseHandler: UUHttpResponseHandler
               return
           }
         
-        dataParser.parse(data: data, response: httpResponse, request: urlRequest)
+        NSLog("ResponseBody: \(String(describing: String(bytes: data, encoding: .utf8)))")
+        
+        let parser = httpResponse.statusCode.uuIsHttpSuccess() ? successParser : errorParser
+        
+        parser.parse(data: data, response: httpResponse, request: urlRequest)
         { parseResult in
             
             self.finishHandleResponse(request: request, response: httpResponse, data: data, result: parseResult, completion: completion)
@@ -97,16 +114,21 @@ open class UUBaseResponseHandler: UUHttpResponseHandler
     }
 }
 
-open class UUJsonCodableResponseHandler<T: Codable>: UUBaseResponseHandler
+open class UUJsonCodableResponseHandler<SuccessType: Codable, ErrorType: Codable>: UUBaseResponseHandler
 {
     public required init()
     {
         super.init()
     }
     
-    open override var dataParser: UUHttpDataParser
+    open override var successParser: UUHttpDataParser
     {
-        return UUJsonCodableDataParser<T>()
+        return UUJsonCodableDataParser<SuccessType>()
+    }
+    
+    open override var errorParser: UUHttpDataParser
+    {
+        return UUJsonCodableDataParser<ErrorType>()
     }
 }
 
@@ -117,7 +139,12 @@ open class UUPassthroughResponseHandler: UUBaseResponseHandler
         super.init()
     }
     
-    open override var dataParser: UUHttpDataParser
+    open override var successParser: UUHttpDataParser
+    {
+        return UUBinaryDataParser()
+    }
+    
+    open override var errorParser: UUHttpDataParser
     {
         return UUBinaryDataParser()
     }

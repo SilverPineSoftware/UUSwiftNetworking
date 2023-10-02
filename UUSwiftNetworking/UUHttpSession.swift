@@ -55,7 +55,7 @@ public class UUHttpSession: NSObject
         
         request.startTime = Date.timeIntervalSinceReferenceDate
         
-        /*
+        
         NSLog("Begin Request\n\nMethod: %@\nURL: %@\nHeaders: %@)",
             String(describing: request.httpRequest?.httpMethod),
             String(describing: request.httpRequest?.url),
@@ -74,7 +74,7 @@ public class UUHttpSession: NSObject
                     NSLog("Raw Body: %@", request.body!.uuToHexString())
                 }
             }
-        }*/
+        }
         
         let task = urlSession.dataTask(with: httpRequest)
         { (data : Data?, response: URLResponse?, error : Error?) in
@@ -123,15 +123,15 @@ public class UUHttpSession: NSObject
 // MARK: Codable Convenience Methods
 extension UUHttpSession
 {
-    public func executeCodableRequest<T: Codable>(_ request: UUHttpRequest, _ completion: @escaping (T?, Error?) -> ()) -> UUHttpRequest
+    public func executeCodableRequest<SuccessType: Codable, ErrorType: Codable>(
+        _ request: UUCodableHttpRequest<SuccessType, ErrorType>,
+        _ completion: @escaping (SuccessType?, Error?) -> ()) -> UUHttpRequest
     {
-        request.responseHandler = UUJsonCodableResponseHandler<T>()
         return executeRequest(request)
         { response in
-            completion(response.parsedResponse as? T, response.httpError)
+            completion(response.parsedResponse as? SuccessType, response.httpError)
         }
     }
-    
 }
 
 // MARK: Static Convenience Methods
@@ -170,13 +170,15 @@ extension UUHttpSession
 // MARK: Static Codable Convenience Methods
 extension UUHttpSession
 {
-    public static func get<T: Codable>(url : String, queryArguments : UUQueryStringArgs = [:], headers: UUHttpHeaders = [:], completion: @escaping (T?, Error?) -> ())
-    {
-        let req = UUHttpRequest(url: url, method: .get, queryArguments: queryArguments, headers: headers)
-        executeCodableRequest(req, completion)
-    }
-    
-    public static func executeCodableRequest<T: Codable>(_ request: UUHttpRequest, _ completion: @escaping (T?, Error?) -> ())
+//    public static func get<SuccessType: Codable, ErrorType: Codable>(url : String, queryArguments : UUQueryStringArgs = [:], headers: UUHttpHeaders = [:], completion: @escaping (SuccessType?, Error?) -> ())
+//    {
+//        let req = UUCodableHttpRequest<SuccessType, ErrorType>(url: url, method: .get, queryArguments: queryArguments, headers: headers)
+//        executeCodableRequest(req, completion)
+//    }
+//    
+    public static func executeCodableRequest<SuccessType: Codable, ErrorType: Codable>(
+        _ request: UUCodableHttpRequest<SuccessType, ErrorType>,
+        _ completion: @escaping (SuccessType?, Error?) -> ())
     {
         _ = shared.executeCodableRequest(request, completion)
     }

@@ -164,7 +164,7 @@ class UUHttpErrorHandlingTests: XCTestCase
         queryArgs["numberField"] = 57
         
         let request = UUHttpRequest(url: url, method: .get, queryArguments: queryArgs)
-        request.responseHandler = UUJsonCodableResponseHandler<FakeCodable>()
+        request.responseHandler = UUJsonCodableResponseHandler<FakeCodable, UUEmptyResponse>()
         
         _ = session.executeRequest(request)
         { response in
@@ -273,7 +273,12 @@ fileprivate class PassthroughResponseHandler: UUBaseResponseHandler
         super.init()
     }
     
-    override var dataParser: UUHttpDataParser
+    override var successParser: UUHttpDataParser
+    {
+        return PassthroughDataParser(passthroughResponse)
+    }
+    
+    override var errorParser: UUHttpDataParser
     {
         return PassthroughDataParser(passthroughResponse)
     }
