@@ -13,6 +13,8 @@ import UIKit
 
 import UUSwiftCore
 
+fileprivate let LOG_TAG = "UUBaseResponseHandler"
+
 public protocol UUHttpResponseHandler
 {
     func handleResponse(request: UUHttpRequest, data: Data?, response: URLResponse?, error: Error?, completion: @escaping (UUHttpResponse)->())
@@ -42,7 +44,7 @@ open class UUBaseResponseHandler: UUHttpResponseHandler
     {
         if let e = error
         {
-            NSLog("Got an error: %@", String(describing: error))
+            UULog.debug(tag: LOG_TAG, message: "Got an error: \(String(describing: error))")
             let err = UUErrorFactory.wrapNetworkError(e, request)
             finishHandleResponse(request: request, response: response, data: data, result: err, completion: completion)
             return
@@ -55,11 +57,11 @@ open class UUBaseResponseHandler: UUHttpResponseHandler
             return
         }
         
-        NSLog("HTTP Response Code: \(httpResponse.statusCode)")
+        UULog.debug(tag: LOG_TAG, message: "HTTP Response Code: \(httpResponse.statusCode)")
         
         httpResponse.allHeaderFields.forEach()
         { (key: AnyHashable, value: Any) in
-            NSLog("ResponseHeader: \(key) - \(value)")
+            UULog.debug(tag: LOG_TAG, message: "ResponseHeader: \(key) - \(value)")
         }
         
         // Verify there is response data to parse, if not, just finish the operation
@@ -72,7 +74,7 @@ open class UUBaseResponseHandler: UUHttpResponseHandler
               return
           }
         
-        NSLog("ResponseBody: \(String(describing: String(bytes: data, encoding: .utf8)))")
+        UULog.debug(tag: LOG_TAG, message: "ResponseBody: \(String(describing: String(bytes: data, encoding: .utf8)))")
         
         let parser = httpResponse.statusCode.uuIsHttpSuccess() ? successParser : errorParser
         

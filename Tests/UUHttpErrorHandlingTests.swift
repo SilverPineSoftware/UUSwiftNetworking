@@ -18,6 +18,12 @@ class UUHttpErrorHandlingTests: XCTestCase
         return UUHttpSession.shared
     }
     
+    override func setUp()
+    {
+        super.setUp()
+        UUSetupTestLogging()
+    }
+    
     func test_noInternet()
     {
         // TODO: Write this test
@@ -62,9 +68,11 @@ class UUHttpErrorHandlingTests: XCTestCase
         let request = UUHttpRequest(url: url, method: .get, queryArguments: queryArgs)
         request.timeout = TimeInterval(timeout / 2)
         
+        UUTestLog("Starting request, timeout: \(request.timeout)")
         _ = session.executeRequest(request)
         { response in
             
+            UUTestLog("Got back response: \(response)")
             UUAssertResponseError(response, .timedOut)
             
             exp.fulfill()
@@ -124,7 +132,7 @@ class UUHttpErrorHandlingTests: XCTestCase
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 5)
         {
-            NSLog("Canceling task")
+            UUTestLog("Canceling task")
             task.cancel()
         }
         

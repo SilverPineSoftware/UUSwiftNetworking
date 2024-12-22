@@ -15,6 +15,8 @@
 
 import UUSwiftCore
 
+fileprivate let LOG_TAG = "UUHttpSession"
+
 
 @objc
 public class UUHttpSession: NSObject
@@ -56,22 +58,19 @@ public class UUHttpSession: NSObject
         request.startTime = Date.timeIntervalSinceReferenceDate
         
         
-        NSLog("Begin Request\n\nMethod: %@\nURL: %@\nHeaders: %@)",
-            String(describing: request.httpRequest?.httpMethod),
-            String(describing: request.httpRequest?.url),
-            String(describing: request.httpRequest?.allHTTPHeaderFields))
+        UULog.debug(tag: LOG_TAG, message: "Begin Request\n\nMethod: \(String(describing: request.httpRequest?.httpMethod))\nURL: \(String(describing: request.httpRequest?.url))\nHeaders: \(String(describing: request.httpRequest?.allHTTPHeaderFields))")
         
         if (request.body != nil)
         {
             if (UUContentType.applicationJson == request.bodyContentType)
             {
-                NSLog("JSON Body: %@", request.body!.uuToJsonString())
+                UULog.debug(tag: LOG_TAG, message: "JSON Body: \(request.body!.uuToJsonString())")
             }
             else
             {
                 if (request.body!.count < 10000)
                 {
-                    NSLog("Raw Body: %@", request.body!.uuToHexString())
+                    UULog.debug(tag: LOG_TAG, message: "Raw Body: \(request.body!.uuToHexString())")
                 }
             }
         }

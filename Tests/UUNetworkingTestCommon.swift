@@ -7,15 +7,25 @@
 
 import Foundation
 import XCTest
+import UUSwiftCore
 import UUSwiftNetworking
 
-class Constants
+struct Constants
 {
     static let nonExistantHostUrl = "http://this.is.a.fake.url/non_existent.jpg"
     static let timeoutUrl = "https://spsw.io/uu/timeout.php"
     
     static let imageGetUrl = "http://publicdomainarchive.com/?ddownload=47473"
     //private static let testUrl : String = "http://publicdomainarchive.com/?ddownload=47473"
+}
+
+func UUSetupTestLogging()
+{
+    let logger = UULogger.console
+    logger.logLevel = .verbose
+    
+    UULog.setLogger(logger)
+    
 }
 
 func UUAssertResponseError(_ response: UUHttpResponse, _ expectedErrorCode: UUHttpSessionError, expectValidRequest: Bool = true)
