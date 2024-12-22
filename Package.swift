@@ -19,7 +19,7 @@ let package = Package(
 	dependencies: [
 		.package(
 			url: "https://github.com/SilverPineSoftware/UUSwiftCore.git",
-            .branch("logging")
+            from: "1.2.0"
 		),
         .package(
             url: "https://github.com/SilverPineSoftware/UUSwiftTestCore.git",
