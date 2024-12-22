@@ -28,6 +28,8 @@
 
 import UUSwiftCore
 
+fileprivate let LOG_TAG = "UURemoteData"
+
 public protocol UURemoteDataProtocol
 {
     func data(for key: String) -> Data?
@@ -192,7 +194,7 @@ public class UURemoteData: UURemoteDataProtocol
         }
         else
         {
-            UUDebugLog("Remote download failed!\n\nPath: %@\nStatusCode: %d\nError: %@\n", key, String(describing: response.httpResponse?.statusCode), String(describing: response.httpError))
+            UULog.debug(tag: LOG_TAG, message: "Remote download failed!\n\nPath: \(key)\nStatusCode: \(String(describing: response.httpResponse?.statusCode))\nError: \(String(describing: response.httpError))\n")
             
             md[NotificationKeys.Error] = response.httpError
             

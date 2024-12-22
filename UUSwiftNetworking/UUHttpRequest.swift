@@ -11,6 +11,8 @@ import AppKit
 import UIKit
 #endif
 
+fileprivate let LOG_TAG = "UUHttpRequest"
+
 import UUSwiftCore
 
 open class UUHttpRequest: NSObject
@@ -79,6 +81,19 @@ open class UUHttpRequest: NSObject
         
         guard let url = URL.init(string: fullUrl) else
         {
+            UULog.verbose(tag: LOG_TAG, message: "Invalid URL: \(fullUrl)")
+            return nil
+        }
+        
+        guard url.scheme != nil else
+        {
+            UULog.verbose(tag: LOG_TAG, message: "URL scheme is nil: \(fullUrl)")
+            return nil
+        }
+        
+        guard url.host != nil else
+        {
+            UULog.verbose(tag: LOG_TAG, message: "URL host is nil: \(fullUrl)")
             return nil
         }
         

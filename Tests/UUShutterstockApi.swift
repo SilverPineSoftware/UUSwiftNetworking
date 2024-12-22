@@ -8,6 +8,7 @@
 import Foundation
 import UUSwiftCore
 import UUSwiftNetworking
+import UUSwiftTestCore
 
 class UUShutterstockApi
 {
@@ -51,7 +52,7 @@ class UUShutterstockApi
         let usernameEncoded = usernameData!.base64EncodedString(options: Data.Base64EncodingOptions.init(rawValue: 0))
         req.headerFields["Authorization"] = "Basic \(usernameEncoded)"
         
-        NSLog("Fetching page \(page)")
+        UUTestLog("Fetching page \(page)")
         _ = UUHttpSession.executeRequest(req)
         { (response: UUHttpResponse) in
         

@@ -54,13 +54,13 @@ class UURemoteDataNegativeTests: XCTestCase
         for i in 0..<count
         {
             startedCount += 1
-            NSLog("Start - \(i), startedCount: \(startedCount), endedCount: \(endedCount)")
+            UUTestLog("Start - \(i), startedCount: \(startedCount), endedCount: \(endedCount)")
 
             _ = api.data(for: key, remoteLoadCompletion:
             { responseData, responseErr in
                 
                 endedCount += 1
-                NSLog("End - \(i), startedCount: \(startedCount), endedCount: \(endedCount)")
+                UUTestLog("End - \(i), startedCount: \(startedCount), endedCount: \(endedCount)")
                 exp.fulfill()
             })
         }
@@ -84,13 +84,13 @@ class UURemoteDataNegativeTests: XCTestCase
         let key = url
         
         remoteFetchCountStarted += 1
-        NSLog("Starting fetch, startedCount: \(remoteFetchCountStarted), endedCount: \(remoteFetchCountEnded)")
+        UUTestLog("Starting fetch, startedCount: \(remoteFetchCountStarted), endedCount: \(remoteFetchCountEnded)")
         
         let data = remoteData.data(for: key, remoteLoadCompletion:
         { remoteDataOpt, remoteErrOpt in
             
             self.remoteFetchCountEnded += 1
-            NSLog("Ending fetch, startedCount: \(self.remoteFetchCountStarted), endedCount: \(self.remoteFetchCountEnded)")
+            UUTestLog("Ending fetch, startedCount: \(self.remoteFetchCountStarted), endedCount: \(self.remoteFetchCountEnded)")
             
             XCTAssertNil(remoteDataOpt)
             XCTAssertNotNil(remoteErrOpt)

@@ -111,7 +111,7 @@ class UUHttpSessionInstanceTests: XCTestCase
         if let data = form.formData(),
            let str = String(data: data, encoding: .ascii)?.uuSubString(0, 1000)
         {
-            NSLog("Form:\n\n\(str))\n\n")
+            UUTestLog("Form:\n\n\(str))\n\n")
         }
         
         _ = session.executeRequest(request)

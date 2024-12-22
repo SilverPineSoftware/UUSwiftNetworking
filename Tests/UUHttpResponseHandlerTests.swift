@@ -18,10 +18,10 @@ class UUHttpReponseHandlerTests: XCTestCase
     {
         let parser = UUJsonCodableDataParser<TestCodable>()
         
-        let nsData = "00AA".uuToHexData()
-        XCTAssertNotNil(nsData, "Unable to create raw response data")
+        let data = "00AA".uuToHexData()
+        XCTAssertNotNil(data, "Unable to create raw response data")
         
-        let data = Data(referencing: nsData!)
+        //let data = Data(referencing: nsData!)
         
         let url = URL(string: "https://fake.url")
         XCTAssertNotNil(url)
@@ -31,7 +31,7 @@ class UUHttpReponseHandlerTests: XCTestCase
         XCTAssertNotNil(response)
         
         let exp = uuExpectationForMethod()
-        parser.parse(data: data, response: response!, request: request)
+        parser.parse(data: data!, response: response!, request: request)
         { parsedResult in
         
             XCTAssertNotNil(parsedResult)

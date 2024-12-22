@@ -8,6 +8,8 @@
 import Foundation
 import UUSwiftCore
 
+fileprivate let LOG_TAG = "UUHttpDataParser"
+
 public protocol UUHttpDataParser
 {
     func parse(data: Data, response: HTTPURLResponse, request: URLRequest, completion: @escaping (Any?)->())
@@ -72,7 +74,7 @@ open class UUJsonDataParser: UUHttpDataParser
         }
         catch (let err)
         {
-            UUDebugLog("Error deserializing JSON: %@", String(describing: err))
+            UULog.debug(tag: LOG_TAG, message: "Error deserializing JSON: \(String(describing: err))")
         }
 
         completion(result)
