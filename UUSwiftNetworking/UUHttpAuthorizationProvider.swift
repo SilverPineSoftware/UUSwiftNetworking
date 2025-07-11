@@ -27,11 +27,5 @@ open class UUTokenAuthorizationProvider: UUHttpAuthorizationProvider
         }
     }
     
-    open var authorizationToken: String?
-    {
-        get
-        {
-            return nil
-        }
-    }
+    public var authorizationToken: String? = nil
 }
