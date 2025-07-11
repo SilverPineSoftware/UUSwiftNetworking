@@ -43,6 +43,7 @@ public struct UUHeader
 {
 	public static let contentLength = "Content-Length"
 	public static let contentType = "Content-Type"
+    public static let authorization = "Authorization"
 }
 
 public extension Int
