@@ -177,11 +177,14 @@ open class UUJsonCodableDataParser<T: Codable>: UUHttpDataParser
         
     }
     
+    public var configureJsonDecoder: ((JSONDecoder)-> Void ) = { _ in  }
+    
     open func parse(data: Data, response: HTTPURLResponse, request: URLRequest, completion: @escaping (Any?)->())
     {
         var result: Any? = nil
         
         let decoder = JSONDecoder()
+        configureJsonDecoder(decoder)
         
         do
         {

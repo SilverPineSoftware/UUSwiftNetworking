@@ -123,14 +123,20 @@ open class UUJsonCodableResponseHandler<SuccessType: Codable, ErrorType: Codable
         super.init()
     }
     
+    public var configureJsonDecoder: ((JSONDecoder)-> Void ) = { _ in  }
+    
     open override var successParser: UUHttpDataParser
     {
-        return UUJsonCodableDataParser<SuccessType>()
+        let parser = UUJsonCodableDataParser<SuccessType>()
+        parser.configureJsonDecoder = self.configureJsonDecoder
+        return parser
     }
     
     open override var errorParser: UUHttpDataParser
     {
-        return UUJsonCodableDataParser<ErrorType>()
+        let parser = UUJsonCodableDataParser<ErrorType>()
+        parser.configureJsonDecoder = self.configureJsonDecoder
+        return parser
     }
 }
 
