@@ -77,6 +77,48 @@ class UUHttpReponseHandlerTests: XCTestCase
             
         uuWaitForExpectations()
     }
+    
+    
+    func test_codableSuccess_withJsonParser()
+    {
+        let parserExp = uuExpectationForMethod(tag: "parser configure")
+        let parser = UUJsonCodableDataParser<TestCodable>()
+        parser.configureJsonDecoder =
+        { decoder in
+        
+            NSLog("Json configure called")
+            parserExp.fulfill()
+        }
+        
+        let obj = TestCodable(fieldOne: "HelloWorld", fieldTwo: 2021)
+        let data = obj.toJsonData()
+        XCTAssertNotNil(data, "Unable to create response data")
+        
+        let url = URL(string: "https://fake.url")
+        XCTAssertNotNil(url)
+        
+        let request = URLRequest(url: url!)
+        let response = HTTPURLResponse(url: url!, statusCode: 200, httpVersion: "2.0", headerFields: nil)
+        XCTAssertNotNil(response)
+        
+        let exp = uuExpectationForMethod()
+        parser.parse(data: data!, response: response!, request: request)
+        { parsedResult in
+        
+            XCTAssertNotNil(parsedResult)
+            
+            let parsedError = parsedResult as? Error
+            XCTAssertNil(parsedError, "Do not expect an error to be returned after success parsing")
+            
+            let decodedObject = parsedResult as? TestCodable
+            XCTAssertNotNil(decodedObject, "Expect decoded object to be non-nil")
+            XCTAssertEqual(decodedObject!, obj, "Expect object to decode and be equal")
+            
+            exp.fulfill()
+        }
+            
+        wait(for: [parserExp, exp], timeout: 5)
+    }
 }
 
 fileprivate struct TestCodable: Codable, Equatable

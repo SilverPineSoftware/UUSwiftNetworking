@@ -171,8 +171,16 @@ class UUHttpErrorHandlingTests: XCTestCase
         queryArgs["stringField"] = "UnitTestString"
         queryArgs["numberField"] = 57
         
+        let configureExp = uuExpectationForMethod(tag: "configure")
         let request = UUHttpRequest(url: url, method: .get, queryArguments: queryArgs)
-        request.responseHandler = UUJsonCodableResponseHandler<FakeCodable, UUEmptyResponse>()
+        let handler = UUJsonCodableResponseHandler<FakeCodable, UUEmptyResponse>()
+        handler.configureJsonDecoder =
+        { decoder in
+            NSLog("Configure called")
+            configureExp.fulfill()
+        }
+        
+        request.responseHandler = handler
         
         _ = session.executeRequest(request)
         { response in
