@@ -10,7 +10,7 @@ import Foundation
 
 open class UURemoteApi
 {
-    private var session: UUHttpSession!
+    private var session: UUHttpSession = UUHttpSession()
     
     private var isAuthorizingFlag: Bool = false
     private var isAuthorizingFlagLock = NSRecursiveLock()
@@ -20,8 +20,9 @@ open class UURemoteApi
     
     // MARK: Public Methods
     
-    public required init(session: UUHttpSession = UUHttpSession())
+    public convenience init(session: UUHttpSession = UUHttpSession())
     {
+        self.init()
         self.session = session
     }
     
