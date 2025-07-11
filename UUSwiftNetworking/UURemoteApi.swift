@@ -19,9 +19,15 @@ open class UURemoteApi
     private var authorizeListenersLock = NSRecursiveLock()
     
     // MARK: Public Methods
-    public init()
+    
+    public convenience init(configuration: URLSessionConfiguration, delegate: URLSessionDelegate)
     {
-        session = UUHttpSession()
+        self.init(session: UUHttpSession(configuration: configuration, delegate: delegate))
+    }
+    
+    public required init(session: UUHttpSession = UUHttpSession())
+    {
+        self.session = session
     }
     
     /**
