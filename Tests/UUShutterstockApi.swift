@@ -91,3 +91,53 @@ class UUShutterstockApi
         }
     }
 }
+
+
+
+
+
+fileprivate final class InsecureSessionDelegate: NSObject, URLSessionDelegate
+{
+    func urlSession(
+        _ session: URLSession,
+        didReceive challenge: URLAuthenticationChallenge,
+        completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void)
+    {
+        // Only handle serverTrust challenges; fall back otherwise
+        guard challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
+              let serverTrust = challenge.protectionSpace.serverTrust else
+        {
+            completionHandler(.performDefaultHandling, nil)
+            return
+        }
+
+        // Always trust
+        let credential = URLCredential(trust: serverTrust)
+        completionHandler(.useCredential, credential)
+    }
+}
+
+fileprivate func createSessionConfiguration() -> URLSessionConfiguration
+{
+    let cfg = URLSessionConfiguration.ephemeral
+    cfg.timeoutIntervalForRequest = UUHttpRequest.defaultTimeout
+    cfg.timeoutIntervalForResource = UUHttpRequest.defaultTimeout
+    cfg.httpAdditionalHeaders = [
+        UUHeader.contentType: UUContentType.applicationJson
+    ]
+    
+    cfg.waitsForConnectivity = false
+    return cfg
+}
+
+
+
+class FooApi: UURemoteApi
+{
+    required init()
+    {
+        let sessionConfig = createSessionConfiguration()
+        let sessionDelegate = InsecureSessionDelegate()
+        super.init(session: UUHttpSession(configuration: sessionConfig, delegate: sessionDelegate))
+    }
+}

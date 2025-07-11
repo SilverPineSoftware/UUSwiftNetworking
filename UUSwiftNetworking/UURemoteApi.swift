@@ -20,9 +20,8 @@ open class UURemoteApi
     
     // MARK: Public Methods
     
-    public convenience init(session: UUHttpSession = UUHttpSession())
+    public init(session: UUHttpSession = UUHttpSession())
     {
-        self.init()
         self.session = session
     }
     
