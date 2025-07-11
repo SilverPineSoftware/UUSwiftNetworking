@@ -23,7 +23,7 @@ open class UUTokenAuthorizationProvider: UUHttpAuthorizationProvider
     {
         if let token = authorizationToken
         {
-            request.headerFields["Authorization"] = "Bearer \(token)"
+            request.headerFields[UUHeader.authorization] = "Bearer \(token)"
         }
     }
     

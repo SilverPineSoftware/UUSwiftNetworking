@@ -49,12 +49,14 @@ public class UUHttpSession: NSObject
     
     public func executeRequest(_ request : UUHttpRequest, _ completion: @escaping (UUHttpResponse) -> ()) -> UUHttpRequest
     {
-        guard let httpRequest = request.buildURLRequest() else
+        guard var httpRequest = request.buildURLRequest() else
         {
             let uuResponse = UUHttpResponse(request: request, response: nil, error: UUErrorFactory.createInvalidRequestError(request))
             completion(uuResponse)
             return request
         }
+        
+        httpRequest.uuApplyAdditionalHeaders(from: sessionConfiguration)
         
         request.httpRequest = httpRequest
         

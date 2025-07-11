@@ -141,6 +141,23 @@ open class UUHttpRequest: NSObject
     }
 }
 
+public extension URLRequest
+{
+    mutating func uuApplyAdditionalHeaders(from configuration: URLSessionConfiguration)
+    {
+        if let headers = configuration.httpAdditionalHeaders
+        {
+            for (key, value) in headers
+            {
+                if let keyString = key as? String, let valueString = value as? String
+                {
+                    setValue(valueString, forHTTPHeaderField: keyString)
+                }
+            }
+        }
+    }
+}
+
 
 open class UUCodableHttpRequest<SuccessType: Codable, ErrorType: Codable>: UUHttpRequest
 {
