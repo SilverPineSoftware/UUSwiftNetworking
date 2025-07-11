@@ -36,10 +36,13 @@ public class UUHttpSession: NSObject
         return cfg
     }
     
-    required public init(configuration: URLSessionConfiguration = UUHttpSession.defaultConfiguration)
+    required public init(
+        configuration: URLSessionConfiguration = UUHttpSession.defaultConfiguration,
+        delegate: URLSessionDelegate? = nil)
     {
         sessionConfiguration = configuration
-        urlSession = URLSession(configuration: sessionConfiguration)
+        
+        urlSession = URLSession(configuration: sessionConfiguration, delegate: delegate, delegateQueue: nil)
         
         super.init()
     }
