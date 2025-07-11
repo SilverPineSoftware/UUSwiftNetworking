@@ -25,7 +25,7 @@ open class UURemoteApi
         self.init(session: UUHttpSession(configuration: configuration, delegate: delegate))
     }
     
-    public required init(session: UUHttpSession = UUHttpSession())
+    public init(session: UUHttpSession = UUHttpSession())
     {
         self.session = session
     }
