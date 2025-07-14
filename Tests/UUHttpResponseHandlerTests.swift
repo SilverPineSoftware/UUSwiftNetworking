@@ -83,12 +83,9 @@ class UUHttpReponseHandlerTests: XCTestCase
     {
         let parserExp = uuExpectationForMethod(tag: "parser configure")
         let parser = UUJsonCodableDataParser<TestCodable>()
-        parser.configureJsonDecoder =
-        { decoder in
         
-            NSLog("Json configure called")
-            parserExp.fulfill()
-        }
+        let jsonDecoder = JSONDecoder()
+        parser.jsonDecoder = jsonDecoder
         
         let obj = TestCodable(fieldOne: "HelloWorld", fieldTwo: 2021)
         let data = obj.toJsonData()

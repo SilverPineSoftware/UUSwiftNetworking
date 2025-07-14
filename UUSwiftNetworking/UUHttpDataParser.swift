@@ -177,18 +177,15 @@ open class UUJsonCodableDataParser<T: Codable>: UUHttpDataParser
         
     }
     
-    public var configureJsonDecoder: ((JSONDecoder)-> Void ) = { _ in  }
+    public var jsonDecoder: JSONDecoder = JSONDecoder()
     
     open func parse(data: Data, response: HTTPURLResponse, request: URLRequest, completion: @escaping (Any?)->())
     {
         var result: Any? = nil
         
-        let decoder = JSONDecoder()
-        configureJsonDecoder(decoder)
-        
         do
         {
-            result = try decoder.decode(T.self, from: data)
+            result = try jsonDecoder.decode(T.self, from: data)
         }
         catch let err
         {
