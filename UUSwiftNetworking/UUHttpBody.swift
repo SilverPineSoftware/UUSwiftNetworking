@@ -5,7 +5,7 @@
 //  Created by Ryan DeVore on 2/17/23.
 //
 
-import UIKit
+import Foundation
 
 open class UUHttpBody
 {

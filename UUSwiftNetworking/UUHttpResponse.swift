@@ -5,12 +5,7 @@
 //  Created by Jonathan Hays on 10/18/21.
 //
 
-#if os(macOS)
-import AppKit
-#else
-import UIKit
-#endif
-
+import Foundation
 import UUSwiftCore
 
 public class UUHttpResponse : NSObject
