@@ -28,6 +28,8 @@ open class UUCodableBody<T: Codable>: UUHttpBody
 {
     let codableContent: T
     
+    public var jsonEncoder: JSONEncoder = JSONEncoder()
+    
     public required init(_ content: T)
     {
         codableContent = content
@@ -41,7 +43,6 @@ open class UUCodableBody<T: Codable>: UUHttpBody
     
     override open func serializeBody() -> Data?
     {
-        let encoder = JSONEncoder()
-        return try? encoder.encode(codableContent)
+        return try? jsonEncoder.encode(codableContent)
     }
 }
