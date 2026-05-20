@@ -139,7 +139,7 @@ public class UURemoteImage
         
     private func notifyImageDownloaded(_ key: String)
     {
-        DispatchQueue.main.async
+        DispatchQueue.global(qos: .userInitiated).async
         {
             var metaData : [String:Any] = [:]
             metaData[UURemoteData.NotificationKeys.RemotePath] = key

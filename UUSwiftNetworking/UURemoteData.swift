@@ -228,7 +228,7 @@ public class UURemoteData: UURemoteDataProtocol
     
     private func notifyDownloadFailed(_ key: String, _ error: Error?)
     {
-        DispatchQueue.main.async
+        DispatchQueue.global(qos: .userInitiated).async
         {
             var metaData : [String:Any] = [:]
             metaData[UURemoteData.NotificationKeys.RemotePath] = key
@@ -240,7 +240,7 @@ public class UURemoteData: UURemoteDataProtocol
     private func notifyDataDownloaded(metaData: [String:Any])
     {
         let jsonData = metaData.uuToJson()
-        DispatchQueue.main.async
+        DispatchQueue.global(qos: .userInitiated).async
         {
             let jsonObject = jsonData?.uuToJson() as? [String:Any]
             NotificationCenter.default.post(name: Notifications.DataDownloaded, object: nil, userInfo: jsonObject)
@@ -251,10 +251,7 @@ public class UURemoteData: UURemoteDataProtocol
     {
         for handler in handlers
         {
-            DispatchQueue.main.async
-            {
-                handler(data, error)
-            }
+            handler(data, error)
         }
     }
     
