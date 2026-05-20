@@ -239,9 +239,11 @@ public class UURemoteData: UURemoteDataProtocol
     
     private func notifyDataDownloaded(metaData: [String:Any])
     {
+        let jsonData = metaData.uuToJson()
         DispatchQueue.main.async
         {
-            NotificationCenter.default.post(name: Notifications.DataDownloaded, object: nil, userInfo: metaData)
+            let jsonObject = jsonData?.uuToJson() as? [String:Any]
+            NotificationCenter.default.post(name: Notifications.DataDownloaded, object: nil, userInfo: jsonObject)
         }
     }
     
