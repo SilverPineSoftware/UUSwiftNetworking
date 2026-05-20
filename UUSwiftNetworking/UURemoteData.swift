@@ -191,12 +191,7 @@ public class UURemoteData: UURemoteDataProtocol
         {
             UULog.debug(tag: LOG_TAG, message: "Remote download failed!\n\nPath: \(key)\nStatusCode: \(String(describing: response.httpResponse?.statusCode))\nError: \(String(describing: response.httpError))\n")
             
-            md[NotificationKeys.Error] = response.httpError
-            
-            DispatchQueue.main.async
-            {
-                NotificationCenter.default.post(name: Notifications.DataDownloadFailed, object: nil, userInfo: md)
-            }
+            notifyDownloadFailed(key, response.httpError)
             
             if let handlers = self.httpRequestLookups[key]
             {
@@ -229,6 +224,17 @@ public class UURemoteData: UURemoteDataProtocol
         dataCache.set(metaData: md, for: key)
         
         notifyDataDownloaded(metaData: md)
+    }
+    
+    private func notifyDownloadFailed(_ key: String, _ error: Error?)
+    {
+        DispatchQueue.main.async
+        {
+            var metaData : [String:Any] = [:]
+            metaData[UURemoteData.NotificationKeys.RemotePath] = key
+            metaData[NotificationKeys.Error] = error
+            NotificationCenter.default.post(name: Notifications.DataDownloadFailed, object: nil, userInfo: metaData)
+        }
     }
     
     private func notifyDataDownloaded(metaData: [String:Any])
