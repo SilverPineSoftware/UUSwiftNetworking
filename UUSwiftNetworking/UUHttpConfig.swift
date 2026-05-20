@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct UUHttpConfig: Sendable
+public struct UUHttpConfig
 {
     public static let shared = UUHttpConfig()
     
