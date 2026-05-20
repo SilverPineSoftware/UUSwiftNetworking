@@ -12,17 +12,14 @@ fileprivate let LOG_TAG = "UUHttpRequest"
 
 open class UUHttpRequest: NSObject
 {
-	public static var defaultTimeout : TimeInterval = 60.0
-	public static var defaultCachePolicy : URLRequest.CachePolicy = .useProtocolCachePolicy
-
 	public var url : String = ""
 	public var httpMethod : UUHttpMethod = .get
 	public var queryArguments : UUQueryStringArgs = [:]
 	public var headerFields : UUHttpHeaders = [:]
 	public var body : Data? = nil
 	public var bodyContentType : String? = nil
-	public var timeout : TimeInterval = UUHttpRequest.defaultTimeout
-	public var cachePolicy : URLRequest.CachePolicy = UUHttpRequest.defaultCachePolicy
+    public var timeout : TimeInterval = UUHttpConfig.shared.defaultTimeout
+    public var cachePolicy : URLRequest.CachePolicy = UUHttpConfig.shared.defaultCachePolicy
 	//public var processMimeTypes : Bool = true
 	public var startTime : TimeInterval = 0
 	public var httpRequest : URLRequest? = nil

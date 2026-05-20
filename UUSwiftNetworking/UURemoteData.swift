@@ -68,7 +68,7 @@ public class UURemoteData: UURemoteDataProtocol
     // Default to 4 active requests at a time...
     public var maxActiveRequests: Int = 4
     
-    public var networkTimeout: TimeInterval = UUHttpRequest.defaultTimeout
+    public var networkTimeout: TimeInterval = UUHttpConfig.shared.defaultTimeout
     
     // Optional hook to provide an instance of UURemoteApi.  When set UURemoteData sends
     // requests through the remoteApi

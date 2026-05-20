@@ -26,8 +26,8 @@ public class UUHttpSession: NSObject
     public static var defaultConfiguration: URLSessionConfiguration
     {
         let cfg = URLSessionConfiguration.default
-        cfg.timeoutIntervalForRequest = UUHttpRequest.defaultTimeout
-        cfg.timeoutIntervalForResource = UUHttpRequest.defaultTimeout
+        cfg.timeoutIntervalForRequest = UUHttpConfig.shared.defaultTimeout
+        cfg.timeoutIntervalForResource = UUHttpConfig.shared.defaultTimeout
         return cfg
     }
     
