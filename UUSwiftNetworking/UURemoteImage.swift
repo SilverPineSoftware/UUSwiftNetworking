@@ -28,8 +28,8 @@ public typealias UUImageLoadedCompletionBlock = (UUImage?, Error?) -> Void
 
 public class UURemoteImage
 {
-    public static let shared = UURemoteImage(remoteData: UURemoteData.shared)
-    public static var useDiskCache = true
+    nonisolated(unsafe) public static let shared = UURemoteImage(remoteData: UURemoteData.shared)
+    nonisolated(unsafe) public static var useDiskCache = true
     
     private let remoteData: UURemoteData
     
@@ -129,9 +129,7 @@ public class UURemoteImage
                 remoteData.dataCache.set(metaData: md, for: key)
             }
 
-            var metaData : [String:Any] = [:]
-            metaData[UURemoteData.NotificationKeys.RemotePath] = key
-            self.notifyImageDownloaded(metaData: metaData)
+            self.notifyImageDownloaded(key)
             
             return image
         }
@@ -139,10 +137,12 @@ public class UURemoteImage
         return nil
     }
         
-    private func notifyImageDownloaded(metaData: [String:Any])
+    private func notifyImageDownloaded(_ key: String)
     {
         DispatchQueue.main.async
         {
+            var metaData : [String:Any] = [:]
+            metaData[UURemoteData.NotificationKeys.RemotePath] = key
             NotificationCenter.default.post(name: Notifications.ImageDownloaded, object: nil, userInfo: metaData)
         }
     }

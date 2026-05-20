@@ -75,7 +75,7 @@ public class UURemoteData: UURemoteDataProtocol
     let remoteApi: UURemoteApi
     let dataCache: UUDataCache
     
-    static public let shared = UURemoteData(dataCache: UUDataCache.shared, remoteApi: UURemoteApi())
+    nonisolated(unsafe) static public let shared = UURemoteData(dataCache: UUDataCache.shared, remoteApi: UURemoteApi())
     
     required init(dataCache: UUDataCache, remoteApi: UURemoteApi)
     {

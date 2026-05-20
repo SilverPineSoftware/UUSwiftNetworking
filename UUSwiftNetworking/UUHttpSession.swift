@@ -21,7 +21,7 @@ public class UUHttpSession: NSObject
     private var activeTasks : [URLSessionTask] = []
     private var activeTasksLock = NSRecursiveLock()
     
-    public static let shared = UUHttpSession()
+    nonisolated(unsafe) public static let shared = UUHttpSession()
     
     public static var defaultConfiguration: URLSessionConfiguration
     {
