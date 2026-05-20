@@ -1,4 +1,4 @@
-// swift-tools-version:5.3
+// swift-tools-version:6.2
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
 	name: "UUSwiftNetworking",
 	platforms: [
-		.iOS(.v13),
+		.iOS(.v15),
 		.macOS(.v10_15)
 	],
 
@@ -43,8 +43,9 @@ let package = Package(
                 .process("TestJpeg_0001.JPG")
             ]),
 	],
-	swiftLanguageVersions: [
+    swiftLanguageModes: [
 		.v4_2,
-		.v5
+		.v5,
+        .v6
 	]
 )
