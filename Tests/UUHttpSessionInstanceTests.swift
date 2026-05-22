@@ -13,6 +13,15 @@ import UUSwiftTestCore
 
 class UUHttpSessionInstanceTests: XCTestCase
 {
+    override func setUp()
+    {
+        super.setUp()
+        
+        let logger = UULogger.console
+        logger.logLevel = .debug
+        UULog.setLogger(logger)
+    }
+    
     private var uuHttpSessionForTest: UUHttpSession
     {
         return UUHttpSession()

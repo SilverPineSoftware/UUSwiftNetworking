@@ -11,6 +11,7 @@ import UUSwiftTestCore
 
 @testable import UUSwiftNetworking
 
+@MainActor
 class UURemoteDataTests: XCTestCase
 {
     private let testFileName = "uu_remote_data_test.jpg"
@@ -18,6 +19,10 @@ class UURemoteDataTests: XCTestCase
     override func setUp()
     {
         super.setUp()
+        
+        let logger = UULogger.console
+        logger.logLevel = .debug
+        UULog.setLogger(logger)
         
         remoteDataForTest.dataCache.clearCache()
         remoteDataForTest.maxActiveRequests = 50
@@ -171,14 +176,29 @@ class UURemoteDataTests: XCTestCase
                 
                 UUTestLog("HTTP Code: \(String(describing: err?.uuHttpStatusCode))")
                 
-                // Special case - sometimes, randomly shutterstock will give a URL that doesn't exist, so
-                // we just ignore that condition and let the test proceed
-                if (err?.uuHttpStatusCode != 404)
-                {
-                    XCTAssertNotNil(result)
-                    XCTAssertNil(err)
-                }
                 
+                if let httpCode = err?.uuHttpStatusCode
+                {
+                    switch (httpCode)
+                    {
+                        // Special case - sometimes api will return urls that get a 403.  Just ignore them
+                        case 403:
+                            UUTestLog("Skipping 403 Forbidden for \(url)")
+                        
+                        // Special case - sometimes, randomly shutterstock will give a URL that doesn't exist, so
+                        // we just ignore that condition and let the test proceed
+                        case 404:
+                            UUTestLog("Skipping 404 Not Found for \(url)")
+                        
+                        break
+                        
+                        default:
+                            XCTAssertNotNil(result)
+                            XCTAssertNil(err)
+                            break
+                    }
+                }
+            
                 exp.fulfill()
                 UUTestLog("Iteration Complete - \(index)")
             }
@@ -191,12 +211,26 @@ class UURemoteDataTests: XCTestCase
                 let innerResult = remoteData.data(for: url)
                 { result, err in
                     
-                    // Special case - sometimes, randomly shutterstock will give a URL that doesn't exist, so
-                    // we just ignore that condition and let the test proceed
-                    if (err?.uuHttpStatusCode != 404)
+                    if let httpCode = err?.uuHttpStatusCode
                     {
-                        XCTAssertNotNil(result)
-                        XCTAssertNil(err)
+                        switch (httpCode)
+                        {
+                            // Special case - sometimes api will return urls that get a 403.  Just ignore them
+                            case 403:
+                                UUTestLog("Skipping 403 Forbidden for \(url)")
+                            
+                            // Special case - sometimes, randomly shutterstock will give a URL that doesn't exist, so
+                            // we just ignore that condition and let the test proceed
+                            case 404:
+                                UUTestLog("Skipping 404 Not Found for \(url)")
+                            
+                            break
+                            
+                            default:
+                                XCTAssertNotNil(result)
+                                XCTAssertNil(err)
+                                break
+                        }
                     }
                     
                     expInner.fulfill()

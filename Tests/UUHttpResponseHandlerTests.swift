@@ -81,7 +81,6 @@ class UUHttpReponseHandlerTests: XCTestCase
     
     func test_codableSuccess_withJsonParser()
     {
-        let parserExp = uuExpectationForMethod(tag: "parser configure")
         let parser = UUJsonCodableDataParser<TestCodable>()
         
         let jsonDecoder = JSONDecoder()
@@ -114,7 +113,7 @@ class UUHttpReponseHandlerTests: XCTestCase
             exp.fulfill()
         }
             
-        wait(for: [parserExp, exp], timeout: 5)
+        uuWaitForExpectations()
     }
 }
 

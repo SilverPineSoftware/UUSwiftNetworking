@@ -65,6 +65,8 @@ class UUShutterstockApi
                 {
                     for item in data
                     {
+                        //UUTestLog("item: \(item)")
+                        
                         if let assets = item.uuGetDictionary("assets")
                         {
                             //small_thumb
@@ -74,11 +76,14 @@ class UUShutterstockApi
                             //preview_1000
                             //preview_1500
                             
+                            //UUTestLog("item: \(item)")
+                            
                             if let d = assets.uuGetDictionary(assetKey),
                                let url = d.uuGetString("url")
                             {
                                 if (!results.contains(url))
                                 {
+                                    //UUTestLog("Adding URL: \(url)")
                                     results.append(url)
                                 }
                             }
@@ -120,8 +125,8 @@ fileprivate final class InsecureSessionDelegate: NSObject, URLSessionDelegate
 fileprivate func createSessionConfiguration() -> URLSessionConfiguration
 {
     let cfg = URLSessionConfiguration.ephemeral
-    cfg.timeoutIntervalForRequest = UUHttpRequest.defaultTimeout
-    cfg.timeoutIntervalForResource = UUHttpRequest.defaultTimeout
+    cfg.timeoutIntervalForRequest = UUHttpConfig.shared.defaultTimeout
+    cfg.timeoutIntervalForResource = UUHttpConfig.shared.defaultTimeout
     cfg.httpAdditionalHeaders = [
         UUHeader.contentType: UUContentType.applicationJson
     ]

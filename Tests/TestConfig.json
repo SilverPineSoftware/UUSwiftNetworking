@@ -1,0 +1,5 @@
+{
+    "api_host": "https://uu.spsw.io",
+    "does_not_exist_url":"http://this.is.a.fake.url",
+    "upload_image_file_name":"TestJpeg_0001.JPG",
+}

@@ -39,7 +39,7 @@ let package = Package(
             dependencies: ["UUSwiftTestCore", "UUSwiftCore", "UUSwiftNetworking"],
             path: "Tests",
             resources: [
-                .process("UUNetworkingTestConfig.plist"),
+                .process("TestConfig.json"),
                 .process("TestJpeg_0001.JPG")
             ]),
 	],

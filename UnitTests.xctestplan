@@ -1,0 +1,24 @@
+{
+  "configurations" : [
+    {
+      "id" : "47F27880-7402-4828-B7E5-86CA8DA5DBF4",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "performanceAntipatternCheckerEnabled" : true
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:",
+        "identifier" : "UUSwiftNetworkingTests",
+        "name" : "UUSwiftNetworkingTests"
+      }
+    }
+  ],
+  "version" : 1
+}

@@ -130,7 +130,7 @@ class UUHttpErrorHandlingTests: XCTestCase
             exp.fulfill()
         }
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5)
+        DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 5)
         {
             UUTestLog("Canceling task")
             task.cancel()

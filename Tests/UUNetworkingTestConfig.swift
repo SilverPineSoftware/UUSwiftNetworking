@@ -14,10 +14,39 @@ class UUNetworkingTestConfig
     var doesNotExistUrl: String = ""
     var uploadFilePath: URL? = nil
     
-    required init(plistFile: String)
+    required init(_ fileName: String)
     {
-        if let path = Bundle.module.url(forResource: plistFile, withExtension: "plist")
+        if let path = Bundle.module.url(forResource: fileName, withExtension: "json")
         {
+            if let data = try? Data(contentsOf: path)
+            {
+                if let d = data.uuToJson() as? [AnyHashable:Any]
+                {
+                    if let str = d["api_host"] as? String
+                    {
+                        testServerApiHost = str
+                    }
+                    
+                    if let str = d["does_not_exist_url"] as? String
+                    {
+                        doesNotExistUrl = str
+                    }
+                    
+                    if let fullFileName = d["upload_image_file_name"] as? String
+                    {
+                        let namePart = fullFileName.uuGetFileName()
+                        let extPart = fullFileName.uuGetFileExtension()
+                        let nameOnly = namePart.replacingOccurrences(of: ".\(extPart)", with: "")
+                        
+                        if let path = Bundle.module.url(forResource: nameOnly, withExtension: extPart)
+                        {
+                            uploadFilePath = path
+                        }
+                    }
+                }
+            }
+            
+            /*
             if let d = NSDictionary(contentsOf: path) as? [AnyHashable:Any]
             {
                 if let str = d["test_server_api_host"] as? String
@@ -41,7 +70,7 @@ class UUNetworkingTestConfig
                         uploadFilePath = path
                     }
                 }
-            }
+            }*/
         }
     }
     
@@ -79,7 +108,7 @@ class UUNetworkingTestConfig
 
 func UULoadNetworkingTestConfig() -> UUNetworkingTestConfig
 {
-    let cfg = UUNetworkingTestConfig(plistFile: "UUNetworkingTestConfig")
+    let cfg = UUNetworkingTestConfig("TestConfig")
     
     XCTAssertFalse(cfg.testServerApiHost.isEmpty, "Expected a valid test server api host")
     XCTAssertFalse(cfg.doesNotExistUrl.isEmpty, "Expected a valid does not exist url")
