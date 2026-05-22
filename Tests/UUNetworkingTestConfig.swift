@@ -84,6 +84,12 @@ class UUNetworkingTestConfig
         return "\(testServerApiHost)/echo_json.php"
     }
     
+    /// Routed `EchoController` (`GET` / `POST` / `PUT` on `/echo/json`).
+    var echoControllerJsonUrl: String
+    {
+        return "\(testServerApiHost)/echo/json"
+    }
+    
     var invalidJsonUrl: String
     {
         return "\(testServerApiHost)/invalid_json.php"
