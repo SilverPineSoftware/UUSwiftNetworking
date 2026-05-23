@@ -12,5 +12,5 @@ fileprivate let LOG_TAG = "UUHttpDataParser"
 
 public protocol UUHttpDataParser
 {
-    func parse(data: Data, response: HTTPURLResponse, request: URLRequest, completion: @escaping (Any?)->())
+    func parse(data: Data, response: HTTPURLResponse, request: URLRequest) async -> Any?
 }

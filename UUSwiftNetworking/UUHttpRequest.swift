@@ -127,9 +127,9 @@ open class UUHttpRequest: NSObject
         return req
     }
     
-    func handleResponse(data: Data?, response: URLResponse?, error: Error?, completion: @escaping (UUHttpResponse)->())
+    func handleResponse(data: Data?, response: URLResponse?, error: Error?) async -> UUHttpResponse
     {
-        responseHandler.handleResponse(request: self, data: data, response: response, error: error, completion: completion)
+        return await responseHandler.handleResponse(request: self, data: data, response: response, error: error)
     }
 }
 

@@ -5,11 +5,14 @@
 //  Created by Ryan DeVore on 10/18/21.
 //
 
+#if RUN_INTEGRATION_TESTS
+
 import XCTest
 import UUSwiftCore
 import UUSwiftTestCore
 
 @testable import UUSwiftNetworking
+
 
 @MainActor
 class UURemoteDataTests: XCTestCase
@@ -330,3 +333,5 @@ class UURemoteDataTests: XCTestCase
         uuWaitForExpectations()
     }
 }
+
+#endif

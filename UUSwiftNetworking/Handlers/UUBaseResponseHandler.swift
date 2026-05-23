@@ -27,21 +27,19 @@ open class UUBaseResponseHandler: UUHttpResponseHandler
         return UUMimeTypeDataParser()
     }
     
-    open func handleResponse(request: UUHttpRequest, data: Data?, response: URLResponse?, error: Error?, completion: @escaping (UUHttpResponse)->())
+    open func handleResponse(request: UUHttpRequest, data: Data?, response: URLResponse?, error: Error?) async -> UUHttpResponse
     {
         if let e = error
         {
             UULog.debug(tag: LOG_TAG, message: "Got an error: \(String(describing: error))")
             let err = UUErrorFactory.wrapNetworkError(e, request)
-            finishHandleResponse(request: request, response: response, data: data, result: err, completion: completion)
-            return
+            return await finishHandleResponse(request: request, response: response, data: data, result: err)
         }
         
         guard let httpResponse = response as? HTTPURLResponse else
         {
             let err = UUErrorFactory.createError(UUHttpSessionError.unkownError, [:])
-            finishHandleResponse(request: request, response: response, data: data, result: err, completion: completion)
-            return
+            return await finishHandleResponse(request: request, response: response, data: data, result: err)
         }
         
         UULog.debug(tag: LOG_TAG, message: "HTTP Response Code: \(httpResponse.statusCode)")
@@ -57,22 +55,18 @@ open class UUBaseResponseHandler: UUHttpResponseHandler
               let httpResponse = response as? HTTPURLResponse,
               let urlRequest = request.httpRequest else
           {
-              finishHandleResponse(request: request, response: response, data: data, result: nil, completion: completion)
-              return
+              return await finishHandleResponse(request: request, response: response, data: data, result: nil)
           }
         
         UULog.debug(tag: LOG_TAG, message: "ResponseBody: \(String(describing: String(bytes: data, encoding: .utf8)))")
         
         let parser = httpResponse.statusCode.uuIsHttpSuccess() ? successParser : errorParser
         
-        parser.parse(data: data, response: httpResponse, request: urlRequest)
-        { parseResult in
-            
-            self.finishHandleResponse(request: request, response: httpResponse, data: data, result: parseResult, completion: completion)
-        }
+        let parseResult = await parser.parse(data: data, response: httpResponse, request: urlRequest)
+        return await finishHandleResponse(request: request, response: httpResponse, data: data, result: parseResult)
     }
     
-    private func finishHandleResponse(request: UUHttpRequest, response: URLResponse?, data: Data?, result: Any?, completion: @escaping (UUHttpResponse)->())
+    private func finishHandleResponse(request: UUHttpRequest, response: URLResponse?, data: Data?, result: Any?) async -> UUHttpResponse
     {
         var err: Error? = nil
         var parsedResponse: Any? = result
@@ -94,7 +88,7 @@ open class UUBaseResponseHandler: UUHttpResponseHandler
         }
         
         let uuResponse = UUHttpResponse(request: request, response: httpResponse, error: err, rawResponse: data, parsedResponse: parsedResponse)
-        completion(uuResponse)
+        return uuResponse
     }
     
     private func isHttpSuccessResponseCode(_ responseCode : Int) -> Bool

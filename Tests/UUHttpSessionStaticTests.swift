@@ -13,10 +13,8 @@ import UUSwiftTestCore
 
 class UUHttpSessionStaticTests: XCTestCase
 {
-    func test_getCodableObject()
+    func test_getCodableObject() async
     {
-        let exp = uuExpectationForMethod()
-        
         let cfg = UULoadNetworkingTestConfig()
         let url = cfg.echoJsonUrl
         
@@ -33,21 +31,19 @@ class UUHttpSessionStaticTests: XCTestCase
             queryArguments: queryArgs,
             headers: headers)
         
-        UUHttpSession.executeCodableRequest(req)
-        { (response: SimpleObject?, err: Error?) in
+        let result = await UUHttpSession.executeCodableRequest(req)
+        switch (result)
+        {
+            case .success(let obj):
+                XCTAssertNotNil(obj)
             
-            XCTAssertNotNil(response)
-            XCTAssertNil(err)
-            exp.fulfill()
+            case .failure(let err):
+                XCTFail("Unexpected failure: \(err)")
         }
-        
-        uuWaitForExpectations()
     }
     
-    func test_getCodableArray()
+    func test_getCodableArray() async
     {
-        let exp = uuExpectationForMethod()
-        
         let cfg = UULoadNetworkingTestConfig()
         let url = cfg.echoJsonUrl
         
@@ -64,15 +60,15 @@ class UUHttpSessionStaticTests: XCTestCase
             queryArguments: queryArgs,
             headers: headers)
         
-        UUHttpSession.executeCodableRequest(req)
-        { (response: [SimpleObject]?, err: Error?) in
+        let result = await UUHttpSession.executeCodableRequest(req)
+        switch (result)
+        {
+            case .success(let obj):
+                XCTAssertNotNil(obj)
             
-            XCTAssertNotNil(response)
-            XCTAssertNil(err)
-            exp.fulfill()
+            case .failure(let err):
+                XCTFail("Unexpected failure: \(err)")
         }
-        
-        uuWaitForExpectations()
     }
 }
 

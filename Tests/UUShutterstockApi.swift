@@ -51,7 +51,7 @@ class UUShutterstockApi
         let usernameData = username.data(using: .utf8)
         let usernameEncoded = usernameData!.base64EncodedString(options: Data.Base64EncodingOptions.init(rawValue: 0))
         req.headerFields["Authorization"] = "Basic \(usernameEncoded)"
-        
+        /*
         UUTestLog("Fetching page \(page)")
         _ = UUHttpSession.executeRequest(req)
         { (response: UUHttpResponse) in
@@ -93,7 +93,7 @@ class UUShutterstockApi
             }
             
             callback(results)
-        }
+        }*/
     }
 }
 

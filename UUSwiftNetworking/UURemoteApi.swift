@@ -82,7 +82,17 @@ open class UURemoteApi
      */
     public func executeOneRequest(_ request: UUHttpRequest, _ completion: @escaping (UUHttpResponse)->())
     {
-        _ = session.executeRequest(request, completion)
+        //_ = session.executeRequest(request, completion)
+        
+        nonisolated(unsafe) let sesh = session
+        nonisolated(unsafe) let req = request
+        nonisolated(unsafe) let done = completion
+        
+        Task
+        {
+            let response = await sesh.executeRequest(req)
+            done(response)
+        }
     }
     
     // MARK: Public Overridable Methods

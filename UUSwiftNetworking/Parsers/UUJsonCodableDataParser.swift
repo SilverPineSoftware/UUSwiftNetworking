@@ -19,7 +19,7 @@ open class UUJsonCodableDataParser<T: Codable>: UUHttpDataParser
     
     public var jsonDecoder: JSONDecoder = JSONDecoder()
     
-    open func parse(data: Data, response: HTTPURLResponse, request: URLRequest, completion: @escaping (Any?)->())
+    open func parse(data: Data, response: HTTPURLResponse, request: URLRequest) async -> Any?
     {
         var result: Any? = nil
         
@@ -32,6 +32,6 @@ open class UUJsonCodableDataParser<T: Codable>: UUHttpDataParser
             result = UUErrorFactory.createParseError(err, data, response, request)
         }
         
-        completion(result)
+        return result
     }
 }

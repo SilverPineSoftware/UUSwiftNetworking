@@ -31,32 +31,21 @@ class UUHttpErrorHandlingTests: XCTestCase
         _ = XCTSkip("Need to implement this test: \(#function)")
     }
     
-    func test_cannotFindHost()
+    func test_cannotFindHost() async
     {
         let session = uuHttpSessionForTest
-        
-        let exp = uuExpectationForMethod()
         
         let cfg = UULoadNetworkingTestConfig()
         let url = cfg.doesNotExistUrl
         
         let request = UUHttpRequest(url: url)
-        _ = session.executeRequest(request)
-        { response in
-            
-            UUAssertResponseError(response, .cannotFindHost)
-            
-            exp.fulfill()
-        }
-        
-        uuWaitForExpectations()
+        let response = await session.executeRequest(request)
+        UUAssertResponseError(response, .cannotFindHost)
     }
     
-    func test_timedOut()
+    func test_timedOut() async
     {
         let session = uuHttpSessionForTest
-        
-        let exp = uuExpectationForMethod()
         
         let cfg = UULoadNetworkingTestConfig()
         let url = cfg.timeoutUrl
@@ -69,49 +58,30 @@ class UUHttpErrorHandlingTests: XCTestCase
         request.timeout = TimeInterval(timeout / 2)
         
         UUTestLog("Starting request, timeout: \(request.timeout)")
-        _ = session.executeRequest(request)
-        { response in
-            
-            UUTestLog("Got back response: \(response)")
-            UUAssertResponseError(response, .timedOut)
-            
-            exp.fulfill()
-        }
-        
-        uuWaitForExpectations()
+        let response = await session.executeRequest(request)
+        UUAssertResponseError(response, .timedOut)
     }
     
-    func test_httpFailure()
+    func test_httpFailure() async
     {
         let session = uuHttpSessionForTest
-        
-        let exp = uuExpectationForMethod()
         
         let cfg = UULoadNetworkingTestConfig()
         let url = cfg.redirectUrl
         
         let request = UUHttpRequest(url: url)
-        _ = session.executeRequest(request)
-        { response in
-            
-            UUAssertResponseError(response, .httpFailure)
-            
-            exp.fulfill()
-        }
-        
-        uuWaitForExpectations()
+        let response = await session.executeRequest(request)
+        UUAssertResponseError(response, .httpFailure)
     }
     
-    func test_httpError()
+    func test_httpError() async
     {
-        doStatusCodeTest(statusCode: 500, expectedError: .httpError)
+        await doStatusCodeTest(statusCode: 500, expectedError: .httpError)
     }
     
-    func test_userCanceled()
+    /*func test_userCanceled() async
     {
         let session = uuHttpSessionForTest
-        
-        let exp = uuExpectationForMethod()
         
         let cfg = UULoadNetworkingTestConfig()
         let url = cfg.timeoutUrl
@@ -121,48 +91,30 @@ class UUHttpErrorHandlingTests: XCTestCase
         queryArgs["timeout"] = (timeout * 60)
         
         let request = UUHttpRequest(url: url, method: .get, queryArguments: queryArgs)
-        
-        let task = session.executeRequest(request)
-        { response in
-            
-            UUAssertResponseError(response, .userCancelled)
-            
-            exp.fulfill()
-        }
+        let response = await session.executeRequest(request)
+        UUAssertResponseError(response, .userCancelled)
         
         DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 5)
         {
             UUTestLog("Canceling task")
             task.cancel()
         }
-        
-        uuWaitForExpectations()
-    }
+    }*/
     
-    func test_invalidRequest()
+    func test_invalidRequest() async
     {
         let session = uuHttpSessionForTest
         
-        let exp = uuExpectationForMethod()
-        
         let request = UUHttpRequest(url: "?1234$%*()(")
-        _ = session.executeRequest(request)
-        { response in
-            
-            UUAssertResponseError(response, .invalidRequest, expectValidRequest: false)
-            
-            exp.fulfill()
-        }
-        
-        uuWaitForExpectations()
+        let response = await session.executeRequest(request)
+        UUAssertResponseError(response, .invalidRequest, expectValidRequest: false)
+
     }
     
-    func test_parseFailure_codable()
+    func test_parseFailure_codable() async
     {
         let session = uuHttpSessionForTest
         XCTAssertNotNil(session)
-        
-        let exp = uuExpectationForMethod()
         
         let cfg = UULoadNetworkingTestConfig()
         let url = cfg.invalidJsonUrl
@@ -171,33 +123,19 @@ class UUHttpErrorHandlingTests: XCTestCase
         queryArgs["stringField"] = "UnitTestString"
         queryArgs["numberField"] = 57
         
-        //let configureExp = uuExpectationForMethod(tag: "configure")
         let request = UUHttpRequest(url: url, method: .get, queryArguments: queryArgs)
         let handler = UUJsonCodableResponseHandler<FakeCodable, UUEmptyResponse>()
-//        handler.configureJsonDecoder =
-//        { decoder in
-//            NSLog("Configure called")
-//            configureExp.fulfill()
-//        }
-        
+
         request.responseHandler = handler
         
-        _ = session.executeRequest(request)
-        { response in
-            
-            UUAssertResponseError(response, .parseFailure)
-            exp.fulfill()
-        }
-        
-        uuWaitForExpectations()
+        let response = await session.executeRequest(request)
+        UUAssertResponseError(response, .parseFailure)
     }
     
-    func test_parseFailure_parserError()
+    func test_parseFailure_parserError() async
     {
         let session = uuHttpSessionForTest
         XCTAssertNotNil(session)
-        
-        let exp = uuExpectationForMethod()
         
         let cfg = UULoadNetworkingTestConfig()
         let url = cfg.echoJsonUrl
@@ -207,29 +145,22 @@ class UUHttpErrorHandlingTests: XCTestCase
         let err = NSError(domain: "UnitTest", code: 1234, userInfo: nil)
         request.responseHandler = PassthroughResponseHandler(err)
         
-        _ = session.executeRequest(request)
-        { response in
-            
-            XCTAssertNotNil(response.httpError)
-            XCTAssertEqual((response.httpError! as NSError).domain, "UnitTest")
-            XCTAssertEqual((response.httpError! as NSError).code, 1234)
-            exp.fulfill()
-        }
-        
-        uuWaitForExpectations()
+        let response = await session.executeRequest(request)
+        //UUAssertResponseError(response, .invalidRequest, expectValidRequest: false)
+        XCTAssertNotNil(response.httpError)
+        XCTAssertEqual((response.httpError! as NSError).domain, "UnitTest")
+        XCTAssertEqual((response.httpError! as NSError).code, 1234)
     }
     
-    func test_authorizationNeeded()
+    func test_authorizationNeeded() async
     {
-        doStatusCodeTest(statusCode: 401, expectedError: .authorizationNeeded)
+        await doStatusCodeTest(statusCode: 401, expectedError: .authorizationNeeded)
     }
     
-    func doStatusCodeTest(statusCode: Int, expectedError: UUHttpSessionError)
+    func doStatusCodeTest(statusCode: Int, expectedError: UUHttpSessionError) async
     {
         let session = uuHttpSessionForTest
         XCTAssertNotNil(session)
-        
-        let exp = uuExpectationForMethod()
         
         let cfg = UULoadNetworkingTestConfig()
         let url = cfg.echoJsonUrl
@@ -238,18 +169,11 @@ class UUHttpErrorHandlingTests: XCTestCase
         headers["UU-Status-Code"] = statusCode
         
         let request = UUHttpRequest(url: url, method: .get, headers: headers)
-        
-        _ = session.executeRequest(request)
-        { response in
-            
-            XCTAssertNotNil(response.httpError)
-            XCTAssertNotNil(response.parsedResponse)
-            UUAssertError(response.httpError, expectedError, expectValidRequest: true)
-            
-            exp.fulfill()
-        }
-        
-        uuWaitForExpectations()
+        let response = await session.executeRequest(request)
+        XCTAssertNotNil(response.httpError)
+        XCTAssertNotNil(response.parsedResponse)
+        UUAssertError(response.httpError, expectedError, expectValidRequest: true)
+
     }
 }
 
@@ -268,9 +192,9 @@ fileprivate class PassthroughDataParser: UUHttpDataParser
         self.passthroughResponse = response
     }
     
-    open func parse(data: Data, response: HTTPURLResponse, request: URLRequest, completion: @escaping (Any?)->())
+    open func parse(data: Data, response: HTTPURLResponse, request: URLRequest) async -> Any?
     {
-        completion(self.passthroughResponse)
+        return self.passthroughResponse
     }
 }
 

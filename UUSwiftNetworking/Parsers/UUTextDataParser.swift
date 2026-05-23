@@ -17,7 +17,7 @@ open class UUTextDataParser: UUHttpDataParser
         
     }
     
-    open func parse(data: Data, response: HTTPURLResponse, request: URLRequest, completion: @escaping (Any?)->())
+    open func parse(data: Data, response: HTTPURLResponse, request: URLRequest) async -> Any?
     {
         var parsed : Any? = nil
 
@@ -35,6 +35,6 @@ open class UUTextDataParser: UUHttpDataParser
             parsed = stringResult
         }
 
-        completion(parsed)
+        return parsed
     }
 }

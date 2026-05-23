@@ -21,10 +21,9 @@ final class EchoTests: XCTestCase
     
     // MARK: GET
     
-    func test_get_echoesQueryArgs_defaultStatus()
+    func test_get_echoesQueryArgs_defaultStatus() async
     {
         let cfg = UULoadNetworkingTestConfig()
-        let exp = uuExpectationForMethod()
         
         var queryArgs = UUQueryStringArgs()
         queryArgs["fieldOne"] = "GetValue"
@@ -35,22 +34,21 @@ final class EchoTests: XCTestCase
             method: .get,
             queryArguments: queryArgs)
         
-        _ = session.executeCodableRequest(req)
-        { (response: EchoObject?, err: Error?) in
-            XCTAssertNil(err)
-            XCTAssertNotNil(response)
-            XCTAssertEqual(response?.fieldOne, "GetValue")
-            XCTAssertEqual(response?.fieldTwo, 42)
-            exp.fulfill()
+        let result = await session.executeCodableRequest(req)
+        switch (result)
+        {
+            case .success(let response):
+                XCTAssertEqual(response.fieldOne, "GetValue")
+                XCTAssertEqual(response.fieldTwo, 42)
+            
+            case .failure(let err):
+                XCTFail("Unexpected failure: \(err)")
         }
-        
-        uuWaitForExpectations()
     }
     
-    func test_get_customStatusCodeHeader()
+    func test_get_customStatusCodeHeader() async
     {
         let cfg = UULoadNetworkingTestConfig()
-        let exp = uuExpectationForMethod()
         
         var queryArgs = UUQueryStringArgs()
         queryArgs["fieldOne"] = "StatusTest"
@@ -62,21 +60,20 @@ final class EchoTests: XCTestCase
             queryArguments: queryArgs,
             headers: echoHeaders(statusCode: 201))
         
-        _ = session.executeCodableRequest(req)
-        { (response: EchoObject?, err: Error?) in
-            XCTAssertNil(err)
-            XCTAssertNotNil(response)
-            XCTAssertEqual(response?.fieldOne, "StatusTest")
-            exp.fulfill()
+        let result = await session.executeCodableRequest(req)
+        switch (result)
+        {
+            case .success(let response):
+                XCTAssertEqual(response.fieldOne, "StatusTest")
+            
+            case .failure(let err):
+                XCTFail("Unexpected failure: \(err)")
         }
-        
-        uuWaitForExpectations()
     }
     
-    func test_get_returnObjectCountHeader()
+    func test_get_returnObjectCountHeader() async
     {
         let cfg = UULoadNetworkingTestConfig()
-        let exp = uuExpectationForMethod()
         
         var queryArgs = UUQueryStringArgs()
         queryArgs["fieldOne"] = "ArrayTest"
@@ -88,22 +85,21 @@ final class EchoTests: XCTestCase
             queryArguments: queryArgs,
             headers: echoHeaders(returnObjectCount: 3))
         
-        _ = session.executeCodableRequest(req)
-        { (response: [EchoObject]?, err: Error?) in
-            XCTAssertNil(err)
-            XCTAssertNotNil(response)
-            XCTAssertEqual(response?.count, 3)
-            XCTAssertTrue(response?.allSatisfy { $0.fieldOne == "ArrayTest" && $0.fieldTwo == 7 } ?? false)
-            exp.fulfill()
+        let result = await session.executeCodableRequest(req)
+        switch (result)
+        {
+            case .success(let response):
+                XCTAssertEqual(response.count, 3)
+                XCTAssertTrue(response.allSatisfy { $0.fieldOne == "ArrayTest" && $0.fieldTwo == 7 })
+            
+            case .failure(let err):
+                XCTFail("Unexpected failure: \(err)")
         }
-        
-        uuWaitForExpectations()
     }
     
-    func test_get_nonSuccessStatusCodeHeader()
+    func test_get_nonSuccessStatusCodeHeader() async
     {
         let cfg = UULoadNetworkingTestConfig()
-        let exp = uuExpectationForMethod()
         
         let req = UUCodableHttpRequest<EchoObject, UUEmptyResponse>(
             url: cfg.echoControllerJsonUrl,
@@ -111,22 +107,22 @@ final class EchoTests: XCTestCase
             queryArguments: ["fieldOne": "ErrorPath", "fieldTwo": 0],
             headers: echoHeaders(statusCode: 404))
         
-        _ = session.executeRequest(req)
-        { response in
-            XCTAssertNotNil(response.httpError)
-            XCTAssertEqual(response.httpStatusCode, 404)
-            exp.fulfill()
+        let result = await session.executeCodableRequest(req)
+        switch (result)
+        {
+            case .success(let response):
+                XCTFail("Unexpected success: \(response)")
+            
+            case .failure(let err):
+                XCTAssertEqual(err.uuHttpStatusCode, 404)
         }
-        
-        uuWaitForExpectations()
     }
     
     // MARK: POST
     
-    func test_post_echoesJsonBody()
+    func test_post_echoesJsonBody() async
     {
         let cfg = UULoadNetworkingTestConfig()
-        let exp = uuExpectationForMethod()
         
         let payload = EchoObject(fieldOne: "PostValue", fieldTwo: 99)
         let body = try! JSONEncoder().encode(payload)
@@ -138,22 +134,21 @@ final class EchoTests: XCTestCase
             body: body,
             contentType: "application/json")
         
-        _ = session.executeCodableRequest(req)
-        { (response: EchoObject?, err: Error?) in
-            XCTAssertNil(err)
-            XCTAssertNotNil(response)
-            XCTAssertEqual(response?.fieldOne, "PostValue")
-            XCTAssertEqual(response?.fieldTwo, 99)
-            exp.fulfill()
+        let result = await session.executeCodableRequest(req)
+        switch (result)
+        {
+            case .success(let response):
+                XCTAssertEqual(response.fieldOne, "PostValue")
+                XCTAssertEqual(response.fieldTwo, 99)
+            
+            case .failure(let err):
+                XCTFail("Unexpected failure: \(err)")
         }
-        
-        uuWaitForExpectations()
     }
     
-    func test_post_statusCodeAndReturnObjectCountHeaders()
+    func test_post_statusCodeAndReturnObjectCountHeaders() async
     {
         let cfg = UULoadNetworkingTestConfig()
-        let exp = uuExpectationForMethod()
         
         let payload = EchoObject(fieldOne: "PostArray", fieldTwo: 2)
         let body = try! JSONEncoder().encode(payload)
@@ -165,24 +160,23 @@ final class EchoTests: XCTestCase
             body: body,
             contentType: "application/json")
         
-        _ = session.executeCodableRequest(req)
-        { (response: [EchoObject]?, err: Error?) in
-            XCTAssertNil(err)
-            XCTAssertNotNil(response)
-            XCTAssertEqual(response?.count, 2)
-            XCTAssertTrue(response?.allSatisfy { $0.fieldOne == "PostArray" && $0.fieldTwo == 2 } ?? false)
-            exp.fulfill()
+        let result = await session.executeCodableRequest(req)
+        switch (result)
+        {
+            case .success(let response):
+                XCTAssertEqual(response.count, 2)
+                XCTAssertTrue(response.allSatisfy { $0.fieldOne == "PostArray" && $0.fieldTwo == 2 })
+            
+            case .failure(let err):
+                XCTFail("Unexpected failure: \(err)")
         }
-        
-        uuWaitForExpectations()
     }
     
     // MARK: PUT
     
-    func test_put_echoesJsonBody()
+    func test_put_echoesJsonBody() async
     {
         let cfg = UULoadNetworkingTestConfig()
-        let exp = uuExpectationForMethod()
         
         let payload = EchoObject(fieldOne: "PutValue", fieldTwo: 55)
         let body = try! JSONEncoder().encode(payload)
@@ -194,22 +188,21 @@ final class EchoTests: XCTestCase
             body: body,
             contentType: "application/json")
         
-        _ = session.executeCodableRequest(req)
-        { (response: EchoObject?, err: Error?) in
-            XCTAssertNil(err)
-            XCTAssertNotNil(response)
-            XCTAssertEqual(response?.fieldOne, "PutValue")
-            XCTAssertEqual(response?.fieldTwo, 55)
-            exp.fulfill()
+        let result = await session.executeCodableRequest(req)
+        switch (result)
+        {
+            case .success(let response):
+                XCTAssertEqual(response.fieldOne, "PutValue")
+                XCTAssertEqual(response.fieldTwo, 55)
+            
+            case .failure(let err):
+                XCTFail("Unexpected failure: \(err)")
         }
-        
-        uuWaitForExpectations()
     }
     
-    func test_put_customStatusCodeAndReturnObjectCountHeaders()
+    func test_put_customStatusCodeAndReturnObjectCountHeaders() async
     {
         let cfg = UULoadNetworkingTestConfig()
-        let exp = uuExpectationForMethod()
         
         let payload = EchoObject(fieldOne: "PutArray", fieldTwo: 8)
         let body = try! JSONEncoder().encode(payload)
@@ -221,16 +214,16 @@ final class EchoTests: XCTestCase
             body: body,
             contentType: "application/json")
         
-        _ = session.executeCodableRequest(req)
-        { (response: [EchoObject]?, err: Error?) in
-            XCTAssertNil(err)
-            XCTAssertNotNil(response)
-            XCTAssertEqual(response?.count, 4)
-            XCTAssertTrue(response?.allSatisfy { $0.fieldOne == "PutArray" && $0.fieldTwo == 8 } ?? false)
-            exp.fulfill()
+        let result = await session.executeCodableRequest(req)
+        switch (result)
+        {
+            case .success(let response):
+                XCTAssertEqual(response.count, 4)
+                XCTAssertTrue(response.allSatisfy { $0.fieldOne == "PutArray" && $0.fieldTwo == 8 })
+            
+            case .failure(let err):
+                XCTFail("Unexpected failure: \(err)")
         }
-        
-        uuWaitForExpectations()
     }
 }
 

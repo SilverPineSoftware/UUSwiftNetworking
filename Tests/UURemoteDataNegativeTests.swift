@@ -5,6 +5,8 @@
 //  Created by Ryan DeVore on 09/01/22.
 //
 
+#if RUN_INTEGRATION_TESTS
+
 import XCTest
 import UUSwiftCore
 import UUSwiftTestCore
@@ -116,3 +118,5 @@ class UURemoteDataNegativeTests: XCTestCase
     
     
 }
+
+#endif

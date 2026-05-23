@@ -17,8 +17,8 @@ open class UUImageDataParser: UUHttpDataParser
         
     }
     
-    open func parse(data: Data, response: HTTPURLResponse, request: URLRequest, completion: @escaping (Any?)->())
+    open func parse(data: Data, response: HTTPURLResponse, request: URLRequest) async -> Any?
     {
-        completion(UUImage(data: data))
+        return UUImage(data: data)
     }
 }

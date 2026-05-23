@@ -17,7 +17,7 @@ open class UUFormEncodedDataParser: UUHttpDataParser
         
     }
     
-    open func parse(data: Data, response: HTTPURLResponse, request: URLRequest, completion: @escaping (Any?)->())
+    open func parse(data: Data, response: HTTPURLResponse, request: URLRequest) async -> Any?
     {
         var parsed: [ String: Any ] = [:]
 
@@ -42,6 +42,6 @@ open class UUFormEncodedDataParser: UUHttpDataParser
             }
         }
 
-        completion(parsed)
+        return parsed
     }
 }

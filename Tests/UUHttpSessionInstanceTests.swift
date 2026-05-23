@@ -27,11 +27,9 @@ class UUHttpSessionInstanceTests: XCTestCase
         return UUHttpSession()
     }
     
-    func test_getCodableObject()
+    func test_getCodableObject() async
     {
         let session = uuHttpSessionForTest
-        
-        let exp = uuExpectationForMethod()
         
         let cfg = UULoadNetworkingTestConfig()
         let url = cfg.echoJsonUrl
@@ -49,22 +47,21 @@ class UUHttpSessionInstanceTests: XCTestCase
             queryArguments: queryArgs,
             headers: headers)
         
-        _ = session.executeCodableRequest(request)
-        { (response: SimpleObject?, err: Error?) in
+        let result = await session.executeCodableRequest(request)
+        switch (result)
+        {
+            case .success(let response):
+                XCTAssertEqual(response.fieldOne, "SomeValue")
+                XCTAssertEqual(response.fieldTwo, 1234)
             
-            XCTAssertNotNil(response)
-            XCTAssertNil(err)
-            exp.fulfill()
+            case .failure(let err):
+                XCTFail("Unexpected failure: \(err)")
         }
-        
-        uuWaitForExpectations()
     }
     
-    func test_getCodableArray()
+    func test_getCodableArray() async
     {
         let session = uuHttpSessionForTest
-        
-        let exp = uuExpectationForMethod()
         
         let cfg = UULoadNetworkingTestConfig()
         let url = cfg.echoJsonUrl
@@ -82,22 +79,20 @@ class UUHttpSessionInstanceTests: XCTestCase
             queryArguments: queryArgs,
             headers: headers)
         
-        _ = session.executeCodableRequest(request)
-        { (response: [SimpleObject]?, err: Error?) in
+        let result = await session.executeCodableRequest(request)
+        switch (result)
+        {
+            case .success(let response):
+                XCTAssertEqual(response.count, 3)
             
-            XCTAssertNotNil(response)
-            XCTAssertNil(err)
-            exp.fulfill()
+            case .failure(let err):
+                XCTFail("Unexpected failure: \(err)")
         }
-        
-        uuWaitForExpectations()
     }
     
-    func test_formPost()
+    func test_formPost() async
     {
         let session = uuHttpSessionForTest
-        
-        let exp = uuExpectationForMethod()
         
         let cfg = UULoadNetworkingTestConfig()
         let url = cfg.formPostUrl
@@ -123,41 +118,28 @@ class UUHttpSessionInstanceTests: XCTestCase
             UUTestLog("Form:\n\n\(str))\n\n")
         }
         
-        _ = session.executeRequest(request)
-        { response in
-            
-            XCTAssertNil(response.httpError)
-            exp.fulfill()
-        }
+        let response = await session.executeRequest(request)
+        XCTAssertNil(response.httpError)
         
-        uuWaitForExpectations()
-        
-        verifyUploadedFile(fileName)
+        await verifyUploadedFile(fileName)
     }
     
-    private func verifyUploadedFile(_ fileName: String)
+    private func verifyUploadedFile(_ fileName: String) async
     {
         let session = uuHttpSessionForTest
         
-        let exp = uuExpectationForMethod()
         let cfg = UULoadNetworkingTestConfig()
         let url = "\(cfg.downloadFileUrl)?uu_file=\(fileName)"
         
         let request = UUHttpRequest(url: url, method: .get)
         
-        _ = session.executeRequest(request)
-        { response in
-            
-            XCTAssertNotNil(response.parsedResponse)
-            XCTAssertNil(response.httpError)
-            
-            let img = response.parsedResponse as? UIImage
-            XCTAssertNotNil(img)
-            
-            exp.fulfill()
-        }
+        let response = await session.executeRequest(request)
         
-        uuWaitForExpectations()
+        XCTAssertNotNil(response.parsedResponse)
+        XCTAssertNil(response.httpError)
+        
+        let img = response.parsedResponse as? UIImage
+        XCTAssertNotNil(img)
     }
 }
 

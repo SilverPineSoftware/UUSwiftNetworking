@@ -5,6 +5,8 @@
 //  Created by Ryan DeVore on 10/18/21.
 //
 
+#if RUN_INTEGRATION_TESTS
+
 import XCTest
 import UUSwiftCore
 import UUSwiftTestCore
@@ -31,3 +33,5 @@ fileprivate class CustomRemoteApi: UURemoteApi
         completion(false, nil)
     }
 }
+
+#endif

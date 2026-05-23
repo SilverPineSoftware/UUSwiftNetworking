@@ -31,20 +31,18 @@ open class UUMimeTypeDataParser: UUHttpDataParser
         }
     }
     
-    open func parse(data: Data, response: HTTPURLResponse, request: URLRequest, completion: @escaping (Any?)->())
+    open func parse(data: Data, response: HTTPURLResponse, request: URLRequest) async -> Any?
     {
         guard let mimeType = response.mimeType else
         {
-            completion(nil)
-            return
+            return nil
         }
         
         guard let parser = parsers[mimeType] else
         {
-            completion(nil)
-            return
+            return nil
         }
         
-        parser.parse(data: data, response: response, request: request, completion: completion)
+        return await parser.parse(data: data, response: response, request: request)
     }
 }

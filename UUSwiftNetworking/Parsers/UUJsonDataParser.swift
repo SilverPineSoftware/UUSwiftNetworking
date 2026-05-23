@@ -17,7 +17,7 @@ open class UUJsonDataParser: UUHttpDataParser
         
     }
     
-    open func parse(data: Data, response: HTTPURLResponse, request: URLRequest, completion: @escaping (Any?)->())
+    open func parse(data: Data, response: HTTPURLResponse, request: URLRequest) async -> Any?
     {
         var result: Any? = nil
         
@@ -30,6 +30,6 @@ open class UUJsonDataParser: UUHttpDataParser
             UULog.debug(tag: LOG_TAG, message: "Error deserializing JSON: \(String(describing: err))")
         }
 
-        completion(result)
+        return result
     }
 }

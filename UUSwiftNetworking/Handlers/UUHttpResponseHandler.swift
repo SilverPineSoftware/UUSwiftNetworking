@@ -12,7 +12,7 @@ fileprivate let LOG_TAG = "UUHttpResponseHandler"
 
 public protocol UUHttpResponseHandler
 {
-    func handleResponse(request: UUHttpRequest, data: Data?, response: URLResponse?, error: Error?, completion: @escaping (UUHttpResponse)->())
+    func handleResponse(request: UUHttpRequest, data: Data?, response: URLResponse?, error: Error?) async -> UUHttpResponse
     
     var successParser: UUHttpDataParser { get }
     var errorParser: UUHttpDataParser { get }

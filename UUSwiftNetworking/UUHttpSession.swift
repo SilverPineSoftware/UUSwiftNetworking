@@ -42,6 +42,7 @@ public class UUHttpSession: NSObject
         super.init()
     }
     
+    /*
     public func executeRequest(_ request : UUHttpRequest, _ completion: @escaping (UUHttpResponse) -> ()) -> UUHttpRequest
     {
         guard var httpRequest = request.buildURLRequest() else
@@ -91,6 +92,52 @@ public class UUHttpSession: NSObject
         addActiveTask(task)
         task.resume()
         return request
+    }*/
+    
+    public func executeRequest(_ request: UUHttpRequest) async -> UUHttpResponse
+    {
+        guard var httpRequest = request.buildURLRequest() else
+        {
+            return UUHttpResponse(request: request, response: nil, error: UUErrorFactory.createInvalidRequestError(request))
+        }
+        
+        httpRequest.uuApplyAdditionalHeaders(from: sessionConfiguration)
+        
+        request.httpRequest = httpRequest
+        
+        request.startTime = Date.timeIntervalSinceReferenceDate
+        
+        UULog.debug(tag: LOG_TAG, message: "Begin Request\n\nMethod: \(String(describing: request.httpRequest?.httpMethod))\nURL: \(String(describing: request.httpRequest?.url))\nHeaders: \(String(describing: request.httpRequest?.allHTTPHeaderFields))")
+        
+        if (request.body != nil)
+        {
+            if (UUContentType.applicationJson == request.bodyContentType)
+            {
+                UULog.debug(tag: LOG_TAG, message: "JSON Body: \(request.body!.uuToJsonString())")
+            }
+            else
+            {
+                if (request.body!.count < 10000)
+                {
+                    UULog.debug(tag: LOG_TAG, message: "Raw Body: \(request.body!.uuToHexString())")
+                }
+            }
+        }
+        
+        if Task.isCancelled
+        {
+            return await request.handleResponse(data: nil, response: nil, error: UUErrorFactory.createError(.userCancelled, nil))
+        }
+        
+        do
+        {
+            let (data, urlResponse) = try await urlSession.data(for: httpRequest)
+            return await request.handleResponse(data: data, response: urlResponse, error: nil)
+        }
+        catch
+        {
+            return await request.handleResponse(data: nil, response: nil, error: error)
+        }
     }
     
     private func addActiveTask(_ task : URLSessionTask)
@@ -123,12 +170,22 @@ public class UUHttpSession: NSObject
 extension UUHttpSession
 {
     public func executeCodableRequest<SuccessType: Codable, ErrorType: Codable>(
-        _ request: UUCodableHttpRequest<SuccessType, ErrorType>,
-        _ completion: @escaping (SuccessType?, Error?) -> ()) -> UUHttpRequest
+        _ request: UUCodableHttpRequest<SuccessType, ErrorType>) async -> Result<SuccessType, Error>
     {
-        return executeRequest(request)
-        { response in
-            completion(response.parsedResponse as? SuccessType, response.httpError)
+        let result = await executeRequest(request)
+        
+        if let err = result.httpError
+        {
+            return .failure(err)
+        }
+        else if let success = result.parsedResponse as? SuccessType
+        {
+            return .success(success)
+        }
+        else
+        {
+            // TODO: Is this the correct error
+            return .failure(UUErrorFactory.createError(.parseFailure, nil))
         }
     }
 }
@@ -136,49 +193,42 @@ extension UUHttpSession
 // MARK: Static Convenience Methods
 extension UUHttpSession
 {
-    public static func executeRequest(_ request : UUHttpRequest, _ completion: @escaping (UUHttpResponse) -> Void) -> UUHttpRequest
+    public static func executeRequest(_ request : UUHttpRequest) async -> UUHttpResponse
     {
-        return shared.executeRequest(request, completion)
+        return await shared.executeRequest(request)
     }
     
-    public static func get(url : String, queryArguments : UUQueryStringArgs = [:], headers: UUHttpHeaders = [:], completion: @escaping (UUHttpResponse) -> Void)
+    public static func get(url : String, queryArguments : UUQueryStringArgs = [:], headers: UUHttpHeaders = [:]) async -> UUHttpResponse
     {
         let req = UUHttpRequest(url: url, method: .get, queryArguments: queryArguments, headers: headers)
-        _ = executeRequest(req, completion)
+        return await executeRequest(req)
     }
     
-    public static func delete(url : String, queryArguments : UUQueryStringArgs = [:], headers: UUHttpHeaders = [:], completion: @escaping (UUHttpResponse) -> Void)
+    public static func delete(url : String, queryArguments : UUQueryStringArgs = [:], headers: UUHttpHeaders = [:]) async -> UUHttpResponse
     {
         let req = UUHttpRequest(url: url, method: .delete, queryArguments: queryArguments, headers: headers)
-        _ = executeRequest(req, completion)
+        return await executeRequest(req)
     }
     
-    public static func put(url : String, queryArguments : UUQueryStringArgs = [:], headers: UUHttpHeaders = [:], body: Data?, contentType : String?, completion: @escaping (UUHttpResponse) -> Void)
+    public static func put(url : String, queryArguments : UUQueryStringArgs = [:], headers: UUHttpHeaders = [:], body: Data?, contentType : String?) async -> UUHttpResponse
     {
         let req = UUHttpRequest(url: url, method: .put, queryArguments: queryArguments, headers: headers, body: body, contentType: contentType)
-        _ = executeRequest(req, completion)
+        return await executeRequest(req)
     }
     
-    public static func post(url : String, queryArguments : UUQueryStringArgs = [:], headers: UUHttpHeaders = [:], body: Data?, contentType : String?, completion: @escaping (UUHttpResponse) -> Void)
+    public static func post(url : String, queryArguments : UUQueryStringArgs = [:], headers: UUHttpHeaders = [:], body: Data?, contentType : String?) async -> UUHttpResponse
     {
         let req = UUHttpRequest(url: url, method: .post, queryArguments: queryArguments, headers: headers, body: body, contentType: contentType)
-        _ = executeRequest(req, completion)
+        return await executeRequest(req)
     }
 }
 
 // MARK: Static Codable Convenience Methods
 extension UUHttpSession
 {
-//    public static func get<SuccessType: Codable, ErrorType: Codable>(url : String, queryArguments : UUQueryStringArgs = [:], headers: UUHttpHeaders = [:], completion: @escaping (SuccessType?, Error?) -> ())
-//    {
-//        let req = UUCodableHttpRequest<SuccessType, ErrorType>(url: url, method: .get, queryArguments: queryArguments, headers: headers)
-//        executeCodableRequest(req, completion)
-//    }
-//    
     public static func executeCodableRequest<SuccessType: Codable, ErrorType: Codable>(
-        _ request: UUCodableHttpRequest<SuccessType, ErrorType>,
-        _ completion: @escaping (SuccessType?, Error?) -> ())
+        _ request: UUCodableHttpRequest<SuccessType, ErrorType>) async -> Result<SuccessType, Error>
     {
-        _ = shared.executeCodableRequest(request, completion)
+        return await shared.executeCodableRequest(request)
     }
 }
