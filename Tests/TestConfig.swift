@@ -84,7 +84,7 @@ public struct TestConfig: Codable, CustomStringConvertible
     
     var fullDownloadFileUrl: String
     {
-        return "\(downloadFileUrl)?uu_file=\(downloadImageFileName)"
+        return "\(staticFilesUrl)/downloads/\(downloadImageFileName)"
     }
     
     var uploadImageFilePath: URL?
