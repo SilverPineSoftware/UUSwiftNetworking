@@ -5,8 +5,6 @@
 //  Created by Ryan DeVore on 10/27/21.
 //
 
-#if RUN_INTEGRATION_TESTS
-
 import XCTest
 import UUSwiftCore
 import UUSwiftTestCore
@@ -20,5 +18,3 @@ class UURemoteDataConcurrent_100: UURemoteDataTests
         return 100
     }
 }
-
-#endif

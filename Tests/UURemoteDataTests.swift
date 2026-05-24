@@ -5,25 +5,21 @@
 //  Created by Ryan DeVore on 10/18/21.
 //
 
-#if RUN_INTEGRATION_TESTS
-
 import XCTest
 import UUSwiftCore
 import UUSwiftTestCore
 
 @testable import UUSwiftNetworking
 
-
-@MainActor
 class UURemoteDataTests: BaseOnlineTest
 {
     override func setUp()
     {
         super.setUp()
         
-        //remoteDataForTest.dataCache.clearCache()
-        //remoteDataForTest.maxActiveRequests = 50
-        //remoteDataForTest.dataCache.contentExpirationLength = 30 * 24 * 60 * 60
+        remoteDataForTest.dataCache.clearCache()
+        remoteDataForTest.maxActiveRequests = 50
+        remoteDataForTest.dataCache.contentExpirationLength = 30 * 24 * 60 * 60
     }
     
     open var remoteDataForTest: UURemoteData
@@ -55,36 +51,17 @@ class UURemoteDataTests: BaseOnlineTest
         
         let remoteData = remoteDataForTest
         
-        expectation(forNotification: NSNotification.Name(rawValue: UURemoteData.Notifications.DataDownloaded.rawValue), object: nil)
-        { (notification: Notification) -> Bool in
-            
-            let md = remoteData.metaData(for: key)
-            XCTAssertNotNil(md)
-            
-            let data = remoteData.data(for: key)
-            XCTAssertNotNil(data)
-            
-            let nKey = notification.uuRemoteDataPath
-            XCTAssertNotNil(nKey)
-  
-            let nErr = notification.uuRemoteDataError
-            XCTAssertNil(nErr)
-            
-            return true
+        expectation(
+            forNotification: UURemoteData.Notifications.DataDownloaded,
+            object: nil
+        ) { notification in
+            notification.uuRemoteDataPath == key
         }
         
         var data = remoteData.data(for: key)
         XCTAssertNil(data)
         
-        waitForExpectations(timeout: .infinity)
-        { (err : Error?) in
-            
-            if (err != nil)
-            {
-                XCTFail("failed waiting for expectations, error: \(err!)")
-            }
-        }
- 
+        uuWaitForExpectations()
 
         let md = remoteData.metaData(for: key)
         data = remoteData.data(for: key)
@@ -92,25 +69,37 @@ class UURemoteDataTests: BaseOnlineTest
         XCTAssertNotNil(md)
     }
     
+    func test_fetchNoLocal_async() async throws
+    {
+        let key = testUrl
+        let remoteData = remoteDataForTest
+        
+        XCTAssertNil(remoteData.cachedData(for: key))
+        
+        let data = try await remoteData.data(for: key)
+        
+        XCTAssertNotNil(data)
+        XCTAssertNotNil(remoteData.cachedData(for: key))
+        XCTAssertNotNil(remoteData.metaData(for: key))
+    }
+    
     func test_fetchFromBadUrl()
     {
         let remoteData = remoteDataForTest
         
-        expectation(forNotification: NSNotification.Name(rawValue: UURemoteData.Notifications.DataDownloadFailed.rawValue), object: nil)
+        expectation(forNotification: NSNotification.Name(rawValue: UURemoteData.Notifications.DataDownloadFailed.rawValue), object: nil) { _ in
+            true
+        }
         
         let key = "http://this.is.a.fake.url/non_existent.jpg"
         
         let data = remoteData.data(for: key)
         XCTAssertNil(data)
         
-        waitForExpectations(timeout: .infinity)
-        { (err : Error?) in
-            
-            if (err != nil)
-            {
-                XCTFail("failed waiting for expectations, error: \(err!)")
-            }
-        }
+        uuWaitForExpectations()
+        
+        let dataAfterNotification = remoteData.data(for: key)
+        XCTAssertNil(dataAfterNotification)
     }
     
     func test_fetchExisting() throws
@@ -129,7 +118,7 @@ class UURemoteDataTests: BaseOnlineTest
         
         XCTAssertNil(existing)
         
-        waitForExpectations(timeout: 60, handler: nil)
+        uuWaitForExpectations()
         
         let data = remoteData.data(for: key)
         XCTAssertNotNil(data)
@@ -162,14 +151,22 @@ class UURemoteDataTests: BaseOnlineTest
         let imageUrls = getImageUrls(count: count, large: large)
         XCTAssertTrue(imageUrls.count > 0)
         
+        let expLock = NSLock()
+        var startedExpectations = 0
+        
         for (index, url) in imageUrls.enumerated()
         {
             UUTestLog("Fetching Data for URL: \(url)")
             
             let exp = expectation(description: "Iteration_\(index)")
             
+            expLock.withLock {
+                startedExpectations = startedExpectations + 1
+                UUTestLog("startedExpectations: \(startedExpectations)")
+            }
+            
             let existing = remoteData.data(for: url)
-            { result, err in
+            { [url] result, err in
                 
                 UUTestLog("HTTP Code: \(String(describing: err?.uuHttpStatusCode))")
                 
@@ -198,6 +195,10 @@ class UURemoteDataTests: BaseOnlineTest
             
                 exp.fulfill()
                 UUTestLog("Iteration Complete - \(index)")
+                expLock.withLock {
+                    startedExpectations = startedExpectations - 1
+                    UUTestLog("startedExpectations: \(startedExpectations)")
+                }
             }
             
             if (includeDuplicates)
@@ -205,8 +206,14 @@ class UURemoteDataTests: BaseOnlineTest
                 usleep(50)
                 
                 let expInner = expectation(description: "Iteration_\(index)_inner")
+                
+                expLock.withLock {
+                    startedExpectations = startedExpectations + 1
+                    UUTestLog("startedExpectations: \(startedExpectations)")
+                }
+                
                 let innerResult = remoteData.data(for: url)
-                { result, err in
+                { [url] result, err in
                     
                     if let httpCode = err?.uuHttpStatusCode
                     {
@@ -232,11 +239,20 @@ class UURemoteDataTests: BaseOnlineTest
                     
                     expInner.fulfill()
                     UUTestLog("Iteration Complete - \(index) - Inner")
+                    expLock.withLock {
+                        startedExpectations = startedExpectations - 1
+                        UUTestLog("startedExpectations: \(startedExpectations)")
+                    }
                 }
                 
                 if (innerResult != nil)
                 {
                     expInner.fulfill()
+                    UUTestLog("Iteration Complete - \(index) - Inner (already downloaded)")
+                    expLock.withLock {
+                        startedExpectations = startedExpectations - 1
+                        UUTestLog("startedExpectations: \(startedExpectations)")
+                    }
                 }
             }
             else
@@ -247,7 +263,8 @@ class UURemoteDataTests: BaseOnlineTest
             // The value may or may not be nil, so there is nothing to assert
         }
         
-        waitForExpectations(timeout: 900, handler: nil)
+        UUTestLog("Waiting for all expectations to complete")
+        uuWaitForExpectations(900)
     }
     
     private func getImageUrls(count: Int, large: Bool) -> [String]
@@ -262,13 +279,12 @@ class UURemoteDataTests: BaseOnlineTest
             exp.fulfill()
         }
         
-        waitForExpectations(timeout: 60, handler: nil)
+        uuWaitForExpectations()
         
         let truncated = Array(results.prefix(count))
         XCTAssertEqual(truncated.count, count)
         return truncated
     }
-    
     
     private func uploadTestPhoto() throws
     {
@@ -328,4 +344,3 @@ class UURemoteDataTests: BaseOnlineTest
     }
 }
 
-#endif
