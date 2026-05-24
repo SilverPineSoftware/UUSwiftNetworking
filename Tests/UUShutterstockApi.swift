@@ -45,17 +45,20 @@ class UUShutterstockApi
         args["per_page"] = "\(perPage)" // 500 is the max allowed
         args["query"] = query
         
-        let req = UUHttpRequest(url: url, method: .get, queryArguments: args)
+        nonisolated(unsafe) let req = UUHttpRequest(url: url, method: .get, queryArguments: args)
         
         let username = "d4a89-1400b-04251-4faee-f7a23-12271:61764-d9c3c-8a832-a7bdf-098e4-0b382"
         let usernameData = username.data(using: .utf8)
         let usernameEncoded = usernameData!.base64EncodedString(options: Data.Base64EncodingOptions.init(rawValue: 0))
         req.headerFields["Authorization"] = "Basic \(usernameEncoded)"
-        /*
-        UUTestLog("Fetching page \(page)")
-        _ = UUHttpSession.executeRequest(req)
-        { (response: UUHttpResponse) in
         
+        nonisolated(unsafe) let done = callback
+            
+        UUTestLog("Fetching page \(page)")
+        Task
+        {
+            let response = await UUHttpSession.executeRequest(req)
+            
             var results: [String] = []
             
             if (response.httpError == nil)
@@ -92,8 +95,8 @@ class UUShutterstockApi
                 }
             }
             
-            callback(results)
-        }*/
+            done(results)
+        }
     }
 }
 
