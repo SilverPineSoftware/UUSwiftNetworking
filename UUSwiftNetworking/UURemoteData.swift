@@ -128,7 +128,7 @@ public class UURemoteData: UURemoteDataProtocol
         request.responseHandler = UUPassthroughResponseHandler()
         request.timeout = networkTimeout
         
-        remoteApi.executeRequest(request)
+        executeRequest(request)
         { response in
             self.handleDownloadResponse(response, key)
             self.checkForPendingRequests()
@@ -138,6 +138,20 @@ public class UURemoteData: UURemoteDataProtocol
         self.appendRemoteHandler(for: key, handler: remoteLoadCompletion)
         
         return nil
+    }
+    
+    internal func executeRequest(_ request: UUHttpRequest, completion: @escaping (UUHttpResponse) -> Void)
+    {
+        nonisolated(unsafe) let req = request
+        nonisolated(unsafe) let api = remoteApi
+        nonisolated(unsafe) let done = completion
+        
+        Task
+        {
+            let response = await api.executeRequest(req)
+            done(response)
+        }
+    
     }
     
     private func checkForPendingRequests()
@@ -254,7 +268,6 @@ public class UURemoteData: UURemoteDataProtocol
             handler(data, error)
         }
     }
-    
 }
 
 extension UURemoteData

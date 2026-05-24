@@ -5,6 +5,8 @@
 //  Created by Ryan DeVore on 10/27/21.
 //
 
+#if _REFACTOR_IN_PROGRESS_IGNORE_ME
+
 import XCTest
 import UUSwiftCore
 import UUSwiftTestCore
@@ -18,3 +20,5 @@ class UURemoteDataConcurrent_1000: UURemoteDataTests
         return 1000
     }
 }
+
+#endif

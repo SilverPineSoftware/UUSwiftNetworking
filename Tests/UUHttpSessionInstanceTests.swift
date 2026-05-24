@@ -8,6 +8,9 @@
 import XCTest
 import UUSwiftCore
 import UUSwiftTestCore
+#if canImport(UIKit)
+import UIKit
+#endif
 
 @testable import UUSwiftNetworking
 
@@ -124,8 +127,12 @@ class UUHttpSessionInstanceTests: BaseOnlineTest
         XCTAssertNotNil(response.parsedResponse)
         XCTAssertNil(response.httpError)
         
+        #if canImport(UIKit)
         let img = response.parsedResponse as? UIImage
         XCTAssertNotNil(img)
+        #else
+        XCTAssertNotNil(response.parsedResponse)
+        #endif
     }
 }
 

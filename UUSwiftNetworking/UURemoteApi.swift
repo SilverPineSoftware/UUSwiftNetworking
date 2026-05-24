@@ -10,13 +10,7 @@ import Foundation
 
 open class UURemoteApi
 {
-    private var session: UUHttpSession = UUHttpSession()
-    
-    private var isAuthorizingFlag: Bool = false
-    private var isAuthorizingFlagLock = NSRecursiveLock()
-    
-    private var authorizeListeners : [(Bool,Error?)->()] = []
-    private var authorizeListenersLock = NSRecursiveLock()
+    private let session: UUHttpSession
     
     // MARK: Public Methods
     
@@ -30,69 +24,38 @@ open class UURemoteApi
      Also, if an error is returned, a check is done to determine if the error requires api authorization renewal.  After perforaming any api authorization renewal,
      the original request will be tried again
      */
-    public func executeRequest(_ request: UUHttpRequest, _ completion: @escaping (UUHttpResponse)->())
+    public func executeRequest(_ request: UUHttpRequest) async -> UUHttpResponse
     {
-        renewApiAuthorizationIfNeeded
-        { _, authorizationRenewalError in
-            
-            if (authorizationRenewalError != nil)
+        let renewResult = await renewApiAuthorizationIfNeeded()
+        if let authorizationRenewalError = renewResult.error
+        {
+            return UUHttpResponse(request: request, response: nil, error: authorizationRenewalError)
+        }
+        
+        var response = await executeOneRequest(request)
+        if let err = response.httpError, await shouldRenewApiAuthorization(err)
+        {
+            let innerRenewResult = await internalRenewApiAuthorization()
+            if let innerAuthorizationRenewalError = innerRenewResult.error
             {
-                let response = UUHttpResponse(request: request, response: nil, error: authorizationRenewalError)
-                completion(response)
-                return
+                return UUHttpResponse(request: request, response: nil, error: innerAuthorizationRenewalError)
             }
             
-            self.executeOneRequest(request)
-            { response in
-                
-                if let err = response.httpError,
-                   self.shouldRenewApiAuthorization(err)
-                {
-                    self.internalRenewApiAuthorization
-                    { didAttempt, innerAuthorizationRenewalError in
-                        
-                        if (innerAuthorizationRenewalError != nil)
-                        {
-                            let response = UUHttpResponse(request: request, response: nil, error: innerAuthorizationRenewalError)
-                            completion(response)
-                        }
-                        else
-                        {
-                            if (didAttempt)
-                            {
-                                self.executeOneRequest(request, completion)
-                            }
-                            else
-                            {
-                                completion(response)
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    completion(response)
-                }
+            if (innerRenewResult.didAttempt)
+            {
+                response = await executeOneRequest(request)
             }
         }
+        
+        return response
     }
     
     /**
      Executes a single request with no api authorization checks
      */
-    public func executeOneRequest(_ request: UUHttpRequest, _ completion: @escaping (UUHttpResponse)->())
+    open func executeOneRequest(_ request: UUHttpRequest) async -> UUHttpResponse
     {
-        //_ = session.executeRequest(request, completion)
-        
-        nonisolated(unsafe) let sesh = session
-        nonisolated(unsafe) let req = request
-        nonisolated(unsafe) let done = completion
-        
-        Task
-        {
-            let response = await sesh.executeRequest(req)
-            done(response)
-        }
+        return await session.executeRequest(request)
     }
     
     // MARK: Public Overridable Methods
@@ -102,9 +65,9 @@ open class UURemoteApi
      
      Default behavior is to just return nil
      */
-    open func renewApiAuthorization(_ completion: @escaping (Bool,Error?)->())
+    open func renewApiAuthorization() async -> UURenewAuthorizationResponse
     {
-        completion(false, nil)
+        return UURenewAuthorizationResponse(didAttempt: false, error: nil)
     }
 
     /**
@@ -112,9 +75,9 @@ open class UURemoteApi
      
      Default behavior is to return false
      */
-    open func isApiAuthorizationNeeded(_ completion: @escaping (Bool)->())
+    open func isApiAuthorizationNeeded() async -> Bool
     {
-        completion(false)
+        return false
     }
     
     /**
@@ -122,7 +85,7 @@ open class UURemoteApi
      
      Default behavior is to return  true if the UUHttpSessionError is authorizationNeeded.
      */
-    open func shouldRenewApiAuthorization(_ error: Error) -> Bool
+    open func shouldRenewApiAuthorization(_ error: Error) async -> Bool
     {
         guard let errorCode = error.uuHttpErrorCode else
         {
@@ -139,85 +102,55 @@ open class UURemoteApi
     
     // MARK: Private Implementation
     
-    private func renewApiAuthorizationIfNeeded(_ completion: @escaping (Bool, Error?)->())
+    private func renewApiAuthorizationIfNeeded() async -> UURenewAuthorizationResponse
     {
-        isApiAuthorizationNeeded
-        { authorizationNeeded in
-            
-            if (authorizationNeeded)
-            {
-                self.internalRenewApiAuthorization(completion)
-            }
-            else
-            {
-                completion(false, nil)
-            }
-        }
-    }
-    
-    private func internalRenewApiAuthorization(_ completion: @escaping (Bool, Error?)->())
-    {
-        addAuthorizeListener(completion)
-        
-        let isAuthorizing = self.isAuthorizing()
-        
-        if (isAuthorizing)
+        guard await isApiAuthorizationNeeded() else
         {
-            return
+            return UURenewAuthorizationResponse(didAttempt: false, error: nil)
         }
         
-        setAuthorizing(true)
-        
-        renewApiAuthorization
-        { didAttempt, error in
-            self.notifyAuthorizeListeners(didAttempt, error)
-        }
+        return await internalRenewApiAuthorization()
     }
     
-    private func setAuthorizing(_ val: Bool)
+    private let renewalGate = RenewalGate()
+
+    private actor RenewalGate
     {
-        defer { isAuthorizingFlagLock.unlock() }
-        isAuthorizingFlagLock.lock()
-        
-        isAuthorizingFlag = val
-    }
-    
-    private func isAuthorizing() -> Bool
-    {
-        defer { isAuthorizingFlagLock.unlock() }
-        isAuthorizingFlagLock.lock()
-        
-        return isAuthorizingFlag
-    }
-    
-    private func addAuthorizeListener(_ listener: @escaping (Bool,Error?)->())
-    {
-        defer { authorizeListenersLock.unlock() }
-        authorizeListenersLock.lock()
-        
-        authorizeListeners.append(listener)
-    }
-    
-    private func notifyAuthorizeListeners(_ didAttempt: Bool, _ error: Error?)
-    {
-        defer { authorizeListenersLock.unlock() }
-        authorizeListenersLock.lock()
-        
-        var listenersToNotify: [(Bool, Error?)->()] = []
-        listenersToNotify.append(contentsOf: authorizeListeners)
-        authorizeListeners.removeAll()
-        
-        // At this point, authorize is done, we have the response error,
-        // and if a new call to authorize comes in, we want it allow it
-        setAuthorizing(false)
-        
-        listenersToNotify.forEach
-        { listener in
-            
-            DispatchQueue.global(qos: .default).async
+        private var inFlight = false
+        private var waiters: [CheckedContinuation<UURenewAuthorizationResponse, Never>] = []
+
+        /// Returns a coalesced result when renewal is already in flight; `nil` means this caller is the leader.
+        func begin() async -> UURenewAuthorizationResponse?
+        {
+            if inFlight
             {
-                listener(didAttempt, error)
+                return await withCheckedContinuation { waiters.append($0) }
             }
+            inFlight = true
+            return nil
         }
+
+        func finish(_ result: UURenewAuthorizationResponse) -> UURenewAuthorizationResponse
+        {
+            inFlight = false
+            let pending = waiters
+            waiters.removeAll()
+            for waiter in pending
+            {
+                waiter.resume(returning: result)
+            }
+            return result
+        }
+    }
+
+    private func internalRenewApiAuthorization() async -> UURenewAuthorizationResponse
+    {
+        if let coalesced = await renewalGate.begin()
+        {
+            return coalesced
+        }
+
+        let result = await renewApiAuthorization()
+        return await renewalGate.finish(result)
     }
 }
