@@ -15,15 +15,14 @@ import UUSwiftTestCore
 /// Optional request headers (see UUNetworkingTestServer `common.php`):
 /// - `UU-Status-Code` — HTTP status returned by the server
 /// - `UU-Return-Object-Count` — when > 1, response body is an array of that many copies
-final class EchoTests: XCTestCase
+final class EchoTests: BaseOnlineTest
 {
-    private var session: UUHttpSession { UUHttpSession() }
-    
     // MARK: GET
     
-    func test_get_echoesQueryArgs_defaultStatus() async
+    func test_get_echoesQueryArgs_defaultStatus() async throws
     {
-        let cfg = UULoadNetworkingTestConfig()
+        let cfg = try loadTestConfig()
+        let session = uuHttpSessionForTest
         
         var queryArgs = UUQueryStringArgs()
         queryArgs["fieldOne"] = "GetValue"
@@ -46,9 +45,10 @@ final class EchoTests: XCTestCase
         }
     }
     
-    func test_get_customStatusCodeHeader() async
+    func test_get_customStatusCodeHeader() async throws
     {
-        let cfg = UULoadNetworkingTestConfig()
+        let cfg = try loadTestConfig()
+        let session = uuHttpSessionForTest
         
         var queryArgs = UUQueryStringArgs()
         queryArgs["fieldOne"] = "StatusTest"
@@ -71,9 +71,10 @@ final class EchoTests: XCTestCase
         }
     }
     
-    func test_get_returnObjectCountHeader() async
+    func test_get_returnObjectCountHeader() async throws
     {
-        let cfg = UULoadNetworkingTestConfig()
+        let cfg = try loadTestConfig()
+        let session = uuHttpSessionForTest
         
         var queryArgs = UUQueryStringArgs()
         queryArgs["fieldOne"] = "ArrayTest"
@@ -97,9 +98,10 @@ final class EchoTests: XCTestCase
         }
     }
     
-    func test_get_nonSuccessStatusCodeHeader() async
+    func test_get_nonSuccessStatusCodeHeader() async throws
     {
-        let cfg = UULoadNetworkingTestConfig()
+        let cfg = try loadTestConfig()
+        let session = uuHttpSessionForTest
         
         let req = UUCodableHttpRequest<EchoObject, UUEmptyResponse>(
             url: cfg.echoControllerJsonUrl,
@@ -120,9 +122,10 @@ final class EchoTests: XCTestCase
     
     // MARK: POST
     
-    func test_post_echoesJsonBody() async
+    func test_post_echoesJsonBody() async throws
     {
-        let cfg = UULoadNetworkingTestConfig()
+        let cfg = try loadTestConfig()
+        let session = uuHttpSessionForTest
         
         let payload = EchoObject(fieldOne: "PostValue", fieldTwo: 99)
         let body = try! JSONEncoder().encode(payload)
@@ -146,9 +149,10 @@ final class EchoTests: XCTestCase
         }
     }
     
-    func test_post_statusCodeAndReturnObjectCountHeaders() async
+    func test_post_statusCodeAndReturnObjectCountHeaders() async throws
     {
-        let cfg = UULoadNetworkingTestConfig()
+        let cfg = try loadTestConfig()
+        let session = uuHttpSessionForTest
         
         let payload = EchoObject(fieldOne: "PostArray", fieldTwo: 2)
         let body = try! JSONEncoder().encode(payload)
@@ -174,9 +178,10 @@ final class EchoTests: XCTestCase
     
     // MARK: PUT
     
-    func test_put_echoesJsonBody() async
+    func test_put_echoesJsonBody() async throws
     {
-        let cfg = UULoadNetworkingTestConfig()
+        let cfg = try loadTestConfig()
+        let session = uuHttpSessionForTest
         
         let payload = EchoObject(fieldOne: "PutValue", fieldTwo: 55)
         let body = try! JSONEncoder().encode(payload)
@@ -200,9 +205,10 @@ final class EchoTests: XCTestCase
         }
     }
     
-    func test_put_customStatusCodeAndReturnObjectCountHeaders() async
+    func test_put_customStatusCodeAndReturnObjectCountHeaders() async throws
     {
-        let cfg = UULoadNetworkingTestConfig()
+        let cfg = try loadTestConfig()
+        let session = uuHttpSessionForTest
         
         let payload = EchoObject(fieldOne: "PutArray", fieldTwo: 8)
         let body = try! JSONEncoder().encode(payload)

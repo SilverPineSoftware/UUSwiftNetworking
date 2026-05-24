@@ -11,27 +11,13 @@ import UUSwiftTestCore
 
 @testable import UUSwiftNetworking
 
-class UUHttpSessionInstanceTests: XCTestCase
+class UUHttpSessionInstanceTests: BaseOnlineTest
 {
-    override func setUp()
-    {
-        super.setUp()
-        
-        let logger = UULogger.console
-        logger.logLevel = .debug
-        UULog.setLogger(logger)
-    }
-    
-    private var uuHttpSessionForTest: UUHttpSession
-    {
-        return UUHttpSession()
-    }
-    
-    func test_getCodableObject() async
+    func test_getCodableObject() async throws
     {
         let session = uuHttpSessionForTest
         
-        let cfg = UULoadNetworkingTestConfig()
+        let cfg = try loadTestConfig()
         let url = cfg.echoJsonUrl
         
         var queryArgs = UUQueryStringArgs()
@@ -59,11 +45,11 @@ class UUHttpSessionInstanceTests: XCTestCase
         }
     }
     
-    func test_getCodableArray() async
+    func test_getCodableArray() async throws
     {
         let session = uuHttpSessionForTest
         
-        let cfg = UULoadNetworkingTestConfig()
+        let cfg = try loadTestConfig()
         let url = cfg.echoJsonUrl
         
         var queryArgs = UUQueryStringArgs()
@@ -90,11 +76,11 @@ class UUHttpSessionInstanceTests: XCTestCase
         }
     }
     
-    func test_formPost() async
+    func test_formPost() async throws
     {
         let session = uuHttpSessionForTest
         
-        let cfg = UULoadNetworkingTestConfig()
+        let cfg = try loadTestConfig()
         let url = cfg.formPostUrl
         
         let request = UUHttpRequest(url: url, method: .post)
@@ -104,7 +90,7 @@ class UUHttpSessionInstanceTests: XCTestCase
         
         let fileName = "uploadFileTest.jpg"
         
-        if let filePath = cfg.uploadFilePath,
+        if let filePath = cfg.uploadImageFilePath,
            let data = try? Data(contentsOf: filePath)
         {
             form.addFile(fieldName: "uu_file", fileName: fileName, contentType: "image/jpeg", fileData: data)
@@ -121,14 +107,14 @@ class UUHttpSessionInstanceTests: XCTestCase
         let response = await session.executeRequest(request)
         XCTAssertNil(response.httpError)
         
-        await verifyUploadedFile(fileName)
+        try await verifyUploadedFile(fileName)
     }
     
-    private func verifyUploadedFile(_ fileName: String) async
+    private func verifyUploadedFile(_ fileName: String) async throws
     {
         let session = uuHttpSessionForTest
         
-        let cfg = UULoadNetworkingTestConfig()
+        let cfg = try loadTestConfig()
         let url = "\(cfg.downloadFileUrl)?uu_file=\(fileName)"
         
         let request = UUHttpRequest(url: url, method: .get)

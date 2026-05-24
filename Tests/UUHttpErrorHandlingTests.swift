@@ -11,19 +11,8 @@ import UUSwiftTestCore
 
 @testable import UUSwiftNetworking
 
-class UUHttpErrorHandlingTests: XCTestCase
+class UUHttpErrorHandlingTests: BaseOnlineTest
 {
-    private var uuHttpSessionForTest: UUHttpSession
-    {
-        return UUHttpSession.shared
-    }
-    
-    override func setUp()
-    {
-        super.setUp()
-        UUSetupTestLogging()
-    }
-    
     func test_noInternet()
     {
         // TODO: Write this test
@@ -31,11 +20,11 @@ class UUHttpErrorHandlingTests: XCTestCase
         _ = XCTSkip("Need to implement this test: \(#function)")
     }
     
-    func test_cannotFindHost() async
+    func test_cannotFindHost() async throws
     {
         let session = uuHttpSessionForTest
         
-        let cfg = UULoadNetworkingTestConfig()
+        let cfg = try loadTestConfig()
         let url = cfg.doesNotExistUrl
         
         let request = UUHttpRequest(url: url)
@@ -43,11 +32,11 @@ class UUHttpErrorHandlingTests: XCTestCase
         UUAssertResponseError(response, .cannotFindHost)
     }
     
-    func test_timedOut() async
+    func test_timedOut() async throws
     {
         let session = uuHttpSessionForTest
         
-        let cfg = UULoadNetworkingTestConfig()
+        let cfg = try loadTestConfig()
         let url = cfg.timeoutUrl
         
         let timeout = 10
@@ -62,11 +51,11 @@ class UUHttpErrorHandlingTests: XCTestCase
         UUAssertResponseError(response, .timedOut)
     }
     
-    func test_httpFailure() async
+    func test_httpFailure() async throws
     {
         let session = uuHttpSessionForTest
         
-        let cfg = UULoadNetworkingTestConfig()
+        let cfg = try loadTestConfig()
         let url = cfg.redirectUrl
         
         let request = UUHttpRequest(url: url)
@@ -74,9 +63,9 @@ class UUHttpErrorHandlingTests: XCTestCase
         UUAssertResponseError(response, .httpFailure)
     }
     
-    func test_httpError() async
+    func test_httpError() async throws
     {
-        await doStatusCodeTest(statusCode: 500, expectedError: .httpError)
+        try await doStatusCodeTest(statusCode: 500, expectedError: .httpError)
     }
     
     /*func test_userCanceled() async
@@ -111,12 +100,12 @@ class UUHttpErrorHandlingTests: XCTestCase
 
     }
     
-    func test_parseFailure_codable() async
+    func test_parseFailure_codable() async throws
     {
         let session = uuHttpSessionForTest
         XCTAssertNotNil(session)
         
-        let cfg = UULoadNetworkingTestConfig()
+        let cfg = try loadTestConfig()
         let url = cfg.invalidJsonUrl
         
         var queryArgs = UUQueryStringArgs()
@@ -132,12 +121,12 @@ class UUHttpErrorHandlingTests: XCTestCase
         UUAssertResponseError(response, .parseFailure)
     }
     
-    func test_parseFailure_parserError() async
+    func test_parseFailure_parserError() async throws
     {
         let session = uuHttpSessionForTest
         XCTAssertNotNil(session)
         
-        let cfg = UULoadNetworkingTestConfig()
+        let cfg = try loadTestConfig()
         let url = cfg.echoJsonUrl
         
         let request = UUHttpRequest(url: url, method: .get)
@@ -152,17 +141,17 @@ class UUHttpErrorHandlingTests: XCTestCase
         XCTAssertEqual((response.httpError! as NSError).code, 1234)
     }
     
-    func test_authorizationNeeded() async
+    func test_authorizationNeeded() async throws
     {
-        await doStatusCodeTest(statusCode: 401, expectedError: .authorizationNeeded)
+        try await doStatusCodeTest(statusCode: 401, expectedError: .authorizationNeeded)
     }
     
-    func doStatusCodeTest(statusCode: Int, expectedError: UUHttpSessionError) async
+    func doStatusCodeTest(statusCode: Int, expectedError: UUHttpSessionError) async throws
     {
         let session = uuHttpSessionForTest
         XCTAssertNotNil(session)
         
-        let cfg = UULoadNetworkingTestConfig()
+        let cfg = try loadTestConfig()
         let url = cfg.echoJsonUrl
         
         var headers = UUHttpHeaders()

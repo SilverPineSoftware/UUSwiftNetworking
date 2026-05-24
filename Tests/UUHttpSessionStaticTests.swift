@@ -11,11 +11,11 @@ import UUSwiftTestCore
 
 @testable import UUSwiftNetworking
 
-class UUHttpSessionStaticTests: XCTestCase
+class UUHttpSessionStaticTests: BaseOnlineTest
 {
-    func test_getCodableObject() async
+    func test_getCodableObject() async throws
     {
-        let cfg = UULoadNetworkingTestConfig()
+        let cfg = try loadTestConfig()
         let url = cfg.echoJsonUrl
         
         var queryArgs = UUQueryStringArgs()
@@ -42,9 +42,9 @@ class UUHttpSessionStaticTests: XCTestCase
         }
     }
     
-    func test_getCodableArray() async
+    func test_getCodableArray() async throws
     {
-        let cfg = UULoadNetworkingTestConfig()
+        let cfg = try loadTestConfig()
         let url = cfg.echoJsonUrl
         
         var queryArgs = UUQueryStringArgs()

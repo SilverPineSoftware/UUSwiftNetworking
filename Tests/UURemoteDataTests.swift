@@ -15,21 +15,15 @@ import UUSwiftTestCore
 
 
 @MainActor
-class UURemoteDataTests: XCTestCase
+class UURemoteDataTests: BaseOnlineTest
 {
-    private let testFileName = "uu_remote_data_test.jpg"
-    
     override func setUp()
     {
         super.setUp()
         
-        let logger = UULogger.console
-        logger.logLevel = .debug
-        UULog.setLogger(logger)
-        
-        remoteDataForTest.dataCache.clearCache()
-        remoteDataForTest.maxActiveRequests = 50
-        remoteDataForTest.dataCache.contentExpirationLength = 30 * 24 * 60 * 60
+        //remoteDataForTest.dataCache.clearCache()
+        //remoteDataForTest.maxActiveRequests = 50
+        //remoteDataForTest.dataCache.contentExpirationLength = 30 * 24 * 60 * 60
     }
     
     open var remoteDataForTest: UURemoteData
@@ -46,8 +40,8 @@ class UURemoteDataTests: XCTestCase
     
     private var testUrl: String
     {
-        let cfg = UULoadNetworkingTestConfig()
-        return "\(cfg.downloadFileUrl)?uu_file=\(testFileName)"
+        let cfg = try? loadTestConfig()
+        return cfg?.fullDownloadFileUrl ?? ""
     }
     
     override func tearDown()
@@ -119,9 +113,9 @@ class UURemoteDataTests: XCTestCase
         }
     }
     
-    func test_fetchExisting()
+    func test_fetchExisting() throws
     {
-        uploadTestPhoto()
+        try uploadTestPhoto()
         
         let remoteData = remoteDataForTest
         let key = testUrl
@@ -276,11 +270,11 @@ class UURemoteDataTests: XCTestCase
     }
     
     
-    private func uploadTestPhoto()
+    private func uploadTestPhoto() throws
     {
         let exp = uuExpectationForMethod()
         
-        let cfg = UULoadNetworkingTestConfig()
+        let cfg = try loadTestConfig()
         let url = cfg.formPostUrl
         
         let request = UUHttpRequest(url: url, method: .post)
@@ -288,9 +282,9 @@ class UURemoteDataTests: XCTestCase
         let form = UUHttpForm()
         form.add(field: "FileType", value: "Image", contentType: "text/plain")
         
-        let fileName = testFileName
+        let fileName = cfg.uploadImageFileName
         
-        if let filePath = cfg.uploadFilePath,
+        if let filePath = cfg.uploadImageFilePath,
            let data = try? Data(contentsOf: filePath)
         {
             form.addFile(fieldName: "uu_file", fileName: fileName, contentType: "image/jpeg", fileData: data)
@@ -307,13 +301,13 @@ class UURemoteDataTests: XCTestCase
         
         uuWaitForExpectations()
         
-        verifyUploadedFile(fileName)
+        try verifyUploadedFile(fileName)
     }
     
-    private func verifyUploadedFile(_ fileName: String)
+    private func verifyUploadedFile(_ fileName: String) throws
     {
         let exp = uuExpectationForMethod()
-        let cfg = UULoadNetworkingTestConfig()
+        let cfg = try loadTestConfig()
         let url = "\(cfg.downloadFileUrl)?uu_file=\(fileName)"
         
         let request = UUHttpRequest(url: url, method: .get)
