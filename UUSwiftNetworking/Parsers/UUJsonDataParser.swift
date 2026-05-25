@@ -10,11 +10,14 @@ import UUSwiftCore
 
 fileprivate let LOG_TAG = "UUJsonDataParser"
 
+/// Parses JSON response bodies into Foundation objects (`[String: Any]`, `[Any]`, `NSNumber`, etc.).
+///
+/// Uses ``JSONSerialization`` with ``JSONSerialization.ReadingOptions.fragmentsAllowed``.
+/// Returns `nil` when JSON is malformed (errors are logged, not surfaced as ``UUHttpResponse`` errors).
 open class UUJsonDataParser: UUHttpDataParser
 {
     public required init()
     {
-        
     }
     
     open func parse(data: Data, response: HTTPURLResponse, request: URLRequest) async -> Any?

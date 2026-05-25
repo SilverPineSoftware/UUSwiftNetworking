@@ -10,11 +10,13 @@ import UUSwiftCore
 
 fileprivate let LOG_TAG = "UUFormEncodedDataParser"
 
+/// Parses `application/x-www-form-urlencoded` bodies into `[String: Any]` key/value pairs.
+///
+/// Values are percent-decoded when possible. Keys without `=` are ignored.
 open class UUFormEncodedDataParser: UUHttpDataParser
 {
     public required init()
     {
-        
     }
     
     open func parse(data: Data, response: HTTPURLResponse, request: URLRequest) async -> Any?

@@ -10,6 +10,9 @@ import UUSwiftCore
 
 fileprivate let LOG_TAG = "UUPassthroughResponseHandler"
 
+/// Response handler that always parses bodies as raw ``Data`` via ``UUBinaryDataParser``.
+///
+/// Use for file downloads, binary APIs, or when MIME-based dispatch is not desired.
 open class UUPassthroughResponseHandler: UUBaseResponseHandler
 {
     public required init()

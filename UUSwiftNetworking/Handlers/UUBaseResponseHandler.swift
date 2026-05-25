@@ -10,11 +10,19 @@ import UUSwiftCore
 
 fileprivate let LOG_TAG = "UUBaseResponseHandler"
 
+/// Default ``UUHttpResponseHandler`` implementation used by ``UUHttpRequest``.
+///
+/// Behavior:
+/// - Wraps URLSession transport errors with ``UUErrorFactory/wrapNetworkError(_:_:)``
+/// - Selects ``successParser`` vs ``errorParser`` based on HTTP status (see ``Int/uuIsHttpSuccess()``)
+/// - If a parser returns an ``Error``, that error becomes ``UUHttpResponse/httpError`` (parsed body cleared)
+/// - For non-success status codes, synthesizes an HTTP error when the parser did not already return one
+///
+/// Default parsers are ``UUMimeTypeDataParser`` for both success and error paths.
 open class UUBaseResponseHandler: UUHttpResponseHandler
 {
     public required init()
     {
-        
     }
     
     open var successParser: UUHttpDataParser

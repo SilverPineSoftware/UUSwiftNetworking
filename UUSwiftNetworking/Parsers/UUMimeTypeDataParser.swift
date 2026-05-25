@@ -10,6 +10,17 @@ import UUSwiftCore
 
 fileprivate let LOG_TAG = "UUMimeTypeDataParser"
 
+/// Composite parser that delegates to a MIME-specific ``UUHttpDataParser`` based on `HTTPURLResponse.mimeType`.
+///
+/// Default registrations (see ``init()``):
+/// - JSON → ``UUJsonDataParser``
+/// - HTML / plain text → ``UUTextDataParser``
+/// - Octet-stream → ``UUBinaryDataParser``
+/// - PNG / JPEG → ``UUImageDataParser``
+/// - Form URL encoded → ``UUFormEncodedDataParser``
+///
+/// Register additional types with ``registerResponseHandler(_:_:)``.
+/// Used as the default success and error parser on ``UUBaseResponseHandler``.
 open class UUMimeTypeDataParser: UUHttpDataParser
 {
     private var parsers: [String:UUHttpDataParser] = [:]
@@ -23,6 +34,7 @@ open class UUMimeTypeDataParser: UUHttpDataParser
         registerResponseHandler([UUContentType.formEncoded], UUFormEncodedDataParser())
     }
     
+    /// Associates one or more MIME type strings with a parser instance.
     public func registerResponseHandler(_ mimeTypes: [String], _ parser: UUHttpDataParser)
     {
         for mimeType in mimeTypes

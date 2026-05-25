@@ -10,11 +10,13 @@ import UUSwiftCore
 
 fileprivate let LOG_TAG = "UUTextDataParser"
 
+/// Decodes response body bytes into a `String` using UTF-8 or the encoding declared on the HTTP response.
+///
+/// Returns `nil` when the bytes cannot be decoded with the resolved encoding.
 open class UUTextDataParser: UUHttpDataParser
 {
     public required init()
     {
-        
     }
     
     open func parse(data: Data, response: HTTPURLResponse, request: URLRequest) async -> Any?

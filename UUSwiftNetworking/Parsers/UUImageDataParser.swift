@@ -10,11 +10,11 @@ import UUSwiftCore
 
 fileprivate let LOG_TAG = "UUImageDataParser"
 
+/// Builds a platform image (`UIImage` / `NSImage` via ``UUImage``) from raw image response bytes.
 open class UUImageDataParser: UUHttpDataParser
 {
     public required init()
     {
-        
     }
     
     open func parse(data: Data, response: HTTPURLResponse, request: URLRequest) async -> Any?
