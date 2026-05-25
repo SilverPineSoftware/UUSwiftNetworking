@@ -82,7 +82,7 @@ final class UURemoteApiTests: XCTestCase
 
         var apiAuthorizationNeeded = false
         var renewResult = UURenewAuthorizationResponse(didAttempt: true, error: nil)
-        /// Delay after optional release gate, in milliseconds (matches Kotlin tests).
+        /// Delay after optional release gate, in milliseconds.
         var renewDelayMs: UInt64 = 50
         var blockRenewalUntilReleased = false
 
