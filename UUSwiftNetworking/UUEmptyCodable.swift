@@ -1,12 +1,12 @@
 //
-//  UUEmptyResponse.swift
-//  
+//  UUEmptyCodable.swift
+//
 //
 //  Created by Ryan DeVore on 2/17/23.
 //
 
 import Foundation
 
-public class UUEmptyResponse: Codable
+public class UUEmptyCodable: Codable
 {
 }
