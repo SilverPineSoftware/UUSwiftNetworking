@@ -113,7 +113,7 @@ class UUHttpErrorHandlingTests: BaseOnlineTest
         queryArgs["numberField"] = 57
         
         let request = UUHttpRequest(url: url, method: .get, queryArguments: queryArgs)
-        let handler = UUJsonCodableResponseHandler<FakeCodable, UUEmptyResponse>()
+        let handler = UUJsonCodableResponseHandler<FakeCodable, UUEmptyCodable>()
 
         request.responseHandler = handler
         

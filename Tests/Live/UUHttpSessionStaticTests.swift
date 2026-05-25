@@ -25,7 +25,7 @@ class UUHttpSessionStaticTests: BaseOnlineTest
         var headers = UUHttpHeaders()
         headers["UU-Return-Object-Count"] = 1
         
-        let req = UUCodableHttpRequest<SimpleObject, UUEmptyResponse>(
+        let req = UUCodableHttpRequest<SimpleObject, UUEmptyCodable>(
             url: url,
             method: .get,
             queryArguments: queryArgs,
@@ -54,7 +54,7 @@ class UUHttpSessionStaticTests: BaseOnlineTest
         var headers = UUHttpHeaders()
         headers["UU-Return-Object-Count"] = 3
         
-        let req = UUCodableHttpRequest<[SimpleObject], UUEmptyResponse>(
+        let req = UUCodableHttpRequest<[SimpleObject], UUEmptyCodable>(
             url: url,
             method: .get,
             queryArguments: queryArgs,

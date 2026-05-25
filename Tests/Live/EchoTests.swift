@@ -28,7 +28,7 @@ final class EchoTests: BaseOnlineTest
         queryArgs["fieldOne"] = "GetValue"
         queryArgs["fieldTwo"] = 42
         
-        let req = UUCodableHttpRequest<EchoObject, UUEmptyResponse>(
+        let req = UUCodableHttpRequest<EchoObject, UUEmptyCodable>(
             url: cfg.echoControllerJsonUrl,
             method: .get,
             queryArguments: queryArgs)
@@ -54,7 +54,7 @@ final class EchoTests: BaseOnlineTest
         queryArgs["fieldOne"] = "StatusTest"
         queryArgs["fieldTwo"] = 1
         
-        let req = UUCodableHttpRequest<EchoObject, UUEmptyResponse>(
+        let req = UUCodableHttpRequest<EchoObject, UUEmptyCodable>(
             url: cfg.echoControllerJsonUrl,
             method: .get,
             queryArguments: queryArgs,
@@ -80,7 +80,7 @@ final class EchoTests: BaseOnlineTest
         queryArgs["fieldOne"] = "ArrayTest"
         queryArgs["fieldTwo"] = 7
         
-        let req = UUCodableHttpRequest<[EchoObject], UUEmptyResponse>(
+        let req = UUCodableHttpRequest<[EchoObject], UUEmptyCodable>(
             url: cfg.echoControllerJsonUrl,
             method: .get,
             queryArguments: queryArgs,
@@ -103,7 +103,7 @@ final class EchoTests: BaseOnlineTest
         let cfg = try loadTestConfig()
         let session = uuHttpSessionForTest
         
-        let req = UUCodableHttpRequest<EchoObject, UUEmptyResponse>(
+        let req = UUCodableHttpRequest<EchoObject, UUEmptyCodable>(
             url: cfg.echoControllerJsonUrl,
             method: .get,
             queryArguments: ["fieldOne": "ErrorPath", "fieldTwo": 0],
@@ -130,7 +130,7 @@ final class EchoTests: BaseOnlineTest
         let payload = EchoObject(fieldOne: "PostValue", fieldTwo: 99)
         let body = try! JSONEncoder().encode(payload)
         
-        let req = UUCodableHttpRequest<EchoObject, UUEmptyResponse>(
+        let req = UUCodableHttpRequest<EchoObject, UUEmptyCodable>(
             url: cfg.echoControllerJsonUrl,
             method: .post,
             headers: echoHeaders(),
@@ -157,7 +157,7 @@ final class EchoTests: BaseOnlineTest
         let payload = EchoObject(fieldOne: "PostArray", fieldTwo: 2)
         let body = try! JSONEncoder().encode(payload)
         
-        let req = UUCodableHttpRequest<[EchoObject], UUEmptyResponse>(
+        let req = UUCodableHttpRequest<[EchoObject], UUEmptyCodable>(
             url: cfg.echoControllerJsonUrl,
             method: .post,
             headers: echoHeaders(statusCode: 200, returnObjectCount: 2),
@@ -186,7 +186,7 @@ final class EchoTests: BaseOnlineTest
         let payload = EchoObject(fieldOne: "PutValue", fieldTwo: 55)
         let body = try! JSONEncoder().encode(payload)
         
-        let req = UUCodableHttpRequest<EchoObject, UUEmptyResponse>(
+        let req = UUCodableHttpRequest<EchoObject, UUEmptyCodable>(
             url: cfg.echoControllerJsonUrl,
             method: .put,
             headers: echoHeaders(),
@@ -213,7 +213,7 @@ final class EchoTests: BaseOnlineTest
         let payload = EchoObject(fieldOne: "PutArray", fieldTwo: 8)
         let body = try! JSONEncoder().encode(payload)
         
-        let req = UUCodableHttpRequest<[EchoObject], UUEmptyResponse>(
+        let req = UUCodableHttpRequest<[EchoObject], UUEmptyCodable>(
             url: cfg.echoControllerJsonUrl,
             method: .put,
             headers: echoHeaders(statusCode: 202, returnObjectCount: 4),
