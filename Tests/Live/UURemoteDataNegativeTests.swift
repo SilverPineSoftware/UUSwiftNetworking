@@ -5,18 +5,14 @@
 //  Created by Ryan DeVore on 09/01/22.
 //
 
-#if _REFACTOR_IN_PROGRESS_IGNORE_ME
-
 import XCTest
 import UUSwiftCore
 import UUSwiftTestCore
 
 @testable import UUSwiftNetworking
 
-class UURemoteDataNegativeTests: XCTestCase
+class UURemoteDataNegativeTests: BaseOnlineTest
 {
-    private let testFileName = "uu_remote_data_test.jpg"
-    
     override func setUp()
     {
         super.setUp()
@@ -29,8 +25,8 @@ class UURemoteDataNegativeTests: XCTestCase
     
     private var testUrl: String
     {
-        let cfg = UULoadNetworkingTestConfig()
-        return "\(cfg.downloadFileUrl)?uu_file=\(testFileName)"
+        let cfg = try? loadTestConfig()
+        return cfg?.fullDownloadFileUrl ?? ""
     }
     
     override func tearDown()
@@ -115,8 +111,5 @@ class UURemoteDataNegativeTests: XCTestCase
         
         return results
     }
-    
-    
 }
 
-#endif

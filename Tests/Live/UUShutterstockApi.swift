@@ -5,8 +5,6 @@
 //  Created by Ryan DeVore on 10/18/21.
 //
 
-#if _REFACTOR_IN_PROGRESS_IGNORE_ME
-
 import Foundation
 import UUSwiftCore
 import UUSwiftNetworking
@@ -142,14 +140,13 @@ fileprivate func createSessionConfiguration() -> URLSessionConfiguration
 
 
 
-class FooApi: UURemoteApi
-{
-    required init()
-    {
-        let sessionConfig = createSessionConfiguration()
-        let sessionDelegate = InsecureSessionDelegate()
-        super.init(session: UUHttpSession(configuration: sessionConfig, delegate: sessionDelegate))
-    }
-}
+//class FooApi: UURemoteApi
+//{
+//    required init()
+//    {
+//        let sessionConfig = createSessionConfiguration()
+//        let sessionDelegate = InsecureSessionDelegate()
+//        super.init(session: UUHttpSession(configuration: sessionConfig, delegate: sessionDelegate))
+//    }
+//}
 
-#endif

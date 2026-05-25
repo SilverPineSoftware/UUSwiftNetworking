@@ -36,7 +36,32 @@ public protocol UURemoteDataProtocol
 
 public typealias UUDataLoadedCompletionBlock = (Data?, Error?) -> Void
 
-public class UURemoteData: UURemoteDataProtocol
+private struct CoalescedDownloadResponse: @unchecked Sendable
+{
+    let response: UUHttpResponse
+}
+
+private actor UURemoteDataPendingQueue
+{
+    private var pendingDownloads: [String] = []
+
+    func queuePending(for key: String)
+    {
+        if let index = pendingDownloads.firstIndex(of: key)
+        {
+            pendingDownloads.remove(at: index)
+        }
+
+        pendingDownloads.insert(key, at: 0)
+    }
+
+    func dequeuePending() -> String?
+    {
+        pendingDownloads.popLast()
+    }
+}
+
+public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
 {
     public struct Notifications
     {
@@ -56,13 +81,10 @@ public class UURemoteData: UURemoteDataProtocol
         public static let Error = "UURemoteDataErrorKey"
     }
 
-	private var activeDownloads : [String : UUHttpRequest] = [:]
-    private var activeDownloadsLock = NSRecursiveLock()
-    
-    private var pendingDownloads : [String] = []
-    private var pendingDownloadsLock = NSRecursiveLock()
-    
-	private var httpRequestLookups : [String : [UUDataLoadedCompletionBlock]] = [:]
+    private let downloadCoalescer = UUAsyncCoalescer<String, CoalescedDownloadResponse>()
+    private let pendingQueue = UURemoteDataPendingQueue()
+
+    private var httpRequestLookups: [String: [UUDataLoadedCompletionBlock]] = [:]
     private var httpRequestLookupsLock = NSRecursiveLock()
     
     // Default to 4 active requests at a time...
@@ -107,66 +129,22 @@ public class UURemoteData: UURemoteDataProtocol
 				return data
 			}
         }
-        
-        if (self.isDownloadActive(for: key))
-        {
-            // An active UUHttpSession means a request is currently fetching the resource, so
-            // no need to re-fetch
-            //UUDebugLog("Download pending for \(key)")
-            self.appendRemoteHandler(for: key, handler: remoteLoadCompletion)
 
-            return nil
-        }
-        
-        if (self.activeDownloadCount() > self.maxActiveRequests)
-        {
-            self.queuePendingRequest(for: key, remoteLoadCompletion: remoteLoadCompletion)
-            return nil
-        }
-        
-        let request = UUHttpRequest(url: key)
-        request.responseHandler = UUPassthroughResponseHandler()
-        request.timeout = networkTimeout
-        
-        executeRequest(request)
-        { response in
-            self.handleDownloadResponse(response, key)
-            self.checkForPendingRequests()
-        }
+        appendRemoteHandler(for: key, handler: remoteLoadCompletion)
 
-		self.setActiveDownload(request, forKey: key)
-        self.appendRemoteHandler(for: key, handler: remoteLoadCompletion)
-        
-        return nil
-    }
-    
-    internal func executeRequest(_ request: UUHttpRequest, completion: @escaping (UUHttpResponse) -> Void)
-    {
-        nonisolated(unsafe) let req = request
-        nonisolated(unsafe) let api = remoteApi
-        nonisolated(unsafe) let done = completion
-        
         Task
         {
-            let response = await api.executeRequest(req)
-            done(response)
+            await beginDownloadIfNeeded(for: key)
         }
-    
-    }
-    
-    private func checkForPendingRequests()
-    {
-        while (activeDownloadCount() < self.maxActiveRequests)
-        {
-            guard let next = self.dequeuePending() else
-            {
-                break
-            }
-            
-            _ = self.data(for: next)
-        }
+
+        return nil
     }
 
+    public func isDownloadActive(for key: String) -> Bool
+    {
+        downloadCoalescer.isInFlightSync(key: key)
+    }
+    
     public func metaData(for key: String) -> [String:Any]
     {
         return dataCache.metaData(for: key)
@@ -180,41 +158,95 @@ public class UURemoteData: UURemoteDataProtocol
     ////////////////////////////////////////////////////////////////////////////
     // Private Implementation
     ////////////////////////////////////////////////////////////////////////////
+
+    private func beginDownloadIfNeeded(for key: String) async
+    {
+        if downloadCoalescer.isInFlightSync(key: key)
+        {
+            return
+        }
+
+        if downloadCoalescer.syncInFlightCount > maxActiveRequests
+        {
+            await pendingQueue.queuePending(for: key)
+            return
+        }
+
+        await performCoalescedDownload(for: key)
+    }
+
+    private func performCoalescedDownload(for key: String) async
+    {
+        nonisolated(unsafe) let api = remoteApi
+        let timeout = networkTimeout
+
+        let coalesced = try? await downloadCoalescer.run(key: key)
+        {
+            let request = UUHttpRequest(url: key)
+            request.responseHandler = UUPassthroughResponseHandler()
+            request.timeout = timeout
+            let response = await api.executeRequest(request)
+            return CoalescedDownloadResponse(response: response)
+        }
+
+        if let coalesced
+        {
+            handleDownloadResponse(coalesced.response, key)
+        }
+
+        await checkForPendingRequests()
+    }
+
+    internal func executeRequest(_ request: UUHttpRequest, completion: @escaping (UUHttpResponse) -> Void)
+    {
+        nonisolated(unsafe) let req = request
+        nonisolated(unsafe) let api = remoteApi
+        nonisolated(unsafe) let done = completion
+
+        Task
+        {
+            let response = await api.executeRequest(req)
+            done(response)
+        }
+    }
+
+    private func checkForPendingRequests() async
+    {
+        while downloadCoalescer.syncInFlightCount < maxActiveRequests
+        {
+            guard let next = await pendingQueue.dequeuePending() else
+            {
+                break
+            }
+
+            await beginDownloadIfNeeded(for: next)
+        }
+    }
+
     private func handleDownloadResponse(_ response: UUHttpResponse, _ key: String)
     {
-        defer { httpRequestLookupsLock.unlock() }
-        httpRequestLookupsLock.lock()
-        
-        var md : [String:Any] = [:]
+        let handlers = takeRemoteHandlers(for: key)
+
+        var md: [String: Any] = [:]
         md[UURemoteData.NotificationKeys.RemotePath] = key
-        
+
         if (response.httpError == nil && response.rawResponse != nil)
         {
             let responseData = response.rawResponse!
-            
+
             dataCache.set(data: responseData, for: key)
             updateMetaDataFromResponse(response, for: key)
             notifyDataDownloaded(metaData: md)
-            
-            if let handlers = self.httpRequestLookups[key]
-            {
-                notifyRemoteDownloadHandlers(key: key, data: responseData, error: nil, handlers: handlers)
-            }
+
+            notifyRemoteDownloadHandlers(key: key, data: responseData, error: nil, handlers: handlers)
         }
         else
         {
             UULog.debug(tag: LOG_TAG, message: "Remote download failed!\n\nPath: \(key)\nStatusCode: \(String(describing: response.httpResponse?.statusCode))\nError: \(String(describing: response.httpError))\n")
-            
-            notifyDownloadFailed(key, response.httpError)
-            
-            if let handlers = self.httpRequestLookups[key]
-            {
-                notifyRemoteDownloadHandlers(key: key, data: nil, error: response.httpError, handlers: handlers)
-            }
-        }
 
-		self.removeDownload(forKey: key)
-        _ = self.httpRequestLookups.removeValue(forKey: key)
+            notifyDownloadFailed(key, response.httpError)
+            notifyRemoteDownloadHandlers(key: key, data: nil, error: response.httpError, handlers: handlers)
+        }
     }
     
     private func updateMetaDataFromResponse(_ response: UUHttpResponse, for key: String)
@@ -244,7 +276,7 @@ public class UURemoteData: UURemoteDataProtocol
     {
         DispatchQueue.global(qos: .userInitiated).async
         {
-            var metaData : [String:Any] = [:]
+            var metaData: [String: Any] = [:]
             metaData[UURemoteData.NotificationKeys.RemotePath] = key
             metaData[NotificationKeys.Error] = error
             NotificationCenter.default.post(name: Notifications.DataDownloadFailed, object: nil, userInfo: metaData)
@@ -268,93 +300,27 @@ public class UURemoteData: UURemoteDataProtocol
             handler(data, error)
         }
     }
-}
 
-extension UURemoteData
-{
-	private func setActiveDownload(_ request : UUHttpRequest, forKey: String)
+    private func appendRemoteHandler(for key: String, handler: UUDataLoadedCompletionBlock?)
     {
-        defer { activeDownloadsLock.unlock() }
-        activeDownloadsLock.lock()
-        
-        self.activeDownloads[forKey] = request
-	}
-
-	private func removeDownload(forKey: String)
-    {
-        defer { activeDownloadsLock.unlock() }
-        activeDownloadsLock.lock()
-        
-        _ = self.activeDownloads.removeValue(forKey: forKey)
-	}
-
-	private func activeDownloadCount() -> Int
-	{
-        defer { activeDownloadsLock.unlock() }
-        activeDownloadsLock.lock()
-        
-        return self.activeDownloads.count
-	}
-
-	public func isDownloadActive(for key: String) -> Bool
-	{
-        defer { activeDownloadsLock.unlock() }
-        activeDownloadsLock.lock()
-        
-		return (activeDownloads[key] != nil)
-	}
-
-	private func pendingDownloadCount() -> Int
-	{
-        defer { pendingDownloadsLock.unlock() }
-        pendingDownloadsLock.lock()
-        
-		return self.pendingDownloads.count
-	}
-
-	private func dequeuePending() -> String?
-	{
-        defer { pendingDownloadsLock.unlock() }
-        pendingDownloadsLock.lock()
-        
-		return self.pendingDownloads.popLast()
-	}
-
-	private func queuePendingRequest(for key: String, remoteLoadCompletion: UUDataLoadedCompletionBlock?)
-	{
-        defer { pendingDownloadsLock.unlock() }
-        pendingDownloadsLock.lock()
-        
-        if let index = self.pendingDownloads.firstIndex(of: key)
-        {
-            self.pendingDownloads.remove(at: index)
-        }
-        
-        self.pendingDownloads.insert(key, at: 0)
-		
-		appendRemoteHandler(for: key, handler: remoteLoadCompletion)
-	}
-
-	private func appendRemoteHandler(for key: String, handler: UUDataLoadedCompletionBlock?)
-	{
         defer { httpRequestLookupsLock.unlock() }
         httpRequestLookupsLock.lock()
-        
+
         if let remoteHandler = handler
         {
-            var handlers = self.httpRequestLookups[key]
-            if (handlers == nil)
-            {
-                handlers = []
-            }
-
-            if (handlers != nil)
-            {
-                handlers!.append(remoteHandler)
-                self.httpRequestLookups[key] = handlers!
-            }
+            var handlers = httpRequestLookups[key] ?? []
+            handlers.append(remoteHandler)
+            httpRequestLookups[key] = handlers
         }
-	}
+    }
+
+    private func takeRemoteHandlers(for key: String) -> [UUDataLoadedCompletionBlock]
+    {
+        defer { httpRequestLookupsLock.unlock() }
+        httpRequestLookupsLock.lock()
+
+        return httpRequestLookups.removeValue(forKey: key) ?? []
+    }
 }
 
 extension Notification
