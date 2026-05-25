@@ -61,6 +61,12 @@ public struct TestConfig: Codable, CustomStringConvertible
     {
         return "\(apiHost)/echo/json"
     }
+
+    /// Routed `TestController` (`GET` / `POST` on `/test/single`, `GET` on `/test/multiple`).
+    var testApiUrl: String
+    {
+        return "\(apiHost)/test"
+    }
     
     var invalidJsonUrl: String
     {
