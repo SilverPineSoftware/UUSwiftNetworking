@@ -12,15 +12,11 @@ import UUSwiftCore
 
 fileprivate let LOG_TAG = "UUHttpSession"
 
-
-@objc
 public class UUHttpSession: NSObject
 {
     private let urlSession: URLSession
     private let sessionConfiguration: URLSessionConfiguration
-    private var activeTasks : [URLSessionTask] = []
-    private var activeTasksLock = NSRecursiveLock()
-    
+
     nonisolated(unsafe) public static let shared = UUHttpSession()
     
     public static var defaultConfiguration: URLSessionConfiguration
@@ -140,29 +136,12 @@ public class UUHttpSession: NSObject
         }
     }
     
-    private func addActiveTask(_ task : URLSessionTask)
-    {
-        defer { activeTasksLock.unlock() }
-        activeTasksLock.lock()
-        
-        self.activeTasks.append(task)
-    }
-    
-    private func removeActiveTask(_ task : URLSessionTask)
-    {
-        defer { activeTasksLock.unlock() }
-        activeTasksLock.lock()
-        
-        self.activeTasks.removeAll(where: { $0.taskIdentifier == task.taskIdentifier })
-    }
-    
     public func cancelAll()
     {
-        defer { activeTasksLock.unlock() }
-        activeTasksLock.lock()
-        
-        activeTasks.forEach({ $0.cancel() })
-        activeTasks.removeAll()
+        urlSession.getAllTasks
+        { tasks in
+            tasks.forEach { $0.cancel() }
+        }
     }
 }
 

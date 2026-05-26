@@ -1,0 +1,233 @@
+//
+//  UUHttpSessionCancelAllTests.swift
+//  UUSwiftNetworking
+//
+
+import XCTest
+import UUSwiftTestCore
+@testable import UUSwiftNetworking
+
+extension UUHttpSession: @unchecked Sendable {}
+extension UUHttpRequest: @unchecked Sendable {}
+
+private let cancelAllTestHost = "uu-cancel-all-test.local"
+
+/// URLProtocol that stays open until the task is cancelled (or completes via `stopLoading`).
+private final class HangingURLProtocol: URLProtocol
+{
+    private static let sync = NSLock()
+    nonisolated(unsafe) private static var activeProtocols: [HangingURLProtocol] = []
+
+    override class func canInit(with request: URLRequest) -> Bool
+    {
+        request.url?.host == cancelAllTestHost
+    }
+
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest
+    {
+        request
+    }
+
+    override func startLoading()
+    {
+        Self.sync.lock()
+        Self.activeProtocols.append(self)
+        Self.sync.unlock()
+    }
+
+    override func stopLoading()
+    {
+        Self.sync.lock()
+        Self.activeProtocols.removeAll { $0 === self }
+        Self.sync.unlock()
+
+        let error = NSError(
+            domain: NSURLErrorDomain,
+            code: NSURLErrorCancelled,
+            userInfo: [NSLocalizedDescriptionKey: "cancelled"])
+        client?.urlProtocol(self, didFailWithError: error)
+    }
+
+    static var activeCount: Int
+    {
+        sync.lock()
+        defer { sync.unlock() }
+        return activeProtocols.count
+    }
+}
+
+/// URLProtocol that returns a minimal JSON body immediately.
+private final class ImmediateJSONURLProtocol: URLProtocol
+{
+    override class func canInit(with request: URLRequest) -> Bool
+    {
+        request.url?.host == cancelAllTestHost
+    }
+
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest
+    {
+        request
+    }
+
+    override func startLoading()
+    {
+        let body = Data("{\"ok\":true}".utf8)
+        let response = HTTPURLResponse(
+            url: request.url!,
+            statusCode: 200,
+            httpVersion: nil,
+            headerFields: [UUHeader.contentType: UUContentType.applicationJson])!
+        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+        client?.urlProtocol(self, didLoad: body)
+        client?.urlProtocolDidFinishLoading(self)
+    }
+
+    override func stopLoading()
+    {
+    }
+}
+
+private func makeCancelAllTestSession(protocolClasses: [AnyClass]) -> UUHttpSession
+{
+    let configuration = URLSessionConfiguration.ephemeral
+    configuration.protocolClasses = protocolClasses
+    configuration.timeoutIntervalForRequest = 60
+    configuration.timeoutIntervalForResource = 60
+    return UUHttpSession(configuration: configuration)
+}
+
+private func hangingRequestURL(path: String = "/slow") -> String
+{
+    "https://\(cancelAllTestHost)\(path)"
+}
+
+final class UUHttpSessionCancelAllTests: XCTestCase
+{
+    // MARK: - cancelAll
+
+    func test_cancelAll_cancelsInFlightRequest() async throws
+    {
+        let session = makeCancelAllTestSession(protocolClasses: [HangingURLProtocol.self])
+        let request = UUHttpRequest(url: hangingRequestURL())
+        let box = HttpResponseBox()
+
+        await withTaskGroup(of: Void.self)
+        { group in
+            group.addTask
+            {
+                box.value = await session.executeRequest(request)
+            }
+            group.addTask
+            {
+                await waitUntil(timeout: 2)
+                {
+                    HangingURLProtocol.activeCount > 0
+                }
+                session.cancelAll()
+            }
+            for await _ in group { }
+        }
+
+        let response = try XCTUnwrap(box.value)
+        UUAssertResponseError(response, .userCancelled)
+    }
+
+    func test_cancelAll_cancelsMultipleInFlightRequests() async throws
+    {
+        let session = makeCancelAllTestSession(protocolClasses: [HangingURLProtocol.self])
+        let box1 = HttpResponseBox()
+        let box2 = HttpResponseBox()
+
+        await withTaskGroup(of: Void.self)
+        { group in
+            group.addTask
+            {
+                box1.value = await session.executeRequest(UUHttpRequest(url: hangingRequestURL(path: "/a")))
+            }
+            group.addTask
+            {
+                box2.value = await session.executeRequest(UUHttpRequest(url: hangingRequestURL(path: "/b")))
+            }
+            group.addTask
+            {
+                await waitUntil(timeout: 2)
+                {
+                    HangingURLProtocol.activeCount >= 2
+                }
+                session.cancelAll()
+            }
+            for await _ in group { }
+        }
+
+        UUAssertResponseError(try XCTUnwrap(box1.value), .userCancelled)
+        UUAssertResponseError(try XCTUnwrap(box2.value), .userCancelled)
+    }
+
+    func test_cancelAll_allowsSubsequentRequestToComplete() async throws
+    {
+        let hangingSession = makeCancelAllTestSession(protocolClasses: [HangingURLProtocol.self])
+        let hungBox = HttpResponseBox()
+
+        await withTaskGroup(of: Void.self)
+        { group in
+            group.addTask
+            {
+                hungBox.value = await hangingSession.executeRequest(
+                    UUHttpRequest(url: hangingRequestURL(path: "/hang")))
+            }
+            group.addTask
+            {
+                await waitUntil(timeout: 2)
+                {
+                    HangingURLProtocol.activeCount > 0
+                }
+                hangingSession.cancelAll()
+            }
+            for await _ in group { }
+        }
+
+        _ = hungBox.value
+
+        let followUpSession = makeCancelAllTestSession(protocolClasses: [ImmediateJSONURLProtocol.self])
+        let followUp = UUCodableHttpRequest<CancelAllOkResponse, UUEmptyCodable>(
+            url: hangingRequestURL(path: "/ok"))
+        let result = await followUpSession.executeCodableRequest(followUp)
+
+        switch result
+        {
+            case .success(let value):
+                XCTAssertTrue(value.ok)
+            case .failure(let error):
+                XCTFail("Expected success after cancelAll, got \(error)")
+        }
+    }
+}
+
+// MARK: - Helpers
+
+private final class HttpResponseBox: @unchecked Sendable
+{
+    var value: UUHttpResponse?
+}
+
+private struct CancelAllOkResponse: Codable
+{
+    var ok: Bool
+}
+
+private func waitUntil(
+    timeout: TimeInterval,
+    pollInterval: TimeInterval = 0.05,
+    condition: @escaping () -> Bool) async
+{
+    let deadline = Date().addingTimeInterval(timeout)
+    while Date() < deadline
+    {
+        if condition()
+        {
+            return
+        }
+        try? await Task.sleep(nanoseconds: UInt64(pollInterval * 1_000_000_000))
+    }
+    XCTFail("Timed out waiting for condition")
+}

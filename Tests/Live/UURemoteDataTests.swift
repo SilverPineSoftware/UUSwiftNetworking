@@ -335,8 +335,15 @@ class UURemoteDataTests: BaseOnlineTest
             XCTAssertNotNil(response.parsedResponse)
             XCTAssertNil(response.httpError)
             
+            #if canImport(UIKit)
             let img = response.parsedResponse as? UIImage
             XCTAssertNotNil(img)
+            #elseif canImport(AppKit)
+            let img = response.parsedResponse as? NSImage
+            XCTAssertNotNil(img)
+            #else
+            XCTAssertNotNil(response.parsedResponse)
+            #endif
             
             exp.fulfill()
         }
