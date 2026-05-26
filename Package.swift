@@ -7,7 +7,7 @@ let package = Package(
 	name: "UUSwiftNetworking",
 	platforms: [
 		.iOS(.v15),
-		.macOS(.v10_15)
+		.macOS(.v11)
 	],
 
 	products: [
