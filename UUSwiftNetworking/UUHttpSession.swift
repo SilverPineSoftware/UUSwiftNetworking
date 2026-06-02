@@ -12,7 +12,7 @@ import UUSwiftCore
 
 fileprivate let LOG_TAG = "UUHttpSession"
 
-public class UUHttpSession: NSObject
+public class UUHttpSession: NSObject, @unchecked Sendable
 {
     private let urlSession: URLSession
     private let sessionConfiguration: URLSessionConfiguration
@@ -122,18 +122,35 @@ public class UUHttpSession: NSObject
         
         if Task.isCancelled
         {
-            return await request.handleResponse(data: nil, response: nil, error: UUErrorFactory.createError(.userCancelled, nil))
+            return await userCancelledResponse(for: request)
         }
         
+        return await performDataRequest(request, httpRequest: httpRequest)
+    }
+    
+    private func performDataRequest(_ request: UUHttpRequest, httpRequest: URLRequest) async -> UUHttpResponse
+    {
         do
         {
             let (data, urlResponse) = try await urlSession.data(for: httpRequest)
             return await request.handleResponse(data: data, response: urlResponse, error: nil)
         }
+        catch is CancellationError
+        {
+            return await userCancelledResponse(for: request)
+        }
         catch
         {
             return await request.handleResponse(data: nil, response: nil, error: error)
         }
+    }
+    
+    private func userCancelledResponse(for request: UUHttpRequest) async -> UUHttpResponse
+    {
+        return await request.handleResponse(
+            data: nil,
+            response: nil,
+            error: UUErrorFactory.createError(.userCancelled, nil))
     }
     
     public func cancelAll()

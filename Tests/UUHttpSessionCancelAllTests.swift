@@ -2,13 +2,12 @@
 //  UUHttpSessionCancelAllTests.swift
 //  UUSwiftNetworking
 //
+//  Exercises session-wide cancelAll() and Swift Task cancellation.
+//
 
 import XCTest
 import UUSwiftTestCore
 @testable import UUSwiftNetworking
-
-extension UUHttpSession: @unchecked Sendable {}
-extension UUHttpRequest: @unchecked Sendable {}
 
 private let cancelAllTestHost = "uu-cancel-all-test.local"
 
@@ -200,6 +199,87 @@ final class UUHttpSessionCancelAllTests: XCTestCase
             case .failure(let error):
                 XCTFail("Expected success after cancelAll, got \(error)")
         }
+    }
+
+    // MARK: - Task cancellation
+
+    func test_taskCancel_returnsUserCancelled() async throws
+    {
+        let session = makeCancelAllTestSession(protocolClasses: [HangingURLProtocol.self])
+        let request = UUHttpRequest(url: hangingRequestURL(path: "/task-cancel"))
+        let box = HttpResponseBox()
+
+        let work = Task
+        {
+            box.value = await session.executeRequest(request)
+        }
+
+        await waitUntil(timeout: 2)
+        {
+            HangingURLProtocol.activeCount > 0
+        }
+
+        work.cancel()
+        _ = await work.value
+
+        let response = try XCTUnwrap(box.value)
+        UUAssertResponseError(response, .userCancelled)
+        UUAssertError(response.httpError, .userCancelled)
+    }
+
+    func test_taskCancel_executeCodableRequest_returnsUserCancelledFailure() async throws
+    {
+        let session = makeCancelAllTestSession(protocolClasses: [HangingURLProtocol.self])
+        let request = UUCodableHttpRequest<CancelAllOkResponse, UUEmptyCodable>(
+            url: hangingRequestURL(path: "/codable-cancel"))
+
+        let work = Task
+        {
+            await session.executeCodableRequest(request)
+        }
+
+        await waitUntil(timeout: 2)
+        {
+            HangingURLProtocol.activeCount > 0
+        }
+
+        work.cancel()
+
+        let result = await work.value
+        switch result
+        {
+            case .success:
+                XCTFail("Expected cancellation failure")
+            case .failure(let error):
+                UUAssertError(error, .userCancelled)
+        }
+    }
+
+    func test_taskCancel_onlyAffectsCancelledRequest() async throws
+    {
+        let session = makeCancelAllTestSession(protocolClasses: [HangingURLProtocol.self])
+        let requestA = UUHttpRequest(url: hangingRequestURL(path: "/only-a"))
+        let requestB = UUHttpRequest(url: hangingRequestURL(path: "/only-b"))
+        let boxA = HttpResponseBox()
+        let boxB = HttpResponseBox()
+
+        let workA = Task { boxA.value = await session.executeRequest(requestA) }
+        let workB = Task { boxB.value = await session.executeRequest(requestB) }
+
+        await waitUntil(timeout: 2)
+        {
+            HangingURLProtocol.activeCount >= 2
+        }
+
+        workA.cancel()
+        _ = await workA.value
+        UUAssertResponseError(try XCTUnwrap(boxA.value), .userCancelled)
+
+        XCTAssertGreaterThanOrEqual(HangingURLProtocol.activeCount, 1, "Other request should remain in flight")
+
+        workB.cancel()
+        _ = await workB.value
+        UUAssertResponseError(try XCTUnwrap(boxB.value), .userCancelled)
     }
 }
 

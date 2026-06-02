@@ -10,7 +10,7 @@ import UUSwiftCore
 
 fileprivate let LOG_TAG = "UUHttpRequest"
 
-open class UUHttpRequest: NSObject
+open class UUHttpRequest: NSObject, @unchecked Sendable
 {
 	public var url : String = ""
 	public var httpMethod : UUHttpMethod = .get
@@ -20,16 +20,12 @@ open class UUHttpRequest: NSObject
 	public var bodyContentType : String? = nil
     public var timeout : TimeInterval = UUHttpConfig.shared.defaultTimeout
     public var cachePolicy : URLRequest.CachePolicy = UUHttpConfig.shared.defaultCachePolicy
-	//public var processMimeTypes : Bool = true
 	public var startTime : TimeInterval = 0
 	public var httpRequest : URLRequest? = nil
-	public var httpTask : URLSessionTask? = nil
 	public var responseHandler : UUHttpResponseHandler = UUBaseResponseHandler()
 	public var form : UUHttpForm? = nil
     public var authorizationProvider: UUHttpAuthorizationProvider? = nil
     
-    //public var credentials : URLCredential? = nil
-
 	public init(url : String, method: UUHttpMethod = .get, queryArguments: UUQueryStringArgs = [:], headers: UUHttpHeaders = [:], body : Data? = nil, contentType : String? = nil)
 	{
 		super.init()
@@ -48,11 +44,6 @@ open class UUHttpRequest: NSObject
 		self.form = form
 	}
 
-	public func cancel()
-    {
-		self.httpTask?.cancel()
-	}
-    
     func buildURLRequest() -> URLRequest?
     {
         let request = self
