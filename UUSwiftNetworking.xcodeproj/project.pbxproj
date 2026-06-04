@@ -11,6 +11,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		08F546552FCE89BF006EE7C9 /* UUSwiftNetworkingSample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = UUSwiftNetworkingSample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C574961926BB5E7A00CECCC0 /* UUSwiftNetworking.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = UUSwiftNetworking.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C574962B26BB5F3E00CECCC0 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		C574962C26BB5F3E00CECCC0 /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
@@ -29,9 +30,17 @@
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		08F546322FCE87FA006EE7C9 /* UUSwiftNetworking */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (08F546502FCE8811006EE7C9 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = UUSwiftNetworking; sourceTree = "<group>"; };
+		08F546562FCE89BF006EE7C9 /* UUSwiftNetworkingSample */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = UUSwiftNetworkingSample; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		08F546522FCE89BF006EE7C9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C574961626BB5E7A00CECCC0 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -50,6 +59,7 @@
 				C574962D26BB5F3E00CECCC0 /* Package.swift */,
 				C574962B26BB5F3E00CECCC0 /* README.md */,
 				08F546322FCE87FA006EE7C9 /* UUSwiftNetworking */,
+				08F546562FCE89BF006EE7C9 /* UUSwiftNetworkingSample */,
 				C574961A26BB5E7A00CECCC0 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -58,6 +68,7 @@
 			isa = PBXGroup;
 			children = (
 				C574961926BB5E7A00CECCC0 /* UUSwiftNetworking.framework */,
+				08F546552FCE89BF006EE7C9 /* UUSwiftNetworkingSample.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -75,6 +86,28 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		08F546542FCE89BF006EE7C9 /* UUSwiftNetworkingSample */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 08F546782FCE89C1006EE7C9 /* Build configuration list for PBXNativeTarget "UUSwiftNetworkingSample" */;
+			buildPhases = (
+				08F546512FCE89BF006EE7C9 /* Sources */,
+				08F546522FCE89BF006EE7C9 /* Frameworks */,
+				08F546532FCE89BF006EE7C9 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				08F546562FCE89BF006EE7C9 /* UUSwiftNetworkingSample */,
+			);
+			name = UUSwiftNetworkingSample;
+			packageProductDependencies = (
+			);
+			productName = UUSwiftNetworkingSample;
+			productReference = 08F546552FCE89BF006EE7C9 /* UUSwiftNetworkingSample.app */;
+			productType = "com.apple.product-type.application";
+		};
 		C574961826BB5E7A00CECCC0 /* UUSwiftNetworking */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = C574962126BB5E7A00CECCC0 /* Build configuration list for PBXNativeTarget "UUSwiftNetworking" */;
@@ -105,8 +138,12 @@
 		C574961026BB5E7A00CECCC0 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				LastSwiftUpdateCheck = 2650;
 				LastUpgradeCheck = 1250;
 				TargetAttributes = {
+					08F546542FCE89BF006EE7C9 = {
+						CreatedOnToolsVersion = 26.5;
+					};
 					C574961826BB5E7A00CECCC0 = {
 						CreatedOnToolsVersion = 12.5.1;
 						LastSwiftMigration = 1250;
@@ -130,11 +167,19 @@
 			projectRoot = "";
 			targets = (
 				C574961826BB5E7A00CECCC0 /* UUSwiftNetworking */,
+				08F546542FCE89BF006EE7C9 /* UUSwiftNetworkingSample */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		08F546532FCE89BF006EE7C9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C574961726BB5E7A00CECCC0 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -145,6 +190,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		08F546512FCE89BF006EE7C9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C574961526BB5E7A00CECCC0 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -155,6 +207,83 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
+		08F546792FCE89C1006EE7C9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = SVT6H48N2C;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.silverpine.uu.networking.sample.UUSwiftNetworkingSample;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		08F5467A2FCE89C1006EE7C9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = SVT6H48N2C;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.silverpine.uu.networking.sample.UUSwiftNetworkingSample;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		C574961F26BB5E7A00CECCC0 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -337,6 +466,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		08F546782FCE89C1006EE7C9 /* Build configuration list for PBXNativeTarget "UUSwiftNetworkingSample" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				08F546792FCE89C1006EE7C9 /* Debug */,
+				08F5467A2FCE89C1006EE7C9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		C574961326BB5E7A00CECCC0 /* Build configuration list for PBXProject "UUSwiftNetworking" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
