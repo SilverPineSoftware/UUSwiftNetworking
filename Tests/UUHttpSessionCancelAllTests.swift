@@ -75,7 +75,7 @@ private final class ImmediateJSONURLProtocol: URLProtocol
             url: request.url!,
             statusCode: 200,
             httpVersion: nil,
-            headerFields: [UUHeader.contentType: UUContentType.applicationJson])!
+            headerFields: [UUHttpHeader.contentType: UUContentType.applicationJson])!
         client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
         client?.urlProtocol(self, didLoad: body)
         client?.urlProtocolDidFinishLoading(self)

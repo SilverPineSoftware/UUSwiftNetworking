@@ -131,7 +131,7 @@ fileprivate func createSessionConfiguration() -> URLSessionConfiguration
     cfg.timeoutIntervalForRequest = UUHttpConfig.shared.defaultTimeout
     cfg.timeoutIntervalForResource = UUHttpConfig.shared.defaultTimeout
     cfg.httpAdditionalHeaders = [
-        UUHeader.contentType: UUContentType.applicationJson
+        UUHttpHeader.contentType: UUContentType.applicationJson
     ]
     
     cfg.waitsForConnectivity = false
