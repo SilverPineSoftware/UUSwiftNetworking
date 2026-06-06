@@ -44,7 +44,7 @@ open class UUHttpRequest: NSObject, @unchecked Sendable
 		self.form = form
 	}
 
-    func buildURLRequest() -> URLRequest?
+    func buildURLRequest() async -> URLRequest?
     {
         let request = self
         
@@ -85,7 +85,7 @@ open class UUHttpRequest: NSObject, @unchecked Sendable
         req.timeoutInterval = request.timeout
         req.cachePolicy = request.cachePolicy
         
-        self.authorizationProvider?.attachAuthorization(to: self)
+        await self.authorizationProvider?.attachAuthorization(self)
         
         for key in request.headerFields.keys
         {
@@ -106,12 +106,12 @@ open class UUHttpRequest: NSObject, @unchecked Sendable
         
         if (request.body != nil)
         {
-            req.setValue(String.init(format: "%lu", request.body!.count), forHTTPHeaderField: UUHeader.contentLength)
+            req.setValue(String.init(format: "%lu", request.body!.count), forHTTPHeaderField: UUHttpHeader.contentLength)
             req.httpBody = request.body
             
             if (request.bodyContentType != nil && request.bodyContentType!.count > 0)
             {
-                req.addValue(request.bodyContentType!, forHTTPHeaderField: UUHeader.contentType)
+                req.addValue(request.bodyContentType!, forHTTPHeaderField: UUHttpHeader.contentType)
             }
         }
         

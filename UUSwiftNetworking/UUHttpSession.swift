@@ -92,7 +92,7 @@ public class UUHttpSession: NSObject, @unchecked Sendable
     
     public func executeRequest(_ request: UUHttpRequest) async -> UUHttpResponse
     {
-        guard var httpRequest = request.buildURLRequest() else
+        guard var httpRequest = await request.buildURLRequest() else
         {
             return UUHttpResponse(request: request, response: nil, error: UUErrorFactory.createInvalidRequestError(request))
         }
@@ -163,9 +163,9 @@ public class UUHttpSession: NSObject, @unchecked Sendable
 }
 
 // MARK: Codable Convenience Methods
-extension UUHttpSession
+public extension UUHttpSession
 {
-    public func executeCodableRequest<SuccessType: Codable, ErrorType: Codable>(
+    func executeCodableRequest<SuccessType: Codable, ErrorType: Codable>(
         _ request: UUCodableHttpRequest<SuccessType, ErrorType>) async -> Result<SuccessType, Error>
     {
         let result = await executeRequest(request)
@@ -220,9 +220,9 @@ extension UUHttpSession
 }
 
 // MARK: Static Codable Convenience Methods
-extension UUHttpSession
+public extension UUHttpSession
 {
-    public static func executeCodableRequest<SuccessType: Codable, ErrorType: Codable>(
+    static func executeCodableRequest<SuccessType: Codable, ErrorType: Codable>(
         _ request: UUCodableHttpRequest<SuccessType, ErrorType>) async -> Result<SuccessType, Error>
     {
         return await shared.executeCodableRequest(request)

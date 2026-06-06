@@ -34,7 +34,7 @@ public struct UUContentType
 	public static let formEncoded      = "application/x-www-form-urlencoded"
 }
 
-public struct UUHeader
+public struct UUHttpHeader
 {
 	public static let contentLength = "Content-Length"
 	public static let contentType = "Content-Type"
