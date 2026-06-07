@@ -75,10 +75,10 @@ final class UURemoteApiTests: XCTestCase
         private var renewStartedContinuations: [CheckedContinuation<Void, Never>] = []
         private var releaseRenewalContinuation: CheckedContinuation<Void, Never>?
 
-        public override init(session: UUHttpSession = UUHttpSession())
-        {
-            super.init(session: session)
-        }
+//        public override init(session: UUHttpSession = UUHttpSession())
+//        {
+//            super.init(session: session)
+//        }
 
         var apiAuthorizationNeeded = false
         var renewResult = UURenewAuthorizationResponse(didAttempt: true, error: nil)
@@ -194,7 +194,7 @@ final class UURemoteApiTests: XCTestCase
             return remoteApiSuccessResponse(request: req)
         }
 
-        let response = await api.executeRequest(request)
+        let response = await api.executeAuthorizedRequest(request)
 
         XCTAssertEqual(response.parsedResponse as? String, "ok")
         XCTAssertEqual(api.renewCallCount, 0)
@@ -215,7 +215,7 @@ final class UURemoteApiTests: XCTestCase
             return remoteApiSuccessResponse(request: req)
         }
 
-        let response = await api.executeRequest(request)
+        let response = await api.executeAuthorizedRequest(request)
 
         assertSameErrorInstance(response, renewalError)
         XCTAssertEqual(api.renewCallCount, 1)
@@ -235,15 +235,13 @@ final class UURemoteApiTests: XCTestCase
             return remoteApiSuccessResponse(request: req)
         }
 
-        nonisolated(unsafe) let unsafeRequest = request
-
         await withTaskGroup(of: Void.self)
         { group in
             for _ in 0..<8
             {
                 group.addTask
                 {
-                    _ = await api.executeRequest(unsafeRequest)
+                    _ = await api.executeAuthorizedRequest(request)
                 }
             }
             for await _ in group { }
@@ -269,7 +267,7 @@ final class UURemoteApiTests: XCTestCase
             return remoteApiSuccessResponse(request: req, body: "after-renew")
         }
 
-        let response = await api.executeRequest(request)
+        let response = await api.executeAuthorizedRequest(request)
 
         XCTAssertEqual(response.parsedResponse as? String, "after-renew")
         XCTAssertNil(response.httpError)
@@ -290,7 +288,7 @@ final class UURemoteApiTests: XCTestCase
             return remoteApiAuthNeededResponse(request: req)
         }
 
-        let response = await api.executeRequest(request)
+        let response = await api.executeAuthorizedRequest(request)
 
         assertSameErrorInstance(response, renewalError)
         XCTAssertEqual(api.renewCallCount, 1)
@@ -309,7 +307,7 @@ final class UURemoteApiTests: XCTestCase
             return remoteApiAuthNeededResponse(request: req)
         }
 
-        let response = await api.executeRequest(request)
+        let response = await api.executeAuthorizedRequest(request)
 
         XCTAssertNotNil(response.httpError)
         XCTAssertEqual(response.httpError?.uuHttpErrorCode, .authorizationNeeded)
@@ -327,15 +325,13 @@ final class UURemoteApiTests: XCTestCase
             remoteApiAuthNeededResponse(request: req)
         }
 
-        nonisolated(unsafe) let unsafeRequest = request
-
         await withTaskGroup(of: Void.self)
         { group in
             for _ in 0..<6
             {
                 group.addTask
                 {
-                    _ = await api.executeRequest(unsafeRequest)
+                    _ = await api.executeAuthorizedRequest(request)
                 }
             }
             for await _ in group { }
@@ -356,10 +352,10 @@ final class UURemoteApiTests: XCTestCase
             remoteApiSuccessResponse(request: req)
         }
 
-        _ = await api.executeRequest(request)
+        _ = await api.executeAuthorizedRequest(request)
         XCTAssertEqual(api.renewCallCount, 1)
 
-        _ = await api.executeRequest(request)
+        _ = await api.executeAuthorizedRequest(request)
         XCTAssertEqual(api.renewCallCount, 2)
     }
 
@@ -374,18 +370,16 @@ final class UURemoteApiTests: XCTestCase
             remoteApiSuccessResponse(request: req)
         }
 
-        nonisolated(unsafe) let unsafeRequest = request
-
         let first: Task<Void, Never> = Task
         {
-            _ = await api.executeRequest(unsafeRequest)
+            _ = await api.executeAuthorizedRequest(request)
         }
         await Task.yield()
         try await api.awaitRenewStarted()
 
         let second: Task<Void, Never> = Task
         {
-            _ = await api.executeRequest(unsafeRequest)
+            _ = await api.executeAuthorizedRequest(request)
         }
 
         api.releaseBlockedRenewal()

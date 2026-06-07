@@ -185,7 +185,7 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
             let request = UUHttpRequest(url: key)
             request.responseHandler = UUPassthroughResponseHandler()
             request.timeout = timeout
-            let response = await api.executeRequest(request)
+            let response = await api.executeOneRequest(request)
             return CoalescedDownloadResponse(response: response)
         }
 
@@ -199,13 +199,12 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
 
     internal func executeRequest(_ request: UUHttpRequest, completion: @escaping (UUHttpResponse) -> Void)
     {
-        nonisolated(unsafe) let req = request
         nonisolated(unsafe) let api = remoteApi
         nonisolated(unsafe) let done = completion
 
         Task
         {
-            let response = await api.executeRequest(req)
+            let response = await api.executeOneRequest(request)
             done(response)
         }
     }

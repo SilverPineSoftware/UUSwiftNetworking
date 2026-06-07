@@ -10,13 +10,19 @@ import Foundation
 
 open class UURemoteApi
 {
-    private let session: UUHttpSession
+    public var session: UUHttpSession = UUHttpSession()
+    public var defaultAuthorizationProvider: UUHttpAuthorizationProvider? = nil
     
     // MARK: Public Methods
     
-    public init(session: UUHttpSession = UUHttpSession())
+//    public init(session: UUHttpSession = UUHttpSession())
+//    {
+//        self.session = session
+//    }
+    
+    public init()
     {
-        self.session = session
+        
     }
     
     /**
@@ -24,7 +30,7 @@ open class UURemoteApi
      Also, if an error is returned, a check is done to determine if the error requires api authorization renewal.  After perforaming any api authorization renewal,
      the original request will be tried again
      */
-    public func executeRequest(_ request: UUHttpRequest) async -> UUHttpResponse
+    open func executeAuthorizedRequest(_ request: UUHttpRequest) async -> UUHttpResponse
     {
         let renewResult = await renewApiAuthorizationIfNeeded()
         if let authorizationRenewalError = renewResult.error
@@ -32,7 +38,7 @@ open class UURemoteApi
             return UUHttpResponse(request: request, response: nil, error: authorizationRenewalError)
         }
         
-        var response = await executeOneRequest(request)
+        var response = await executeOneAuthorizedRequest(request)
         if let err = response.httpError, await shouldRenewApiAuthorization(err)
         {
             let innerRenewResult = await internalRenewApiAuthorization()
@@ -43,19 +49,84 @@ open class UURemoteApi
             
             if (innerRenewResult.didAttempt)
             {
-                response = await executeOneRequest(request)
+                response = await executeOneAuthorizedRequest(request)
             }
         }
         
         return response
     }
     
-    /**
-     Executes a single request with no api authorization checks
-     */
+    open func executeOneAuthorizedRequest(_ request: UUHttpRequest) async -> UUHttpResponse
+    {
+        if (request.authorizationProvider == nil)
+        {
+            request.authorizationProvider = defaultAuthorizationProvider
+        }
+        
+        return await executeOneRequest(request)
+    }
+    
     open func executeOneRequest(_ request: UUHttpRequest) async -> UUHttpResponse
     {
         return await session.executeRequest(request)
+    }
+    
+//    open func executeOneCodableRequest<SuccessType: Codable, ErrorType: Codable>(
+//        _ request: UUCodableHttpRequest<SuccessType, ErrorType>) async -> Result<SuccessType, Error>
+//    {
+//        return await session.executeCodableRequest(request)
+//    }
+    
+    open func executeAuthorizedCodableRequest<SuccessType: Codable, ErrorType: Codable>(
+        _ request: UUCodableHttpRequest<SuccessType, ErrorType>) async -> Result<SuccessType, Error>
+    {
+        let renewResult = await renewApiAuthorizationIfNeeded()
+        if let authorizationRenewalError = renewResult.error
+        {
+            return .failure(authorizationRenewalError)
+        }
+        
+        var result = await executeOneAuthorizedCodableRequest(request)
+        switch (result)
+        {
+            case .success(let success):
+                return .success(success)
+            
+            case .failure(let error):
+            
+                if (await shouldRenewApiAuthorization(error))
+                {
+                    let innerRenewResult = await internalRenewApiAuthorization()
+                    if let innerAuthorizationRenewalError = innerRenewResult.error
+                    {
+                        return .failure(innerAuthorizationRenewalError)
+                    }
+                    
+                    if (innerRenewResult.didAttempt)
+                    {
+                        result = await executeOneAuthorizedCodableRequest(request)
+                    }
+                }
+            
+            return result
+        }
+    }
+    
+    open func executeOneAuthorizedCodableRequest<SuccessType: Codable, ErrorType: Codable>(
+        _ request: UUCodableHttpRequest<SuccessType, ErrorType>) async -> Result<SuccessType, Error>
+    {
+        if (request.authorizationProvider == nil)
+        {
+            request.authorizationProvider = defaultAuthorizationProvider
+        }
+        
+        return await executeOneCodableRequest(request)
+    }
+    
+    open func executeOneCodableRequest<SuccessType: Codable, ErrorType: Codable>(
+        _ request: UUCodableHttpRequest<SuccessType, ErrorType>) async -> Result<SuccessType, Error>
+    {
+        return await session.executeCodableRequest(request)
     }
     
     // MARK: Public Overridable Methods

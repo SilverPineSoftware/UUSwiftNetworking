@@ -296,7 +296,7 @@ class UURemoteDataTests: BaseOnlineTest
         
         let request = UUHttpRequest(url: url, method: .post)
         
-        let form = UUHttpForm()
+        let form = UUFormBody()
         form.add(field: "FileType", value: "Image", contentType: "text/plain")
         
         let fileName = cfg.uploadImageFileName
@@ -307,7 +307,7 @@ class UURemoteDataTests: BaseOnlineTest
             form.addFile(fieldName: "uu_file", fileName: fileName, contentType: "image/jpeg", fileData: data)
         }
         
-        request.form = form
+        request.body = form
         
         remoteDataForTest.executeRequest(request)
         { response in

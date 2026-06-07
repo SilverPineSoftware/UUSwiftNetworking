@@ -6,9 +6,9 @@
 //
 
 import XCTest
+import Testing
 import UUSwiftCore
 import UUSwiftTestCore
-
 @testable import UUSwiftNetworking
 
 open class BaseOnlineTest: XCTestCase

@@ -1,13 +1,22 @@
 {
-  "originHash" : "f53c5141c33236c8b2f44839b6133485a56f54d29757fb82859b170818ff2554",
+  "originHash" : "57a4532e420fe14019b1a063f9e85fdd30ba190fc6725b8266f027aff56a9b20",
   "pins" : [
     {
       "identity" : "uuswiftcore",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/SilverPineSoftware/UUSwiftCore",
       "state" : {
-        "branch" : "develop",
-        "revision" : "05216d31eafe6e4e855d70df8f27d169f9381ff4"
+        "revision" : "f3275891b20f4c66276fba0c2f5a02a65c6d9b5d",
+        "version" : "1.4.0"
+      }
+    },
+    {
+      "identity" : "uuswifttestcore",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/SilverPineSoftware/UUSwiftTestCore",
+      "state" : {
+        "revision" : "1563c80ed71b57662a9bdf9af96f8e6267605f6b",
+        "version" : "0.0.5"
       }
     }
   ],

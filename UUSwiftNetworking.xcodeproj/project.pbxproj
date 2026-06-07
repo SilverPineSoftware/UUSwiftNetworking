@@ -7,10 +7,37 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0840B4562FD5A20B006F57DE /* UUSwiftNetworking.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C574961926BB5E7A00CECCC0 /* UUSwiftNetworking.framework */; };
+		0840B4E12FD5A481006F57DE /* UUSwiftCore in Frameworks */ = {isa = PBXBuildFile; productRef = 0840B4E02FD5A481006F57DE /* UUSwiftCore */; };
+		0840B4E32FD5A481006F57DE /* UUSwiftTestCore in Frameworks */ = {isa = PBXBuildFile; productRef = 0840B4E22FD5A481006F57DE /* UUSwiftTestCore */; };
+		08D2A56A2FD49C4E00059110 /* UUSwiftCore in Frameworks */ = {isa = PBXBuildFile; productRef = 08D2A5692FD49C4E00059110 /* UUSwiftCore */; };
+		08D2A56F2FD4A5D800059110 /* UUSwiftTestCore in Frameworks */ = {isa = PBXBuildFile; productRef = 08D2A56E2FD4A5D800059110 /* UUSwiftTestCore */; };
+		08D2A5712FD4A5D800059110 /* UUSwiftTestCoreUX in Frameworks */ = {isa = PBXBuildFile; productRef = 08D2A5702FD4A5D800059110 /* UUSwiftTestCoreUX */; };
+		08D969502FD129310013F490 /* UUSwiftCore in Frameworks */ = {isa = PBXBuildFile; productRef = 08D9694F2FD129310013F490 /* UUSwiftCore */; };
+		08D969512FD129310013F490 /* UUSwiftNetworking.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C574961926BB5E7A00CECCC0 /* UUSwiftNetworking.framework */; };
 		C574963726BB617F00CECCC0 /* UUSwiftCore in Frameworks */ = {isa = PBXBuildFile; productRef = C574963626BB617F00CECCC0 /* UUSwiftCore */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		0840B4572FD5A20B006F57DE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C574961026BB5E7A00CECCC0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C574961826BB5E7A00CECCC0;
+			remoteInfo = UUSwiftNetworking;
+		};
+		08D2A5632FD49AE900059110 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C574961026BB5E7A00CECCC0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 08F546542FCE89BF006EE7C9;
+			remoteInfo = UUSwiftNetworkingSample;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		0840B4522FD5A20B006F57DE /* UUSwiftNetworkingTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UUSwiftNetworkingTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		08D2A55F2FD49AE900059110 /* UUSwiftNetworkingSampleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UUSwiftNetworkingSampleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		08F546552FCE89BF006EE7C9 /* UUSwiftNetworkingSample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = UUSwiftNetworkingSample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C574961926BB5E7A00CECCC0 /* UUSwiftNetworking.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = UUSwiftNetworking.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C574962B26BB5F3E00CECCC0 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
@@ -19,7 +46,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		08F546502FCE8811006EE7C9 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+		0840B4DE2FD5A2B7006F57DE /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -29,15 +56,39 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		08F546322FCE87FA006EE7C9 /* UUSwiftNetworking */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (08F546502FCE8811006EE7C9 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = UUSwiftNetworking; sourceTree = "<group>"; };
-		08F546562FCE89BF006EE7C9 /* UUSwiftNetworkingSample */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = UUSwiftNetworkingSample; sourceTree = "<group>"; };
+		0840B42E2FD5A1E8006F57DE /* Library */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (0840B4DE2FD5A2B7006F57DE /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Library; sourceTree = "<group>"; };
+		0840B4862FD5A224006F57DE /* LibraryTest */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = LibraryTest; sourceTree = "<group>"; };
+		0840B4C62FD5A22E006F57DE /* Sample */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Sample; sourceTree = "<group>"; };
+		0840B4DC2FD5A23B006F57DE /* SampleTest */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = SampleTest; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		0840B44F2FD5A20B006F57DE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0840B4562FD5A20B006F57DE /* UUSwiftNetworking.framework in Frameworks */,
+				0840B4E32FD5A481006F57DE /* UUSwiftTestCore in Frameworks */,
+				0840B4E12FD5A481006F57DE /* UUSwiftCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		08D2A55C2FD49AE900059110 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				08D2A56A2FD49C4E00059110 /* UUSwiftCore in Frameworks */,
+				08D2A5712FD4A5D800059110 /* UUSwiftTestCoreUX in Frameworks */,
+				08D2A56F2FD4A5D800059110 /* UUSwiftTestCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		08F546522FCE89BF006EE7C9 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				08D969512FD129310013F490 /* UUSwiftNetworking.framework in Frameworks */,
+				08D969502FD129310013F490 /* UUSwiftCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -52,14 +103,24 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0840B4DF2FD5A481006F57DE /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		C574960F26BB5E7A00CECCC0 = {
 			isa = PBXGroup;
 			children = (
+				0840B42E2FD5A1E8006F57DE /* Library */,
+				0840B4862FD5A224006F57DE /* LibraryTest */,
+				0840B4C62FD5A22E006F57DE /* Sample */,
+				0840B4DC2FD5A23B006F57DE /* SampleTest */,
 				C574962C26BB5F3E00CECCC0 /* LICENSE */,
 				C574962D26BB5F3E00CECCC0 /* Package.swift */,
 				C574962B26BB5F3E00CECCC0 /* README.md */,
-				08F546322FCE87FA006EE7C9 /* UUSwiftNetworking */,
-				08F546562FCE89BF006EE7C9 /* UUSwiftNetworkingSample */,
+				0840B4DF2FD5A481006F57DE /* Frameworks */,
 				C574961A26BB5E7A00CECCC0 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -69,6 +130,8 @@
 			children = (
 				C574961926BB5E7A00CECCC0 /* UUSwiftNetworking.framework */,
 				08F546552FCE89BF006EE7C9 /* UUSwiftNetworkingSample.app */,
+				08D2A55F2FD49AE900059110 /* UUSwiftNetworkingSampleTests.xctest */,
+				0840B4522FD5A20B006F57DE /* UUSwiftNetworkingTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -86,6 +149,57 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		0840B4512FD5A20B006F57DE /* UUSwiftNetworkingTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0840B4592FD5A20B006F57DE /* Build configuration list for PBXNativeTarget "UUSwiftNetworkingTests" */;
+			buildPhases = (
+				0840B44E2FD5A20B006F57DE /* Sources */,
+				0840B44F2FD5A20B006F57DE /* Frameworks */,
+				0840B4502FD5A20B006F57DE /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				0840B4582FD5A20B006F57DE /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				0840B4862FD5A224006F57DE /* LibraryTest */,
+			);
+			name = UUSwiftNetworkingTests;
+			packageProductDependencies = (
+				0840B4E02FD5A481006F57DE /* UUSwiftCore */,
+				0840B4E22FD5A481006F57DE /* UUSwiftTestCore */,
+			);
+			productName = UUSwiftNetworkingTests;
+			productReference = 0840B4522FD5A20B006F57DE /* UUSwiftNetworkingTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		08D2A55E2FD49AE900059110 /* UUSwiftNetworkingSampleTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 08D2A5672FD49AE900059110 /* Build configuration list for PBXNativeTarget "UUSwiftNetworkingSampleTests" */;
+			buildPhases = (
+				08D2A55B2FD49AE900059110 /* Sources */,
+				08D2A55C2FD49AE900059110 /* Frameworks */,
+				08D2A55D2FD49AE900059110 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				08D2A5642FD49AE900059110 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				0840B4DC2FD5A23B006F57DE /* SampleTest */,
+			);
+			name = UUSwiftNetworkingSampleTests;
+			packageProductDependencies = (
+				08D2A5692FD49C4E00059110 /* UUSwiftCore */,
+				08D2A56E2FD4A5D800059110 /* UUSwiftTestCore */,
+				08D2A5702FD4A5D800059110 /* UUSwiftTestCoreUX */,
+			);
+			productName = UUSwiftNetworkingSampleTests;
+			productReference = 08D2A55F2FD49AE900059110 /* UUSwiftNetworkingSampleTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		08F546542FCE89BF006EE7C9 /* UUSwiftNetworkingSample */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 08F546782FCE89C1006EE7C9 /* Build configuration list for PBXNativeTarget "UUSwiftNetworkingSample" */;
@@ -99,10 +213,11 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				08F546562FCE89BF006EE7C9 /* UUSwiftNetworkingSample */,
+				0840B4C62FD5A22E006F57DE /* Sample */,
 			);
 			name = UUSwiftNetworkingSample;
 			packageProductDependencies = (
+				08D9694F2FD129310013F490 /* UUSwiftCore */,
 			);
 			productName = UUSwiftNetworkingSample;
 			productReference = 08F546552FCE89BF006EE7C9 /* UUSwiftNetworkingSample.app */;
@@ -122,7 +237,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				08F546322FCE87FA006EE7C9 /* UUSwiftNetworking */,
+				0840B42E2FD5A1E8006F57DE /* Library */,
 			);
 			name = UUSwiftNetworking;
 			packageProductDependencies = (
@@ -140,7 +255,15 @@
 			attributes = {
 				LastSwiftUpdateCheck = 2650;
 				LastUpgradeCheck = 1250;
+				ORGANIZATIONNAME = "Silver Pine Software, LLC.";
 				TargetAttributes = {
+					0840B4512FD5A20B006F57DE = {
+						CreatedOnToolsVersion = 26.5;
+					};
+					08D2A55E2FD49AE900059110 = {
+						CreatedOnToolsVersion = 26.5;
+						TestTargetID = 08F546542FCE89BF006EE7C9;
+					};
 					08F546542FCE89BF006EE7C9 = {
 						CreatedOnToolsVersion = 26.5;
 					};
@@ -161,18 +284,35 @@
 			mainGroup = C574960F26BB5E7A00CECCC0;
 			packageReferences = (
 				C574963526BB617F00CECCC0 /* XCRemoteSwiftPackageReference "UUSwiftCore" */,
+				08D2A56D2FD4A5D800059110 /* XCRemoteSwiftPackageReference "UUSwiftTestCore" */,
 			);
 			productRefGroup = C574961A26BB5E7A00CECCC0 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				C574961826BB5E7A00CECCC0 /* UUSwiftNetworking */,
+				0840B4512FD5A20B006F57DE /* UUSwiftNetworkingTests */,
 				08F546542FCE89BF006EE7C9 /* UUSwiftNetworkingSample */,
+				08D2A55E2FD49AE900059110 /* UUSwiftNetworkingSampleTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		0840B4502FD5A20B006F57DE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		08D2A55D2FD49AE900059110 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		08F546532FCE89BF006EE7C9 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -190,6 +330,20 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		0840B44E2FD5A20B006F57DE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		08D2A55B2FD49AE900059110 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		08F546512FCE89BF006EE7C9 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -206,7 +360,120 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		0840B4582FD5A20B006F57DE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C574961826BB5E7A00CECCC0 /* UUSwiftNetworking */;
+			targetProxy = 0840B4572FD5A20B006F57DE /* PBXContainerItemProxy */;
+		};
+		08D2A5642FD49AE900059110 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 08F546542FCE89BF006EE7C9 /* UUSwiftNetworkingSample */;
+			targetProxy = 08D2A5632FD49AE900059110 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		0840B45A2FD5A20B006F57DE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = SVT6H48N2C;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.silverpine.uu.networking.test;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		0840B45B2FD5A20B006F57DE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = SVT6H48N2C;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.silverpine.uu.networking.test;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		08D2A5652FD49AE900059110 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = SVT6H48N2C;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.silverpine.uu.networking.sample.test;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/UUSwiftNetworkingSample.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/UUSwiftNetworkingSample";
+			};
+			name = Debug;
+		};
+		08D2A5662FD49AE900059110 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = SVT6H48N2C;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.silverpine.uu.networking.sample.test;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/UUSwiftNetworkingSample.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/UUSwiftNetworkingSample";
+			};
+			name = Release;
+		};
 		08F546792FCE89C1006EE7C9 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -226,14 +493,14 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.silverpine.uu.networking.sample.UUSwiftNetworkingSample;
+				PRODUCT_BUNDLE_IDENTIFIER = com.silverpine.uu.networking.sample;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
@@ -242,7 +509,6 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -265,14 +531,14 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.silverpine.uu.networking.sample.UUSwiftNetworkingSample;
+				PRODUCT_BUNDLE_IDENTIFIER = com.silverpine.uu.networking.sample;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -280,7 +546,6 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -417,15 +682,14 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				INFOPLIST_FILE = UUSwiftNetworking/Info.plist;
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				INFOPLIST_FILE = Library/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.3.8;
-				PRODUCT_BUNDLE_IDENTIFIER = com.silverpine.UUSwiftNetworking;
+				PRODUCT_BUNDLE_IDENTIFIER = com.silverpine.uu.networking;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "";
@@ -446,15 +710,14 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				INFOPLIST_FILE = UUSwiftNetworking/Info.plist;
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				INFOPLIST_FILE = Library/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.3.8;
-				PRODUCT_BUNDLE_IDENTIFIER = com.silverpine.UUSwiftNetworking;
+				PRODUCT_BUNDLE_IDENTIFIER = com.silverpine.uu.networking;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "";
@@ -466,6 +729,24 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		0840B4592FD5A20B006F57DE /* Build configuration list for PBXNativeTarget "UUSwiftNetworkingTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0840B45A2FD5A20B006F57DE /* Debug */,
+				0840B45B2FD5A20B006F57DE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		08D2A5672FD49AE900059110 /* Build configuration list for PBXNativeTarget "UUSwiftNetworkingSampleTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				08D2A5652FD49AE900059110 /* Debug */,
+				08D2A5662FD49AE900059110 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		08F546782FCE89C1006EE7C9 /* Build configuration list for PBXNativeTarget "UUSwiftNetworkingSample" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -496,17 +777,55 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		08D2A56D2FD4A5D800059110 /* XCRemoteSwiftPackageReference "UUSwiftTestCore" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SilverPineSoftware/UUSwiftTestCore";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.0.5;
+			};
+		};
 		C574963526BB617F00CECCC0 /* XCRemoteSwiftPackageReference "UUSwiftCore" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/SilverPineSoftware/UUSwiftCore";
 			requirement = {
-				branch = develop;
-				kind = branch;
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.4.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		0840B4E02FD5A481006F57DE /* UUSwiftCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C574963526BB617F00CECCC0 /* XCRemoteSwiftPackageReference "UUSwiftCore" */;
+			productName = UUSwiftCore;
+		};
+		0840B4E22FD5A481006F57DE /* UUSwiftTestCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 08D2A56D2FD4A5D800059110 /* XCRemoteSwiftPackageReference "UUSwiftTestCore" */;
+			productName = UUSwiftTestCore;
+		};
+		08D2A5692FD49C4E00059110 /* UUSwiftCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C574963526BB617F00CECCC0 /* XCRemoteSwiftPackageReference "UUSwiftCore" */;
+			productName = UUSwiftCore;
+		};
+		08D2A56E2FD4A5D800059110 /* UUSwiftTestCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 08D2A56D2FD4A5D800059110 /* XCRemoteSwiftPackageReference "UUSwiftTestCore" */;
+			productName = UUSwiftTestCore;
+		};
+		08D2A5702FD4A5D800059110 /* UUSwiftTestCoreUX */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 08D2A56D2FD4A5D800059110 /* XCRemoteSwiftPackageReference "UUSwiftTestCore" */;
+			productName = UUSwiftTestCoreUX;
+		};
+		08D9694F2FD129310013F490 /* UUSwiftCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C574963526BB617F00CECCC0 /* XCRemoteSwiftPackageReference "UUSwiftCore" */;
+			productName = UUSwiftCore;
+		};
 		C574963626BB617F00CECCC0 /* UUSwiftCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = C574963526BB617F00CECCC0 /* XCRemoteSwiftPackageReference "UUSwiftCore" */;

@@ -17,7 +17,7 @@ public class UUHttpSession: NSObject, @unchecked Sendable
     private let urlSession: URLSession
     private let sessionConfiguration: URLSessionConfiguration
 
-    nonisolated(unsafe) public static let shared = UUHttpSession()
+    public static let shared = UUHttpSession()
     
     public static var defaultConfiguration: URLSessionConfiguration
     {
@@ -38,58 +38,6 @@ public class UUHttpSession: NSObject, @unchecked Sendable
         super.init()
     }
     
-    /*
-    public func executeRequest(_ request : UUHttpRequest, _ completion: @escaping (UUHttpResponse) -> ()) -> UUHttpRequest
-    {
-        guard var httpRequest = request.buildURLRequest() else
-        {
-            let uuResponse = UUHttpResponse(request: request, response: nil, error: UUErrorFactory.createInvalidRequestError(request))
-            completion(uuResponse)
-            return request
-        }
-        
-        httpRequest.uuApplyAdditionalHeaders(from: sessionConfiguration)
-        
-        request.httpRequest = httpRequest
-        
-        request.startTime = Date.timeIntervalSinceReferenceDate
-        
-        
-        UULog.debug(tag: LOG_TAG, message: "Begin Request\n\nMethod: \(String(describing: request.httpRequest?.httpMethod))\nURL: \(String(describing: request.httpRequest?.url))\nHeaders: \(String(describing: request.httpRequest?.allHTTPHeaderFields))")
-        
-        if (request.body != nil)
-        {
-            if (UUContentType.applicationJson == request.bodyContentType)
-            {
-                UULog.debug(tag: LOG_TAG, message: "JSON Body: \(request.body!.uuToJsonString())")
-            }
-            else
-            {
-                if (request.body!.count < 10000)
-                {
-                    UULog.debug(tag: LOG_TAG, message: "Raw Body: \(request.body!.uuToHexString())")
-                }
-            }
-        }
-        
-        let task = urlSession.dataTask(with: httpRequest)
-        { (data : Data?, response: URLResponse?, error : Error?) in
-			
-			if let httpTask = request.httpTask
-            {
-                self.removeActiveTask(httpTask)
-			}
-            
-            request.handleResponse(data: data, response: response, error: error, completion: completion)
-        }
-        
-		request.httpTask = task
-		
-        addActiveTask(task)
-        task.resume()
-        return request
-    }*/
-    
     public func executeRequest(_ request: UUHttpRequest) async -> UUHttpResponse
     {
         guard var httpRequest = await request.buildURLRequest() else
@@ -97,14 +45,50 @@ public class UUHttpSession: NSObject, @unchecked Sendable
             return UUHttpResponse(request: request, response: nil, error: UUErrorFactory.createInvalidRequestError(request))
         }
         
-        httpRequest.uuApplyAdditionalHeaders(from: sessionConfiguration)
+        if let body = request.body
+        {
+            let prepareResult = body.prepareToSend()
+            switch (prepareResult)
+            {
+                case .failure(let error):
+                    return UUHttpResponse(request: request, response: nil, error: error)
+                    
+                case .success(let preparedBody):
+                    
+                    httpRequest.httpBody = preparedBody.0
+                    
+                    preparedBody.1.forEach
+                    { entry in
+                        request.headerFields[entry.key] = entry.value
+                    }
+                
+                    if let body = httpRequest.httpBody
+                    {
+                        if (UUContentType.applicationJson == request.body?.contentType)
+                        {
+                            UULog.debug(tag: LOG_TAG, message: "JSON Body: \(body.uuToJsonString())")
+                        }
+                        else
+                        {
+                            if (body.count < 10000)
+                            {
+                                UULog.debug(tag: LOG_TAG, message: "Raw Body: \(body.uuToHexString())")
+                            }
+                        }
+                    }
+                
+            }
+        }
         
+        httpRequest.uuApplyHeaders(request.headerFields)
+        httpRequest.uuApplyAdditionalHeaders(from: sessionConfiguration)
         request.httpRequest = httpRequest
         
         request.startTime = Date.timeIntervalSinceReferenceDate
         
         UULog.debug(tag: LOG_TAG, message: "Begin Request\n\nMethod: \(String(describing: request.httpRequest?.httpMethod))\nURL: \(String(describing: request.httpRequest?.url))\nHeaders: \(String(describing: request.httpRequest?.allHTTPHeaderFields))")
         
+        /*
         if (request.body != nil)
         {
             if (UUContentType.applicationJson == request.bodyContentType)
@@ -119,6 +103,7 @@ public class UUHttpSession: NSObject, @unchecked Sendable
                 }
             }
         }
+        */
         
         if Task.isCancelled
         {
@@ -206,15 +191,15 @@ extension UUHttpSession
         return await executeRequest(req)
     }
     
-    public static func put(url : String, queryArguments : UUQueryStringArgs = [:], headers: UUHttpHeaders = [:], body: Data?, contentType : String?) async -> UUHttpResponse
+    public static func put(url : String, queryArguments : UUQueryStringArgs = [:], headers: UUHttpHeaders = [:], body: UUHttpBody?) async -> UUHttpResponse
     {
-        let req = UUHttpRequest(url: url, method: .put, queryArguments: queryArguments, headers: headers, body: body, contentType: contentType)
+        let req = UUHttpRequest(url: url, method: .put, queryArguments: queryArguments, headers: headers, body: body)
         return await executeRequest(req)
     }
     
-    public static func post(url : String, queryArguments : UUQueryStringArgs = [:], headers: UUHttpHeaders = [:], body: Data?, contentType : String?) async -> UUHttpResponse
+    public static func post(url : String, queryArguments : UUQueryStringArgs = [:], headers: UUHttpHeaders = [:], body: UUHttpBody?) async -> UUHttpResponse
     {
-        let req = UUHttpRequest(url: url, method: .post, queryArguments: queryArguments, headers: headers, body: body, contentType: contentType)
+        let req = UUHttpRequest(url: url, method: .post, queryArguments: queryArguments, headers: headers, body: body)
         return await executeRequest(req)
     }
 }

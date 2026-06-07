@@ -31,13 +31,13 @@ let package = Package(
 		.target(
 			name: "UUSwiftNetworking",
 			dependencies: ["UUSwiftCore"],
-			path: "UUSwiftNetworking",
+			path: "Library",
 			exclude: ["Info.plist"]),
         
         .testTarget(
             name: "UUSwiftNetworkingTests",
             dependencies: ["UUSwiftTestCore", "UUSwiftCore", "UUSwiftNetworking"],
-            path: "Tests",
+            path: "LibraryTest",
             resources: [
                 .process("TestConfig.json"),
                 .process("TestJpeg_0001.JPG")

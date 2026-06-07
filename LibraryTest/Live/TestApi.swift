@@ -30,7 +30,12 @@ final class TestApi: UURemoteApi
     init(baseUrl: String, session: UUHttpSession = UUHttpSession())
     {
         apiUrl = baseUrl
-        super.init(session: session)
+        
+        super.init()
+        
+        
+        self.session = session
+        //super.init(session: session)
     }
 
     func getObject(_ echo: TestApiObject?) async -> Result<TestApiObject, Error>
@@ -48,7 +53,7 @@ final class TestApi: UURemoteApi
             queryArguments: queryArgs
         )
 
-        return await executeCodable(request)
+        return await executeOneCodableRequest(request)
     }
 
     func getArray(count: Int) async -> Result<[TestApiObject], Error>
@@ -58,38 +63,36 @@ final class TestApi: UURemoteApi
             queryArguments: ["count": "\(count)"]
         )
 
-        return await executeCodable(request)
+        return await executeOneCodableRequest(request)
     }
 
     func postObject(_ object: TestApiObject) async -> Result<TestApiObject, Error>
     {
-        let body = try? JSONEncoder().encode(object)
+        let body = UUJsonBody(object)
         let request = UUCodableHttpRequest<TestApiObject, TestApiError>(
             url: "\(apiUrl)/single",
             method: .post,
-            body: body,
-            contentType: UUContentType.applicationJson
+            body: body
         )
 
-        return await executeCodable(request)
+        return await executeOneCodableRequest(request)
     }
 
     func postArray(_ objects: [TestApiObject]) async -> Result<[TestApiObject], Error>
     {
-        let body = try? JSONEncoder().encode(objects)
+        let body = UUJsonBody(objects)
         let request = UUCodableHttpRequest<[TestApiObject], TestApiError>(
             url: "\(apiUrl)/single",
             method: .post,
-            body: body,
-            contentType: UUContentType.applicationJson
+            body: body
         )
 
-        return await executeCodable(request)
+        return await executeOneCodableRequest(request)
     }
 
-    private func executeCodable<Success: Codable>(_ request: UUCodableHttpRequest<Success, TestApiError>) async -> Result<Success, Error>
+    /*private func executeCodable<Success: Codable>(_ request: UUCodableHttpRequest<Success, TestApiError>) async -> Result<Success, Error>
     {
-        let response = await executeRequest(request)
+        let response = await executeOneCodableRequest(request)
 
         if let error = response.httpError
         {
@@ -102,5 +105,5 @@ final class TestApi: UURemoteApi
         }
 
         return .failure(UUErrorFactory.createError(.parseFailure, nil))
-    }
+    }*/
 }

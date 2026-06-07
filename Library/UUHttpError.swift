@@ -47,6 +47,13 @@ public enum UUHttpSessionError : Int
      */
     case parseFailure = 2004
     
+//    /**
+//         * Request body serialization failed before the request was sent.
+//         *
+//         * See the [Exception] on [UUError] for details.
+//         */
+    case serializeFailure = 9
+    
     /**
      Error code returned when server authorization is needed.  By default this happens on a 401 error, but
      applications can emit this error from custom parsers to trigger authorization renewal for other error conditions.

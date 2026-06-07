@@ -128,14 +128,13 @@ final class EchoTests: BaseOnlineTest
         let session = uuHttpSessionForTest
         
         let payload = EchoObject(fieldOne: "PostValue", fieldTwo: 99)
-        let body = try! JSONEncoder().encode(payload)
+        let body = UUJsonBody(payload)
         
         let req = UUCodableHttpRequest<EchoObject, UUEmptyCodable>(
             url: cfg.echoControllerJsonUrl,
             method: .post,
             headers: echoHeaders(),
-            body: body,
-            contentType: "application/json")
+            body: body)
         
         let result = await session.executeCodableRequest(req)
         switch (result)
@@ -155,14 +154,13 @@ final class EchoTests: BaseOnlineTest
         let session = uuHttpSessionForTest
         
         let payload = EchoObject(fieldOne: "PostArray", fieldTwo: 2)
-        let body = try! JSONEncoder().encode(payload)
+        let body = UUJsonBody(payload)
         
         let req = UUCodableHttpRequest<[EchoObject], UUEmptyCodable>(
             url: cfg.echoControllerJsonUrl,
             method: .post,
             headers: echoHeaders(statusCode: 200, returnObjectCount: 2),
-            body: body,
-            contentType: "application/json")
+            body: body)
         
         let result = await session.executeCodableRequest(req)
         switch (result)
@@ -184,14 +182,13 @@ final class EchoTests: BaseOnlineTest
         let session = uuHttpSessionForTest
         
         let payload = EchoObject(fieldOne: "PutValue", fieldTwo: 55)
-        let body = try! JSONEncoder().encode(payload)
+        let body = UUJsonBody(payload)
         
         let req = UUCodableHttpRequest<EchoObject, UUEmptyCodable>(
             url: cfg.echoControllerJsonUrl,
             method: .put,
             headers: echoHeaders(),
-            body: body,
-            contentType: "application/json")
+            body: body)
         
         let result = await session.executeCodableRequest(req)
         switch (result)
@@ -211,14 +208,13 @@ final class EchoTests: BaseOnlineTest
         let session = uuHttpSessionForTest
         
         let payload = EchoObject(fieldOne: "PutArray", fieldTwo: 8)
-        let body = try! JSONEncoder().encode(payload)
+        let body = UUJsonBody(payload)
         
         let req = UUCodableHttpRequest<[EchoObject], UUEmptyCodable>(
             url: cfg.echoControllerJsonUrl,
             method: .put,
             headers: echoHeaders(statusCode: 202, returnObjectCount: 4),
-            body: body,
-            contentType: "application/json")
+            body: body)
         
         let result = await session.executeCodableRequest(req)
         switch (result)

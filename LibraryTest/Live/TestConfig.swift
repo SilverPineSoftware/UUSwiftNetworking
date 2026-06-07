@@ -6,6 +6,10 @@
 //
 
 import Foundation
+import UUSwiftCore
+
+private final class TestConfigBundleToken {}
+
 
 public struct TestConfig: Codable, CustomStringConvertible
 {
@@ -31,7 +35,8 @@ public struct TestConfig: Codable, CustomStringConvertible
     
     static func load(from file: String) -> TestConfig?
     {
-        guard let url = Bundle.module.url(forResource: file, withExtension: "json") else
+        let bundle = Bundle(for: TestConfigBundleToken.self)
+        guard let url = bundle.url(forResource: file, withExtension: "json") else
         {
             return nil
         }
@@ -99,7 +104,8 @@ public struct TestConfig: Codable, CustomStringConvertible
         let extPart = uploadImageFileName.uuGetFileExtension()
         let nameOnly = namePart.replacingOccurrences(of: ".\(extPart)", with: "")
         
-        let path = Bundle.module.url(forResource: nameOnly, withExtension: extPart)
+        let bundle = Bundle(for: TestConfigBundleToken.self)
+        let path = bundle.url(forResource: nameOnly, withExtension: extPart)
         return path
     }
 }

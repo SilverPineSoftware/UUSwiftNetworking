@@ -16,17 +16,18 @@ open class UUHttpRequest: NSObject, @unchecked Sendable
 	public var httpMethod : UUHttpMethod = .get
 	public var queryArguments : UUQueryStringArgs = [:]
 	public var headerFields : UUHttpHeaders = [:]
-	public var body : Data? = nil
-	public var bodyContentType : String? = nil
+//	public var body : Data? = nil
+//	public var bodyContentType : String? = nil
+    public var body: UUHttpBody? = nil
     public var timeout : TimeInterval = UUHttpConfig.shared.defaultTimeout
     public var cachePolicy : URLRequest.CachePolicy = UUHttpConfig.shared.defaultCachePolicy
 	public var startTime : TimeInterval = 0
 	public var httpRequest : URLRequest? = nil
 	public var responseHandler : UUHttpResponseHandler = UUBaseResponseHandler()
-	public var form : UUHttpForm? = nil
+	//public var form : UUHttpForm? = nil
     public var authorizationProvider: UUHttpAuthorizationProvider? = nil
     
-	public init(url : String, method: UUHttpMethod = .get, queryArguments: UUQueryStringArgs = [:], headers: UUHttpHeaders = [:], body : Data? = nil, contentType : String? = nil)
+	public init(url : String, method: UUHttpMethod = .get, queryArguments: UUQueryStringArgs = [:], headers: UUHttpHeaders = [:], body : UUHttpBody? = nil)
 	{
 		super.init()
 
@@ -35,14 +36,13 @@ open class UUHttpRequest: NSObject, @unchecked Sendable
 		self.queryArguments = queryArguments
 		self.headerFields = headers
 		self.body = body
-		self.bodyContentType = contentType
 	}
 
-	public convenience init(url : String, method: UUHttpMethod = .post, queryArguments: UUQueryStringArgs = [:], headers: UUHttpHeaders = [:], form : UUHttpForm)
-	{
-		self.init(url: url, method: method, queryArguments: queryArguments, headers: headers, body: nil, contentType: nil)
-		self.form = form
-	}
+//	public convenience init(url : String, method: UUHttpMethod = .post, queryArguments: UUQueryStringArgs = [:], headers: UUHttpHeaders = [:], form : UUHttpForm)
+//	{
+//		self.init(url: url, method: method, queryArguments: queryArguments, headers: headers, body: nil)
+//		self.form = form
+//	}
 
     func buildURLRequest() async -> URLRequest?
     {
@@ -98,6 +98,7 @@ open class UUHttpRequest: NSObject, @unchecked Sendable
             }
         }
         
+        /*
         if let form = request.form
         {
             request.body = form.formData()
@@ -113,7 +114,34 @@ open class UUHttpRequest: NSObject, @unchecked Sendable
             {
                 req.addValue(request.bodyContentType!, forHTTPHeaderField: UUHttpHeader.contentType)
             }
-        }
+        }*/
+        
+        
+        
+//        val preparedBody = request.body?.prepareToSend()?.getOrElse()
+//                    { error ->
+//                        UUHttpLogging.logError(request, error)
+//                        return UUHttpResponse(request = request, error = error)
+//                    }
+        
+        //if let body = request
+        
+        
+        /*
+        changeState(request, UUHttpRequest.State.PrepareToSend)
+                    val preparedBody = request.body?.prepareToSend()?.getOrElse()
+                    { error ->
+                        UUHttpLogging.logError(request, error)
+                        return UUHttpResponse(request = request, error = error)
+                    }
+
+                    preparedBody?.second?.entries?.forEach()
+                    { entry ->
+                        request.headers[entry.key] = entry.value
+                    }
+
+                    UUHttpLogging.logHeaders(request, UUHttpLoggingMode.RequestHeaders, request.headers)
+*/
         
         return req
     }
@@ -126,6 +154,17 @@ open class UUHttpRequest: NSObject, @unchecked Sendable
 
 public extension URLRequest
 {
+    mutating func uuApplyHeaders(_ headers: UUHttpHeaders)
+    {
+        for (key, value) in headers
+        {
+            if let keyString = key as? String, let valueString = value as? String
+            {
+                setValue(valueString, forHTTPHeaderField: keyString)
+            }
+        }
+    }
+    
     mutating func uuApplyAdditionalHeaders(from configuration: URLSessionConfiguration)
     {
         if let headers = configuration.httpAdditionalHeaders
@@ -142,14 +181,19 @@ public extension URLRequest
 }
 
 
-open class UUCodableHttpRequest<SuccessType: Codable, ErrorType: Codable>: UUHttpRequest
+open class UUCodableHttpRequest<SuccessType: Codable, ErrorType: Codable>: UUHttpRequest, @unchecked Sendable
 {
     public var successHandler: UUHttpDataParser = UUJsonCodableDataParser<SuccessType>()
     public var errorHandler: UUHttpDataParser = UUJsonCodableDataParser<ErrorType>()
     
-    public override init(url: String, method: UUHttpMethod = .get, queryArguments: UUQueryStringArgs = [:], headers: UUHttpHeaders = [:], body: Data? = nil, contentType: String? = nil)
+    public override init(
+        url: String,
+        method: UUHttpMethod = .get,
+        queryArguments: UUQueryStringArgs = [:],
+        headers: UUHttpHeaders = [:],
+        body: UUHttpBody? = nil)
     {
-        super.init(url: url, method: method, queryArguments: queryArguments, headers: headers, body: body, contentType: contentType)
+        super.init(url: url, method: method, queryArguments: queryArguments, headers: headers, body: body)
         
         responseHandler = UUJsonCodableResponseHandler<SuccessType, ErrorType>()
     }

@@ -1,0 +1,64 @@
+{
+  "configurations" : [
+    {
+      "id" : "47F27880-7402-4828-B7E5-86CA8DA5DBF4",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "performanceAntipatternCheckerEnabled" : true
+  },
+  "testTargets" : [
+    {
+      "skippedTests" : [
+        "BaseOnlineTest",
+        "EchoTests",
+        "EchoTests\/test_get_customStatusCodeHeader()",
+        "EchoTests\/test_get_echoesQueryArgs_defaultStatus()",
+        "EchoTests\/test_get_nonSuccessStatusCodeHeader()",
+        "EchoTests\/test_get_returnObjectCountHeader()",
+        "EchoTests\/test_post_echoesJsonBody()",
+        "EchoTests\/test_post_statusCodeAndReturnObjectCountHeaders()",
+        "EchoTests\/test_put_customStatusCodeAndReturnObjectCountHeaders()",
+        "EchoTests\/test_put_echoesJsonBody()",
+        "LiveRemoteApiTests",
+        "LiveRemoteApiTests\/test_0000_getObject()",
+        "LiveRemoteApiTests\/test_0002_getObjectWithOverrides()",
+        "LiveRemoteApiTests\/test_0003_getArray()",
+        "LiveRemoteApiTests\/test_0004_postObject()",
+        "LiveRemoteApiTests\/test_0005_postList()",
+        "UUHttpErrorHandlingTests",
+        "UUHttpSessionInstanceTests",
+        "UUHttpSessionStaticTests",
+        "UURemoteApiTests",
+        "UURemoteDataConcurrent_100",
+        "UURemoteDataConcurrent_100\/test_downloadMultiple_largeFiles_noDuplicates()",
+        "UURemoteDataConcurrent_100\/test_downloadMultiple_largeFiles_withDuplicates()",
+        "UURemoteDataConcurrent_100\/test_downloadMultiple_smallFiles_noDuplicates()",
+        "UURemoteDataConcurrent_100\/test_downloadMultiple_smallFiles_withDuplicates()",
+        "UURemoteDataConcurrent_100\/test_fetchExisting()",
+        "UURemoteDataConcurrent_100\/test_fetchFromBadUrl()",
+        "UURemoteDataConcurrent_100\/test_fetchNoLocal()",
+        "UURemoteDataConcurrent_1000",
+        "UURemoteDataConcurrent_1000\/test_downloadMultiple_largeFiles_noDuplicates()",
+        "UURemoteDataConcurrent_1000\/test_downloadMultiple_largeFiles_withDuplicates()",
+        "UURemoteDataConcurrent_1000\/test_downloadMultiple_smallFiles_noDuplicates()",
+        "UURemoteDataConcurrent_1000\/test_downloadMultiple_smallFiles_withDuplicates()",
+        "UURemoteDataConcurrent_1000\/test_fetchExisting()",
+        "UURemoteDataConcurrent_1000\/test_fetchFromBadUrl()",
+        "UURemoteDataConcurrent_1000\/test_fetchNoLocal()",
+        "UURemoteDataNegativeTests",
+        "UURemoteDataTests"
+      ],
+      "target" : {
+        "containerPath" : "container:UUSwiftNetworking.xcodeproj",
+        "identifier" : "0840B4512FD5A20B006F57DE",
+        "name" : "UUSwiftNetworkingTests"
+      }
+    }
+  ],
+  "version" : 1
+}

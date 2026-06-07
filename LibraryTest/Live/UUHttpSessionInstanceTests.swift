@@ -88,7 +88,7 @@ class UUHttpSessionInstanceTests: BaseOnlineTest
         
         let request = UUHttpRequest(url: url, method: .post)
         
-        let form = UUHttpForm()
+        let form = UUFormBody()
         form.add(field: "FileType", value: "Image", contentType: "text/plain")
         
         let fileName = "uploadFileTest.jpg"
@@ -99,9 +99,9 @@ class UUHttpSessionInstanceTests: BaseOnlineTest
             form.addFile(fieldName: "uu_file", fileName: fileName, contentType: "image/jpeg", fileData: data)
         }
         
-        request.form = form
+        request.body = form
         
-        if let data = form.formData(),
+        if let data = form.encode(),
            let str = String(data: data, encoding: .ascii)?.uuSubString(0, 1000)
         {
             UUTestLog("Form:\n\n\(str))\n\n")

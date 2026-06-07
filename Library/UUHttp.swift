@@ -38,6 +38,7 @@ public struct UUHttpHeader
 {
 	public static let contentLength = "Content-Length"
 	public static let contentType = "Content-Type"
+    public static let contentEncoding = "Content-Encoding"
     public static let authorization = "Authorization"
 }
 

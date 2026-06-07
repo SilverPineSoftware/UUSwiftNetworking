@@ -246,8 +246,8 @@ extension View
             
             Text("Body")
                 .font(.body)
-                .bold()
-                .monospaced()
+                //.bold()
+                //.monospaced()
                 .foregroundColor(.secondary)
             
             Text("uuBodyStyle")
@@ -260,8 +260,8 @@ extension View
             
             Divider()
             
-            Text("Default")
-                .font(.default)
+            //Text("Default")
+            //    .font(.default)
         }
     }
 }
