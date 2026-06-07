@@ -12,7 +12,7 @@ import UUSwiftCore
 
 fileprivate let LOG_TAG = "UUHttpSession"
 
-public class UUHttpSession: NSObject, @unchecked Sendable
+public class UUHttpSession: @unchecked Sendable
 {
     private let urlSession: URLSession
     private let sessionConfiguration: URLSessionConfiguration
@@ -34,8 +34,6 @@ public class UUHttpSession: NSObject, @unchecked Sendable
         sessionConfiguration = configuration
         
         urlSession = URLSession(configuration: sessionConfiguration, delegate: delegate, delegateQueue: nil)
-        
-        super.init()
     }
     
     public func executeRequest(_ request: UUHttpRequest) async -> UUHttpResponse

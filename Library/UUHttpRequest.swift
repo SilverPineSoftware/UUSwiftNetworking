@@ -10,7 +10,7 @@ import UUSwiftCore
 
 fileprivate let LOG_TAG = "UUHttpRequest"
 
-open class UUHttpRequest: NSObject, @unchecked Sendable
+open class UUHttpRequest: @unchecked Sendable
 {
 	public var url : String = ""
 	public var httpMethod : UUHttpMethod = .get
@@ -26,8 +26,6 @@ open class UUHttpRequest: NSObject, @unchecked Sendable
     
 	public init(url : String, method: UUHttpMethod = .get, queryArguments: UUQueryStringArgs = [:], headers: UUHttpHeaders = [:], body : UUHttpBody? = nil)
 	{
-		super.init()
-
 		self.url = url
 		self.httpMethod = method
 		self.queryArguments = queryArguments

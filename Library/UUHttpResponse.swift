@@ -8,7 +8,7 @@
 import Foundation
 import UUSwiftCore
 
-public class UUHttpResponse : NSObject
+public class UUHttpResponse
 {
     public let httpRequest: UUHttpRequest
     public let httpResponse: HTTPURLResponse?
