@@ -31,7 +31,7 @@ final class UUShutterstockApiTests: XCTestCase
         uuTestWait(5)
     }
 
-    func testSearch2() async throws
+    func testSearchImagePage() async throws
     {
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct results.
@@ -41,9 +41,15 @@ final class UUShutterstockApiTests: XCTestCase
         // XCTest Documentation
         // https://developer.apple.com/documentation/xctest
         
-        let api = ShutterstockApi()
+        let cfg = ShutterstockApiConfig(
+            clientKey: "<CLIENT_KEY_HERE>",
+            clientSecret: "<CLIENT_SECRET_HERE>"
+        )
         
-        let result = await api.searchImages2(query: "cat", page: 1, count: 10, large: true)
+        let api = ShutterstockApi()
+        api.config = cfg 
+        
+        let result = await api.searchImagePage(query: "cat", page: 1, count: 10, large: true)
         
         switch (result)
         {

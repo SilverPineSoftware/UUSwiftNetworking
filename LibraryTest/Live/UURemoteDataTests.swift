@@ -268,9 +268,37 @@ class UURemoteDataTests: BaseOnlineTest
         uuWaitForExpectations(900)
     }
     
+    private func getImageUrlsAsync(count: Int, large: Bool) async -> [String]
+    {
+        let cfg = ShutterstockApiConfig(
+            clientKey: "<CLIENT_KEY_HERE>",
+            clientSecret: "<CLIENT_SECRET_HERE>"
+        )
+        
+        let api = ShutterstockApi()
+        api.config = cfg
+        
+        let result = await api.searchImages(query: "forest", count: count, large: large)
+        return (try? result.get()) ?? []
+    }
+    
     private func getImageUrls(count: Int, large: Bool) -> [String]
     {
-        let exp = expectation(description: #function)
+        let exp = uuExpectationForMethod()
+        
+        var results: [String] = []
+        
+        Task
+        {
+            results = await getImageUrlsAsync(count: count, large: large)
+            exp.fulfill()
+        }
+        
+        uuWaitForExpectations()
+        
+        return results
+    
+        /*let exp = expectation(description: #function)
         
         var results: [String] = []
         
@@ -284,7 +312,7 @@ class UURemoteDataTests: BaseOnlineTest
         
         let truncated = Array(results.prefix(count))
         XCTAssertEqual(truncated.count, count)
-        return truncated
+        return truncated*/
     }
     
     private func uploadTestPhoto() throws

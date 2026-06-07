@@ -13,15 +13,20 @@ nonisolated private let LOG_TAG = "ShutterstockApi"
 
 nonisolated class ShutterstockApi: UURemoteApi
 {
+    private static let maxPerPage = 500
     private let baseUrl = "https://api.shutterstock.com"
     
-    private let userName = "d4a89-1400b-04251-4faee-f7a23-12271"
-    private let password = "61764-d9c3c-8a832-a7bdf-098e4-0b382"
+    public var config: ShutterstockApiConfig = ShutterstockApiConfig()
+    {
+        didSet
+        {
+            self.defaultAuthorizationProvider = UUBasicAuthorizationProvider(userName: config.clientKey, password: config.clientSecret)
+        }
+    }
     
     public override init()
     {
         super.init()
-        self.defaultAuthorizationProvider = UUBasicAuthorizationProvider(userName: userName, password: password)
     }
     
     func formatUrl(_ endpoint: ShutterstockEndpoint) -> String
@@ -29,7 +34,30 @@ nonisolated class ShutterstockApi: UURemoteApi
         return "\(baseUrl)\(endpoint.rawValue)"
     }
     
-    func searchImages2(query: String, page: Int, count: Int, large: Bool) async -> Result<[String], Error>
+    func searchImages(query: String, count: Int, large: Bool) async -> Result<[String], Error>
+    {
+        var results: [String] = []
+        
+        let pages = (count / Self.maxPerPage) + 1
+        let perPage = min(Self.maxPerPage, count)
+        
+        for page in 1..<(pages+1)
+        {
+            let pageResult = await searchImagePage(query: query, page: page, count: perPage, large: large)
+            
+            switch (pageResult)
+            {
+                case .success(let pageResults):
+                    results.append(contentsOf: pageResults)
+                case .failure(let error):
+                    return .failure(error)
+            }
+        }
+        
+        return .success(results)
+    }
+    
+    func searchImagePage(query: String, page: Int, count: Int, large: Bool) async -> Result<[String], Error>
     {
         //https://api.shutterstock.com/v2/images/search
         let req = UUCodableHttpRequest<ShutterstockSearchImagesResponse, ShutterstockError>(url: formatUrl(ShutterstockEndpoint.searchImages))
