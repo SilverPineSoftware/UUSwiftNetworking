@@ -14,12 +14,7 @@ open class UURemoteApi
     public var defaultAuthorizationProvider: UUHttpAuthorizationProvider? = nil
     
     // MARK: Public Methods
-    
-//    public init(session: UUHttpSession = UUHttpSession())
-//    {
-//        self.session = session
-//    }
-    
+
     public init()
     {
         
@@ -70,12 +65,6 @@ open class UURemoteApi
     {
         return await session.executeRequest(request)
     }
-    
-//    open func executeOneCodableRequest<SuccessType: Codable, ErrorType: Codable>(
-//        _ request: UUCodableHttpRequest<SuccessType, ErrorType>) async -> Result<SuccessType, Error>
-//    {
-//        return await session.executeCodableRequest(request)
-//    }
     
     open func executeAuthorizedCodableRequest<SuccessType: Codable, ErrorType: Codable>(
         _ request: UUCodableHttpRequest<SuccessType, ErrorType>) async -> Result<SuccessType, Error>
