@@ -1,0 +1,24 @@
+{
+  "configurations" : [
+    {
+      "id" : "E74444A6-26D5-4E53-B215-6DCC80680A78",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:UUSwiftNetworking.xcodeproj",
+        "identifier" : "08D2A55E2FD49AE900059110",
+        "name" : "UUSwiftNetworkingSampleTests"
+      }
+    }
+  ],
+  "version" : 1
+}

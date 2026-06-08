@@ -30,6 +30,14 @@ final class UUShutterstockApiTests: XCTestCase
         //try sleep_type_t
         uuTestWait(5)
     }
+    
+    private func loadConfig() throws -> ShutterstockApiConfig
+    {
+        let testConfig = try XCTUnwrap(SampleTestConfig.load(from: "SampleTestConfig"))
+        return ShutterstockApiConfig(
+            clientKey: testConfig.shutterstockClientKey,
+            clientSecret: testConfig.shutterstockClientSecret)
+    }
 
     func testSearchImagePage() async throws
     {
@@ -41,10 +49,7 @@ final class UUShutterstockApiTests: XCTestCase
         // XCTest Documentation
         // https://developer.apple.com/documentation/xctest
         
-        let cfg = ShutterstockApiConfig(
-            clientKey: "<CLIENT_KEY_HERE>",
-            clientSecret: "<CLIENT_SECRET_HERE>"
-        )
+        let cfg = try loadConfig()
         
         let api = ShutterstockApi()
         api.config = cfg 
