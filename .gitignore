@@ -91,4 +91,4 @@ iOSInjectionProject/
 .DS_Store
 /Package.resolved
 /.swiftpm
-/SampleTest/SampleTestConfig.local.json
+/SampleTest/SampleTestConfig.json

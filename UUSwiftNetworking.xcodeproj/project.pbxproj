@@ -64,7 +64,7 @@
 		0840B6692FD61FB5006F57DE /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				SampleTestConfig.local.json,
+				"SampleTestConfig-template.json",
 			);
 			target = 08D2A55E2FD49AE900059110 /* UUSwiftNetworkingSampleTests */;
 		};
