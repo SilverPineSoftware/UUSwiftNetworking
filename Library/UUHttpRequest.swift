@@ -127,9 +127,6 @@ public extension URLRequest
 
 open class UUCodableHttpRequest<SuccessType: Codable, ErrorType: Codable>: UUHttpRequest, @unchecked Sendable
 {
-    public var successHandler: UUHttpDataParser = UUJsonCodableDataParser<SuccessType>()
-    public var errorHandler: UUHttpDataParser = UUJsonCodableDataParser<ErrorType>()
-    
     public override init(
         url: String,
         method: UUHttpMethod = .get,
