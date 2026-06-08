@@ -8,10 +8,7 @@
 import Foundation
 import UUSwiftCore
 
-private final class TestConfigBundleToken {}
-
-
-public struct TestConfig: Codable, CustomStringConvertible
+final public class TestConfig: Codable
 {
     let apiHost: String
     let staticFilesUrl: String
@@ -19,10 +16,8 @@ public struct TestConfig: Codable, CustomStringConvertible
     let uploadImageFileName: String
     let downloadImageFileName: String
     
-    public var description: String
-    {
-        return "apiHost: \(apiHost), staticFilesUrl: \(staticFilesUrl), doesNotExistUrl: \(doesNotExistUrl), uploadImageFileName: \(uploadImageFileName)"
-    }
+    let shutterstockClientKey: String
+    let shutterstockClientSecret: String
     
     enum CodingKeys: String, CodingKey
     {
@@ -31,11 +26,14 @@ public struct TestConfig: Codable, CustomStringConvertible
         case doesNotExistUrl = "does_not_exist_url"
         case uploadImageFileName = "upload_image_file_name"
         case downloadImageFileName = "download_image_file_name"
+        
+        case shutterstockClientKey = "shutterstock_client_key"
+        case shutterstockClientSecret = "shutterstock_client_secret"
     }
     
-    static func load(from file: String) -> TestConfig?
+    static func load(from file: String) -> Self?
     {
-        let bundle = Bundle(for: TestConfigBundleToken.self)
+        let bundle = Bundle(for: Self.self)
         guard let url = bundle.url(forResource: file, withExtension: "json") else
         {
             return nil
@@ -46,8 +44,7 @@ public struct TestConfig: Codable, CustomStringConvertible
             return nil
         }
         
-        let config = try? JSONDecoder().decode(TestConfig.self, from: data)
-        NSLog("Config: \(String(describing: config))")
+        let config = try? JSONDecoder().decode(Self.self, from: data)
         return config
     }
     
@@ -104,8 +101,9 @@ public struct TestConfig: Codable, CustomStringConvertible
         let extPart = uploadImageFileName.uuGetFileExtension()
         let nameOnly = namePart.replacingOccurrences(of: ".\(extPart)", with: "")
         
-        let bundle = Bundle(for: TestConfigBundleToken.self)
+        let bundle = Bundle(for: Self.self)
         let path = bundle.url(forResource: nameOnly, withExtension: extPart)
         return path
     }
 }
+

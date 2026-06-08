@@ -13,18 +13,29 @@ import UUSwiftTestCore
 
 open class BaseOnlineTest: XCTestCase
 {
-    private var testConfig: TestConfig? = nil
+    var testConfig: TestConfig!
     
-    open override func setUp()
+//    open override func setUp()
+//    {
+//        super.setUp()
+//        
+//        let logger = UULogger.console
+//        logger.logLevel = .debug
+//        UULog.setLogger(logger)
+//    }
+    
+    open override func setUpWithError() throws
     {
-        super.setUp()
+        try super.setUpWithError()
         
         let logger = UULogger.console
         logger.logLevel = .debug
         UULog.setLogger(logger)
+        
+        testConfig = try XCTUnwrap(TestConfig.load(from: "TestConfig"))
     }
     
-    open func loadTestConfig() throws -> TestConfig
+    /*open func loadTestConfig() throws -> TestConfig
     {
         if let testConfig = testConfig
         {
@@ -34,7 +45,7 @@ open class BaseOnlineTest: XCTestCase
         let cfg = TestConfig.load(from: "TestConfig")
         self.testConfig = cfg
         return try XCTUnwrap(self.testConfig)
-    }
+    }*/
     
     open var uuHttpSessionForTest: UUHttpSession
     {

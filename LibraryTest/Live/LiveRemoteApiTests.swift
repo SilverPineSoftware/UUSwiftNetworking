@@ -32,8 +32,7 @@ final class LiveRemoteApiTests: BaseOnlineTest
 
     private func testApi() throws -> TestApi
     {
-        let cfg = try loadTestConfig()
-        return TestApi(baseUrl: cfg.testApiUrl, session: uuHttpSessionForTest)
+        return TestApi(baseUrl: testConfig.testApiUrl, session: uuHttpSessionForTest)
     }
 
     // MARK: - Tests

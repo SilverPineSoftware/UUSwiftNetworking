@@ -25,8 +25,7 @@ class UURemoteDataNegativeTests: BaseOnlineTest
     
     private var testUrl: String
     {
-        let cfg = try? loadTestConfig()
-        return cfg?.fullDownloadFileUrl ?? ""
+        return testConfig.fullDownloadFileUrl
     }
     
     override func tearDown()

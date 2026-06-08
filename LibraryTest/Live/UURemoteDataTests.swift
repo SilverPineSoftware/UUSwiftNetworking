@@ -13,9 +13,18 @@ import UUSwiftTestCore
 
 class UURemoteDataTests: BaseOnlineTest
 {
-    override func setUp()
+//    override func setUp()
+//    {
+//        super.setUp()
+//        
+//        remoteDataForTest.dataCache.clearCache()
+//        remoteDataForTest.maxActiveRequests = 50
+//        remoteDataForTest.dataCache.contentExpirationLength = 30 * 24 * 60 * 60
+//    }
+    
+    override func setUpWithError() throws
     {
-        super.setUp()
+        try super.setUpWithError()
         
         remoteDataForTest.dataCache.clearCache()
         remoteDataForTest.maxActiveRequests = 50
@@ -36,8 +45,9 @@ class UURemoteDataTests: BaseOnlineTest
     
     private var testUrl: String
     {
-        let cfg = try? loadTestConfig()
-        return cfg?.fullDownloadFileUrl ?? ""
+        //let cfg = try? loadTestConfig()
+        //return cfg?.fullDownloadFileUrl ?? ""
+        return testConfig.fullDownloadFileUrl
     }
     
     override func tearDown()
@@ -271,8 +281,8 @@ class UURemoteDataTests: BaseOnlineTest
     private func getImageUrlsAsync(count: Int, large: Bool) async -> [String]
     {
         let cfg = ShutterstockApiConfig(
-            clientKey: "<CLIENT_KEY_HERE>",
-            clientSecret: "<CLIENT_SECRET_HERE>"
+            clientKey: testConfig.shutterstockClientKey,
+            clientSecret: testConfig.shutterstockClientSecret
         )
         
         let api = ShutterstockApi()
@@ -319,17 +329,16 @@ class UURemoteDataTests: BaseOnlineTest
     {
         let exp = uuExpectationForMethod()
         
-        let cfg = try loadTestConfig()
-        let url = cfg.formPostUrl
+        let url = testConfig.formPostUrl
         
         let request = UUHttpRequest(url: url, method: .post)
         
         let form = UUFormBody()
         form.add(field: "FileType", value: "Image", contentType: "text/plain")
         
-        let fileName = cfg.uploadImageFileName
+        let fileName = testConfig.uploadImageFileName
         
-        if let filePath = cfg.uploadImageFilePath,
+        if let filePath = testConfig.uploadImageFilePath,
            let data = try? Data(contentsOf: filePath)
         {
             form.addFile(fieldName: "uu_file", fileName: fileName, contentType: "image/jpeg", fileData: data)
@@ -352,8 +361,8 @@ class UURemoteDataTests: BaseOnlineTest
     private func verifyUploadedFile(_ fileName: String) throws
     {
         let exp = uuExpectationForMethod()
-        let cfg = try loadTestConfig()
-        let url = "\(cfg.downloadFileUrl)?uu_file=\(fileName)"
+        //let cfg = try loadTestConfig()
+        let url = "\(testConfig.downloadFileUrl)?uu_file=\(fileName)"
         
         let request = UUHttpRequest(url: url, method: .get)
         

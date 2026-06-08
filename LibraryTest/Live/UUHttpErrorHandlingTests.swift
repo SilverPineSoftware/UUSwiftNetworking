@@ -24,8 +24,7 @@ class UUHttpErrorHandlingTests: BaseOnlineTest
     {
         let session = uuHttpSessionForTest
         
-        let cfg = try loadTestConfig()
-        let url = cfg.doesNotExistUrl
+        let url = testConfig.doesNotExistUrl
         
         let request = UUHttpRequest(url: url)
         let response = await session.executeRequest(request)
@@ -36,8 +35,7 @@ class UUHttpErrorHandlingTests: BaseOnlineTest
     {
         let session = uuHttpSessionForTest
         
-        let cfg = try loadTestConfig()
-        let url = cfg.timeoutUrl
+        let url = testConfig.timeoutUrl
         
         let timeout = 10
         var queryArgs = UUQueryStringArgs()
@@ -55,8 +53,7 @@ class UUHttpErrorHandlingTests: BaseOnlineTest
     {
         let session = uuHttpSessionForTest
         
-        let cfg = try loadTestConfig()
-        let url = cfg.redirectUrl
+        let url = testConfig.redirectUrl
         
         let request = UUHttpRequest(url: url)
         let response = await session.executeRequest(request)
@@ -105,8 +102,7 @@ class UUHttpErrorHandlingTests: BaseOnlineTest
         let session = uuHttpSessionForTest
         XCTAssertNotNil(session)
         
-        let cfg = try loadTestConfig()
-        let url = cfg.invalidJsonUrl
+        let url = testConfig.invalidJsonUrl
         
         var queryArgs = UUQueryStringArgs()
         queryArgs["stringField"] = "UnitTestString"
@@ -126,8 +122,7 @@ class UUHttpErrorHandlingTests: BaseOnlineTest
         let session = uuHttpSessionForTest
         XCTAssertNotNil(session)
         
-        let cfg = try loadTestConfig()
-        let url = cfg.echoJsonUrl
+        let url = testConfig.echoJsonUrl
         
         let request = UUHttpRequest(url: url, method: .get)
         
@@ -151,8 +146,7 @@ class UUHttpErrorHandlingTests: BaseOnlineTest
         let session = uuHttpSessionForTest
         XCTAssertNotNil(session)
         
-        let cfg = try loadTestConfig()
-        let url = cfg.echoJsonUrl
+        let url = testConfig.echoJsonUrl
         
         var headers = UUHttpHeaders()
         headers["UU-Status-Code"] = statusCode

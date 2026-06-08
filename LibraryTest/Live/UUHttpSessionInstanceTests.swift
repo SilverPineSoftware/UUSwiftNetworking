@@ -20,8 +20,7 @@ class UUHttpSessionInstanceTests: BaseOnlineTest
     {
         let session = uuHttpSessionForTest
         
-        let cfg = try loadTestConfig()
-        let url = cfg.echoJsonUrl
+        let url = testConfig.echoJsonUrl
         
         var queryArgs = UUQueryStringArgs()
         queryArgs["fieldOne"] = "SomeValue"
@@ -52,8 +51,7 @@ class UUHttpSessionInstanceTests: BaseOnlineTest
     {
         let session = uuHttpSessionForTest
         
-        let cfg = try loadTestConfig()
-        let url = cfg.echoJsonUrl
+        let url = testConfig.echoJsonUrl
         
         var queryArgs = UUQueryStringArgs()
         queryArgs["fieldOne"] = "SomeValue"
@@ -83,8 +81,7 @@ class UUHttpSessionInstanceTests: BaseOnlineTest
     {
         let session = uuHttpSessionForTest
         
-        let cfg = try loadTestConfig()
-        let url = cfg.formPostUrl
+        let url = testConfig.formPostUrl
         
         let request = UUHttpRequest(url: url, method: .post)
         
@@ -93,7 +90,7 @@ class UUHttpSessionInstanceTests: BaseOnlineTest
         
         let fileName = "uploadFileTest.jpg"
         
-        if let filePath = cfg.uploadImageFilePath,
+        if let filePath = testConfig.uploadImageFilePath,
            let data = try? Data(contentsOf: filePath)
         {
             form.addFile(fieldName: "uu_file", fileName: fileName, contentType: "image/jpeg", fileData: data)
@@ -117,8 +114,7 @@ class UUHttpSessionInstanceTests: BaseOnlineTest
     {
         let session = uuHttpSessionForTest
         
-        let cfg = try loadTestConfig()
-        let url = "\(cfg.downloadFileUrl)?uu_file=\(fileName)"
+        let url = "\(testConfig.downloadFileUrl)?uu_file=\(fileName)"
         
         let request = UUHttpRequest(url: url, method: .get)
         

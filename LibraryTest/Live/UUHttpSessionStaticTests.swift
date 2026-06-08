@@ -15,8 +15,7 @@ class UUHttpSessionStaticTests: BaseOnlineTest
 {
     func test_getCodableObject() async throws
     {
-        let cfg = try loadTestConfig()
-        let url = cfg.echoJsonUrl
+        let url = testConfig.echoJsonUrl
         
         var queryArgs = UUQueryStringArgs()
         queryArgs["fieldOne"] = "SomeValue"
@@ -44,8 +43,7 @@ class UUHttpSessionStaticTests: BaseOnlineTest
     
     func test_getCodableArray() async throws
     {
-        let cfg = try loadTestConfig()
-        let url = cfg.echoJsonUrl
+        let url = testConfig.echoJsonUrl
         
         var queryArgs = UUQueryStringArgs()
         queryArgs["fieldOne"] = "SomeValue"

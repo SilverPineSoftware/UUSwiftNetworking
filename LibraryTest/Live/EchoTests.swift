@@ -19,9 +19,13 @@ final class EchoTests: BaseOnlineTest
 {
     // MARK: GET
     
+    private var echoControllerJsonUrl: String
+    {
+        testConfig.echoControllerJsonUrl
+    }
+    
     func test_get_echoesQueryArgs_defaultStatus() async throws
     {
-        let cfg = try loadTestConfig()
         let session = uuHttpSessionForTest
         
         var queryArgs = UUQueryStringArgs()
@@ -29,7 +33,7 @@ final class EchoTests: BaseOnlineTest
         queryArgs["fieldTwo"] = 42
         
         let req = UUCodableHttpRequest<EchoObject, UUEmptyCodable>(
-            url: cfg.echoControllerJsonUrl,
+            url: echoControllerJsonUrl,
             method: .get,
             queryArguments: queryArgs)
         
@@ -47,7 +51,6 @@ final class EchoTests: BaseOnlineTest
     
     func test_get_customStatusCodeHeader() async throws
     {
-        let cfg = try loadTestConfig()
         let session = uuHttpSessionForTest
         
         var queryArgs = UUQueryStringArgs()
@@ -55,7 +58,7 @@ final class EchoTests: BaseOnlineTest
         queryArgs["fieldTwo"] = 1
         
         let req = UUCodableHttpRequest<EchoObject, UUEmptyCodable>(
-            url: cfg.echoControllerJsonUrl,
+            url: echoControllerJsonUrl,
             method: .get,
             queryArguments: queryArgs,
             headers: echoHeaders(statusCode: 201))
@@ -73,7 +76,6 @@ final class EchoTests: BaseOnlineTest
     
     func test_get_returnObjectCountHeader() async throws
     {
-        let cfg = try loadTestConfig()
         let session = uuHttpSessionForTest
         
         var queryArgs = UUQueryStringArgs()
@@ -81,7 +83,7 @@ final class EchoTests: BaseOnlineTest
         queryArgs["fieldTwo"] = 7
         
         let req = UUCodableHttpRequest<[EchoObject], UUEmptyCodable>(
-            url: cfg.echoControllerJsonUrl,
+            url: echoControllerJsonUrl,
             method: .get,
             queryArguments: queryArgs,
             headers: echoHeaders(returnObjectCount: 3))
@@ -100,11 +102,10 @@ final class EchoTests: BaseOnlineTest
     
     func test_get_nonSuccessStatusCodeHeader() async throws
     {
-        let cfg = try loadTestConfig()
         let session = uuHttpSessionForTest
         
         let req = UUCodableHttpRequest<EchoObject, UUEmptyCodable>(
-            url: cfg.echoControllerJsonUrl,
+            url: echoControllerJsonUrl,
             method: .get,
             queryArguments: ["fieldOne": "ErrorPath", "fieldTwo": 0],
             headers: echoHeaders(statusCode: 404))
@@ -124,14 +125,13 @@ final class EchoTests: BaseOnlineTest
     
     func test_post_echoesJsonBody() async throws
     {
-        let cfg = try loadTestConfig()
         let session = uuHttpSessionForTest
         
         let payload = EchoObject(fieldOne: "PostValue", fieldTwo: 99)
         let body = UUJsonBody(payload)
         
         let req = UUCodableHttpRequest<EchoObject, UUEmptyCodable>(
-            url: cfg.echoControllerJsonUrl,
+            url: echoControllerJsonUrl,
             method: .post,
             headers: echoHeaders(),
             body: body)
@@ -150,14 +150,13 @@ final class EchoTests: BaseOnlineTest
     
     func test_post_statusCodeAndReturnObjectCountHeaders() async throws
     {
-        let cfg = try loadTestConfig()
         let session = uuHttpSessionForTest
         
         let payload = EchoObject(fieldOne: "PostArray", fieldTwo: 2)
         let body = UUJsonBody(payload)
         
         let req = UUCodableHttpRequest<[EchoObject], UUEmptyCodable>(
-            url: cfg.echoControllerJsonUrl,
+            url: echoControllerJsonUrl,
             method: .post,
             headers: echoHeaders(statusCode: 200, returnObjectCount: 2),
             body: body)
@@ -178,14 +177,13 @@ final class EchoTests: BaseOnlineTest
     
     func test_put_echoesJsonBody() async throws
     {
-        let cfg = try loadTestConfig()
         let session = uuHttpSessionForTest
         
         let payload = EchoObject(fieldOne: "PutValue", fieldTwo: 55)
         let body = UUJsonBody(payload)
         
         let req = UUCodableHttpRequest<EchoObject, UUEmptyCodable>(
-            url: cfg.echoControllerJsonUrl,
+            url: echoControllerJsonUrl,
             method: .put,
             headers: echoHeaders(),
             body: body)
@@ -204,14 +202,13 @@ final class EchoTests: BaseOnlineTest
     
     func test_put_customStatusCodeAndReturnObjectCountHeaders() async throws
     {
-        let cfg = try loadTestConfig()
         let session = uuHttpSessionForTest
         
         let payload = EchoObject(fieldOne: "PutArray", fieldTwo: 8)
         let body = UUJsonBody(payload)
         
         let req = UUCodableHttpRequest<[EchoObject], UUEmptyCodable>(
-            url: cfg.echoControllerJsonUrl,
+            url: echoControllerJsonUrl,
             method: .put,
             headers: echoHeaders(statusCode: 202, returnObjectCount: 4),
             body: body)
