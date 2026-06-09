@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/SilverPineSoftware/UUSwiftCore",
       "state" : {
-        "revision" : "f3275891b20f4c66276fba0c2f5a02a65c6d9b5d",
-        "version" : "1.4.0"
+        "branch" : "develop",
+        "revision" : "f1e6363e7c09eefbac8062a779f3aed3b58482d0"
       }
     },
     {

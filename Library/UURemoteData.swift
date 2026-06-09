@@ -27,14 +27,14 @@ fileprivate let LOG_TAG = "UURemoteData"
 
 public protocol UURemoteDataProtocol
 {
-    func data(for key: String) -> Data?
-    func isDownloadActive(for key: String) -> Bool
+    func data(for key: String) async -> Data?
+    func isDownloadActive(for key: String) async -> Bool
     
-    func metaData(for key: String) -> [String:Any]
-    func set(metaData: [String:Any], for key: String)
+    func metaData(for key: String) async -> [String:Any]
+    func set(metaData: [String:Any], for key: String) async
 }
 
-public typealias UUDataLoadedCompletionBlock = (Data?, Error?) -> Void
+public typealias UUDataLoadedCompletionBlock = @Sendable (Data?, Error?) async -> Void
 
 private struct CoalescedDownloadResponse: @unchecked Sendable
 {
@@ -97,7 +97,7 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
     let remoteApi: UURemoteApi
     let dataCache: UUDataCache
     
-    nonisolated(unsafe) static public let shared = UURemoteData(dataCache: UUDataCache.shared, remoteApi: UURemoteApi())
+    static public let shared = UURemoteData(dataCache: UUDataCache.shared, remoteApi: UURemoteApi())
     
     required init(dataCache: UUDataCache, remoteApi: UURemoteApi)
     {
@@ -108,12 +108,12 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
     ////////////////////////////////////////////////////////////////////////////
     // UURemoteDataProtocol Implementation
     ////////////////////////////////////////////////////////////////////////////
-    public func data(for key: String) -> Data?
+    public func data(for key: String) async -> Data?
     {
-        return data(for: key, remoteLoadCompletion: nil)
+        return await data(for: key, remoteLoadCompletion: nil)
     }
     
-    public func data(for key: String, remoteLoadCompletion: UUDataLoadedCompletionBlock? = nil) -> Data?
+    public func data(for key: String, remoteLoadCompletion: UUDataLoadedCompletionBlock? = nil) async -> Data?
     {
         let url = URL(string: key)
         if (url == nil)
@@ -121,9 +121,9 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
             return nil
         }
         
-		if dataCache.dataExists(for: key)
+		if (await dataCache.dataExists(for: key))
         {
-			let data = dataCache.data(for: key)
+			let data = await dataCache.data(for: key)
 			if (data != nil)
 			{
 				return data
@@ -145,14 +145,14 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
         downloadCoalescer.isInFlightSync(key: key)
     }
     
-    public func metaData(for key: String) -> [String:Any]
+    public func metaData(for key: String) async -> [String:Any]
     {
-        return dataCache.metaData(for: key)
+        return await dataCache.metaData(for: key)
     }
     
-    public func set(metaData: [String:Any], for key: String)
+    public func set(metaData: [String:Any], for key: String) async
     {
-        dataCache.set(metaData: metaData, for: key)
+        await dataCache.set(metaData: metaData, for: key)
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -191,13 +191,13 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
 
         if let coalesced
         {
-            handleDownloadResponse(coalesced.response, key)
+            await handleDownloadResponse(coalesced.response, key)
         }
 
         await checkForPendingRequests()
     }
 
-    internal func executeRequest(_ request: UUHttpRequest, completion: @escaping (UUHttpResponse) -> Void)
+    /*internal func executeRequest(_ request: UUHttpRequest, completion: @escaping (UUHttpResponse) -> Void)
     {
         nonisolated(unsafe) let api = remoteApi
         nonisolated(unsafe) let done = completion
@@ -207,7 +207,7 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
             let response = await api.executeOneRequest(request)
             done(response)
         }
-    }
+    }*/
 
     private func checkForPendingRequests() async
     {
@@ -222,7 +222,7 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
         }
     }
 
-    private func handleDownloadResponse(_ response: UUHttpResponse, _ key: String)
+    private func handleDownloadResponse(_ response: UUHttpResponse, _ key: String) async
     {
         let handlers = takeRemoteHandlers(for: key)
 
@@ -233,40 +233,40 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
         {
             let responseData = response.rawResponse!
 
-            dataCache.set(data: responseData, for: key)
-            updateMetaDataFromResponse(response, for: key)
+            await dataCache.set(data: responseData, for: key)
+            await updateMetaDataFromResponse(response, for: key)
             notifyDataDownloaded(metaData: md)
 
-            notifyRemoteDownloadHandlers(key: key, data: responseData, error: nil, handlers: handlers)
+            await notifyRemoteDownloadHandlers(key: key, data: responseData, error: nil, handlers: handlers)
         }
         else
         {
             UULog.debug(tag: LOG_TAG, message: "Remote download failed!\n\nPath: \(key)\nStatusCode: \(String(describing: response.httpResponse?.statusCode))\nError: \(String(describing: response.httpError))\n")
 
             notifyDownloadFailed(key, response.httpError)
-            notifyRemoteDownloadHandlers(key: key, data: nil, error: response.httpError, handlers: handlers)
+            await notifyRemoteDownloadHandlers(key: key, data: nil, error: response.httpError, handlers: handlers)
         }
     }
     
-    private func updateMetaDataFromResponse(_ response: UUHttpResponse, for key: String)
+    private func updateMetaDataFromResponse(_ response: UUHttpResponse, for key: String) async
     {
-        var md = dataCache.metaData(for: key)
+        var md = await dataCache.metaData(for: key)
         md[MetaData.MimeType] = response.httpResponse!.mimeType!
         md[MetaData.DownloadTimestamp] = Date()
         
-        dataCache.set(metaData: md, for: key)
+        await dataCache.set(metaData: md, for: key)
     }
     
-    public func save(data: Data, key: String)
+    public func save(data: Data, key: String) async
     {
-        dataCache.set(data: data, for: key)
+        await dataCache.set(data: data, for: key)
         
-        var md = dataCache.metaData(for: key)
+        var md = await dataCache.metaData(for: key)
         md[MetaData.MimeType] = "raw"
         md[MetaData.DownloadTimestamp] = Date()
         md[UURemoteData.NotificationKeys.RemotePath] = key
         
-        dataCache.set(metaData: md, for: key)
+        await dataCache.set(metaData: md, for: key)
         
         notifyDataDownloaded(metaData: md)
     }
@@ -292,11 +292,11 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
         }
     }
     
-    private func notifyRemoteDownloadHandlers(key: String, data: Data?, error: Error?, handlers: [UUDataLoadedCompletionBlock])
+    private func notifyRemoteDownloadHandlers(key: String, data: Data?, error: Error?, handlers: [UUDataLoadedCompletionBlock]) async
     {
         for handler in handlers
         {
-            handler(data, error)
+            await handler(data, error)
         }
     }
 

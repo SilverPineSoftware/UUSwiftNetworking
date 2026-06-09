@@ -201,6 +201,17 @@ open class UURemoteApi
             }
             return result
         }
+
+        var coalescedWaiterCount: Int
+        {
+            waiters.count
+        }
+    }
+
+    /// Visible to unit tests via `@testable import` for renewal coalescing assertions.
+    internal func renewalCoalescedWaiterCount() async -> Int
+    {
+        await renewalGate.coalescedWaiterCount
     }
 
     private func internalRenewApiAuthorization() async -> UURenewAuthorizationResponse

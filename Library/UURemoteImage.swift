@@ -43,11 +43,11 @@ public class UURemoteImage
         public static let ImageDownloaded = Notification.Name("UUImageDownloadedNotification")
     }
 
-    public func imageSize(for path: String) -> CGSize?
+    public func imageSize(for path: String) async -> CGSize?
     {
         if UURemoteImage.useDiskCache
         {
-            let md = remoteData.dataCache.metaData(for: path)
+            let md = await remoteData.dataCache.metaData(for: path)
             
             if let w = md[MetaData.ImageWidth] as? NSNumber,
                let h = md[MetaData.ImageHeight] as? NSNumber
@@ -69,7 +69,7 @@ public class UURemoteImage
         self.systemImageCache.removeAllObjects()
     }
     
-    public func isDownloaded( for key: String) -> Bool
+    public func isDownloaded( for key: String) async -> Bool
     {
         if self.systemImageCache.object(forKey: key as NSString) != nil
         {
@@ -78,36 +78,38 @@ public class UURemoteImage
         
         if UURemoteImage.useDiskCache
         {
-            return remoteData.dataCache.dataExists(for: key)
+            return await remoteData.dataCache.dataExists(for: key)
         }
         
         return false
     }
     
-    public func image(for key: String) -> UUImage?
+    public func image(for key: String) async -> UUImage?
     {
-        return image(for: key, remoteLoadCompletion: nil)
+        return await image(for: key, remoteLoadCompletion: nil)
     }
     
-    public func image(for key: String, remoteLoadCompletion: UUImageLoadedCompletionBlock? = nil) -> UUImage?
+    public func image(for key: String, remoteLoadCompletion: UUImageLoadedCompletionBlock? = nil) async -> UUImage?
     {
         if let image = self.systemImageCache.object(forKey: key as NSString)
         {
             return image
         }
-        else {
-            let data = remoteData.data(for: key, remoteLoadCompletion:
-            { (data, error) in
-                let image = self.processImageData(for: key, data: data)
+        else
+        {
+            let data = await remoteData.data(for: key)
+            { data, error in
+                let image = await self.processImageData(for: key, data: data)
                 
-                if let completion = remoteLoadCompletion {
+                if let completion = remoteLoadCompletion
+                {
                     completion(image, error)
                 }
-            })
+            }
             
             if let imageData = data
             {
-                let image = self.processImageData(for: key, data: imageData)
+                let image = await self.processImageData(for: key, data: imageData)
                 return image
             }
         }
@@ -115,7 +117,7 @@ public class UURemoteImage
         return nil
     }
 
-    private func processImageData(for key: String, data : Data?) -> UUImage?
+    private func processImageData(for key: String, data : Data?) async -> UUImage?
     {
         if let imageData = data, let image = UUImage(data: imageData)
         {
@@ -123,10 +125,10 @@ public class UURemoteImage
             
             if UURemoteImage.useDiskCache
             {
-                var md = remoteData.dataCache.metaData(for: key)
+                var md = await remoteData.dataCache.metaData(for: key)
                 md[MetaData.ImageWidth] = NSNumber(value: Float(image.size.width))
                 md[MetaData.ImageHeight] = NSNumber(value: Float(image.size.height))
-                remoteData.dataCache.set(metaData: md, for: key)
+                await remoteData.dataCache.set(metaData: md, for: key)
             }
 
             self.notifyImageDownloaded(key)

@@ -33,7 +33,6 @@
         "UUHttpErrorHandlingTests",
         "UUHttpSessionInstanceTests",
         "UUHttpSessionStaticTests",
-        "UURemoteApiTests",
         "UURemoteDataConcurrent_100",
         "UURemoteDataConcurrent_100\/test_downloadMultiple_largeFiles_noDuplicates()",
         "UURemoteDataConcurrent_100\/test_downloadMultiple_largeFiles_withDuplicates()",

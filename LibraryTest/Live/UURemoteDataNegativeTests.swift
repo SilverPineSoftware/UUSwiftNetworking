@@ -11,104 +11,144 @@ import UUSwiftTestCore
 
 @testable import UUSwiftNetworking
 
+private final class FetchCounter: @unchecked Sendable
+{
+    private let lock = NSLock()
+    private var _started = 0
+    private var _ended = 0
+
+    var started: Int
+    {
+        lock.lock()
+        defer { lock.unlock() }
+        return _started
+    }
+
+    var ended: Int
+    {
+        lock.lock()
+        defer { lock.unlock() }
+        return _ended
+    }
+
+    func recordStart()
+    {
+        lock.lock()
+        _started += 1
+        lock.unlock()
+    }
+
+    func recordEnd()
+    {
+        lock.lock()
+        _ended += 1
+        lock.unlock()
+    }
+}
+
 class UURemoteDataNegativeTests: BaseOnlineTest
 {
-    override func setUp()
+    override func setUpWithError() throws
     {
-        super.setUp()
+        try super.setUpWithError()
     }
-    
+
+    override func setUp() async throws
+    {
+        try await super.setUp()
+
+        await remoteDataForTest.dataCache.clearCache()
+        remoteDataForTest.maxActiveRequests = 50
+    }
+
     open var remoteDataForTest: UURemoteData
     {
-        return UURemoteData.shared
+        let api = UURemoteData.shared
+        api.networkTimeout = 300.0
+        return api
     }
-    
-    private var testUrl: String
+
+    func test_recursiveErrorDownload() async
     {
-        return testConfig.fullDownloadFileUrl
-    }
-    
-    override func tearDown()
-    {
-        super.tearDown()
-    }
-    
-    public func test_recursiveErrorDownload()
-    {
-        let count = 10000
-        let attempts = 10
-        
-        let exp = uuExpectationForMethod()
-        exp.expectedFulfillmentCount = count
-        
+        let count = 10_000
         let api = remoteDataForTest
-        
+
         let key = "https://dddkj112nrsr4.cloudfront.net/media/jr/dx/jrdxK9/item/BYZkn9/39c1af41c5e94885bdfb9ef90536e59d.jpg"
-        
-        var startedCount: Int = 0
-        var endedCount: Int = 0
-        
+
+        let exp = expectation(description: #function)
+        exp.expectedFulfillmentCount = count
+
+        let counter = FetchCounter()
+
         for i in 0..<count
         {
-            startedCount += 1
-            UUTestLog("Start - \(i), startedCount: \(startedCount), endedCount: \(endedCount)")
+            counter.recordStart()
 
-            _ = api.data(for: key, remoteLoadCompletion:
-            { responseData, responseErr in
-                
-                endedCount += 1
-                UUTestLog("End - \(i), startedCount: \(startedCount), endedCount: \(endedCount)")
+            _ = await api.data(for: key, remoteLoadCompletion:
+            { _, _ in
+                counter.recordEnd()
                 exp.fulfill()
             })
         }
-        
-        uuWaitForExpectations()
+
+        await fulfillment(of: [exp], timeout: api.networkTimeout)
+
+        XCTAssertEqual(counter.started, count)
+        XCTAssertEqual(counter.ended, count)
     }
-    
-    var remoteFetchCountStarted: Int = 0
-    var remoteFetchCountEnded: Int = 0
-    
-    private func doFetchFromBadUrl(url: String, count: Int, maxAttempts: Int, completion: @escaping ()->())
+
+    func test_recursiveBadUrlFetch() async
     {
-        if (count >= maxAttempts)
+        let maxAttempts = 10
+        let url = Constants.nonExistantHostUrl
+        let counter = FetchCounter()
+
+        let exp = expectation(description: #function)
+
+        await doFetchFromBadUrl(
+            url: url,
+            count: 0,
+            maxAttempts: maxAttempts,
+            counter: counter)
+        {
+            exp.fulfill()
+        }
+
+        await fulfillment(of: [exp], timeout: remoteDataForTest.networkTimeout)
+
+        XCTAssertEqual(counter.started, maxAttempts)
+        XCTAssertEqual(counter.ended, maxAttempts)
+    }
+
+    private func doFetchFromBadUrl(
+        url: String,
+        count: Int,
+        maxAttempts: Int,
+        counter: FetchCounter,
+        completion: @escaping @Sendable () -> Void) async
+    {
+        guard count < maxAttempts else
         {
             completion()
             return
         }
-        
-        let remoteData = remoteDataForTest
 
-        let key = url
-        
-        remoteFetchCountStarted += 1
-        UUTestLog("Starting fetch, startedCount: \(remoteFetchCountStarted), endedCount: \(remoteFetchCountEnded)")
-        
-        let data = remoteData.data(for: key, remoteLoadCompletion:
+        counter.recordStart()
+
+        let data = await remoteDataForTest.data(for: url, remoteLoadCompletion:
         { remoteDataOpt, remoteErrOpt in
-            
-            self.remoteFetchCountEnded += 1
-            UUTestLog("Ending fetch, startedCount: \(self.remoteFetchCountStarted), endedCount: \(self.remoteFetchCountEnded)")
-            
+            counter.recordEnd()
             XCTAssertNil(remoteDataOpt)
             XCTAssertNotNil(remoteErrOpt)
 
-            self.doFetchFromBadUrl(url: url, count: count + 1, maxAttempts: maxAttempts, completion: completion)
-            
+            await self.doFetchFromBadUrl(
+                url: url,
+                count: count + 1,
+                maxAttempts: maxAttempts,
+                counter: counter,
+                completion: completion)
         })
-                                   
+
         XCTAssertNil(data)
     }
-    
-    private func getBadImageUrls(count: Int) -> [String]
-    {
-        var results: [String] = []
-        
-        for i in 0..<count
-        {
-            results.append("http://this.is.a.fake.url/non_existent_\(i).jpg")
-        }
-        
-        return results
-    }
 }
-

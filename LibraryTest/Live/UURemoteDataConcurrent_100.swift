@@ -11,7 +11,7 @@ import UUSwiftTestCore
 
 @testable import UUSwiftNetworking
 
-class UURemoteDataConcurrent_100: UURemoteDataTests
+class UURemoteDataConcurrent_100: LiveUURemoteDataTests
 {
     override var concurrentDownloadCount: Int
     {

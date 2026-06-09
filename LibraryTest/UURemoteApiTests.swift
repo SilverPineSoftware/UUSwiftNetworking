@@ -110,6 +110,20 @@ final class UURemoteApiTests: XCTestCase
             }
         }
 
+        func awaitRenewCoalescedWaiter(timeoutSeconds: TimeInterval = 5) async throws
+        {
+            let deadline = Date().addingTimeInterval(timeoutSeconds)
+            while await renewalCoalescedWaiterCount() == 0
+            {
+                if Date() > deadline
+                {
+                    throw RenewalTestError.coalescedWaiterNotJoinedInTime
+                }
+                await Task.yield()
+                try await Task.sleep(nanoseconds: 5_000_000)
+            }
+        }
+
         func releaseBlockedRenewal()
         {
             stateLock.lock()
@@ -174,10 +188,17 @@ final class UURemoteApiTests: XCTestCase
     private enum RenewalTestError: LocalizedError
     {
         case renewNotStartedInTime
+        case coalescedWaiterNotJoinedInTime
 
         var errorDescription: String?
         {
-            "renewApiAuthorization was not started in time"
+            switch self
+            {
+                case .renewNotStartedInTime:
+                    "renewApiAuthorization was not started in time"
+                case .coalescedWaiterNotJoinedInTime:
+                    "A coalesced renewal waiter did not join in time"
+            }
         }
     }
 
@@ -381,6 +402,8 @@ final class UURemoteApiTests: XCTestCase
         {
             _ = await api.executeAuthorizedRequest(request)
         }
+
+        try await api.awaitRenewCoalescedWaiter()
 
         api.releaseBlockedRenewal()
         await first.value
