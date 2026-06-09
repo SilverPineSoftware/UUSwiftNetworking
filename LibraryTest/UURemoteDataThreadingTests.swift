@@ -9,6 +9,10 @@ import XCTest
 import UUSwiftCore
 @testable import UUSwiftNetworking
 
+#if canImport(Darwin)
+import Darwin
+#endif
+
 final class UURemoteDataThreadingTests: XCTestCase
 {
     private let testKey = "https://example.com/threading-test.bin"
@@ -51,7 +55,11 @@ final class UURemoteDataThreadingTests: XCTestCase
 
         _ = await api.data(for: badKey, remoteLoadCompletion:
         { _, _ in
-            box.isMainThread = Thread.isMainThread
+            #if canImport(Darwin)
+            box.isMainThread = pthread_main_np() != 0
+            #else
+            box.isMainThread = false
+            #endif
             exp.fulfill()
         })
 

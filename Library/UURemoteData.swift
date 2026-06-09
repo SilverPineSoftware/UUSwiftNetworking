@@ -47,6 +47,12 @@ private struct CoalescedDownloadResponse: @unchecked Sendable
     let response: UUHttpResponse
 }
 
+private struct UncheckedSendableBox<T>: @unchecked Sendable
+{
+    let value: T
+    init(_ value: T) { self.value = value }
+}
+
 private actor UURemoteDataPendingQueue
 {
     private var pendingDownloads: [String] = []
@@ -178,9 +184,11 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
     
     public func set(metaData: [String:Any], for key: String) async
     {
+        let mdBox = UncheckedSendableBox(metaData)
+        let cacheKey = key
         await performOnCacheQueue
         {
-            await self.dataCache.set(metaData: metaData, for: key)
+            await self.dataCache.set(metaData: mdBox.value, for: cacheKey)
         }
     }
 
@@ -230,7 +238,7 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
         storeInMemoryCache(data, for: key)
     }
 
-    private func performOnCacheQueue<T: Sendable>(
+    private func performOnCacheQueue<T>(
         _ operation: @Sendable @escaping () async -> T) async -> T
     {
         let queue = cacheQueue
@@ -331,12 +339,14 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
     
     private func updateMetaDataFromResponse(_ response: UUHttpResponse, for key: String) async
     {
+        let mimeType = response.httpResponse?.mimeType ?? ""
+        let cacheKey = key
         await performOnCacheQueue
         {
-            var md = await self.dataCache.metaData(for: key)
-            md[MetaData.MimeType] = response.httpResponse!.mimeType!
+            var md = await self.dataCache.metaData(for: cacheKey)
+            md[MetaData.MimeType] = mimeType
             md[MetaData.DownloadTimestamp] = Date()
-            await self.dataCache.set(metaData: md, for: key)
+            await self.dataCache.set(metaData: md, for: cacheKey)
         }
     }
     
@@ -344,13 +354,14 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
     {
         await cacheSet(data: data, for: key)
         
+        let cacheKey = key
         await performOnCacheQueue
         {
-            var md = await self.dataCache.metaData(for: key)
+            var md = await self.dataCache.metaData(for: cacheKey)
             md[MetaData.MimeType] = "raw"
             md[MetaData.DownloadTimestamp] = Date()
-            md[UURemoteData.NotificationKeys.RemotePath] = key
-            await self.dataCache.set(metaData: md, for: key)
+            md[UURemoteData.NotificationKeys.RemotePath] = cacheKey
+            await self.dataCache.set(metaData: md, for: cacheKey)
         }
         
         var notifyMd: [String: Any] = [:]

@@ -23,12 +23,12 @@
 
 import UUSwiftCore
 
-public typealias UUImageLoadedCompletionBlock = (UUImage?, Error?) -> Void
+public typealias UUImageLoadedCompletionBlock = @Sendable (UUImage?, Error?) -> Void
 
 
-public class UURemoteImage
+public class UURemoteImage: @unchecked Sendable
 {
-    nonisolated(unsafe) public static let shared = UURemoteImage(remoteData: UURemoteData.shared)
+    public static let shared = UURemoteImage(remoteData: UURemoteData.shared)
     nonisolated(unsafe) public static var useDiskCache = true
     
     private let remoteData: UURemoteData
@@ -107,10 +107,13 @@ public class UURemoteImage
             return image
         }
 
+        let instance = self
+        let imageKey = key
+        let completion = remoteLoadCompletion
         let data = await remoteData.data(for: key)
         { data, error in
-            let image = await self.processImageData(for: key, data: data)
-            self.deliverImageCompletion(remoteLoadCompletion, image: image, error: error)
+            let image = await instance.processImageData(for: imageKey, data: data)
+            instance.deliverImageCompletion(completion, image: image, error: error)
         }
         
         if let imageData = data
@@ -139,6 +142,9 @@ public class UURemoteImage
 
     private func processImageData(for key: String, data: Data?) async -> UUImage?
     {
+        let instance = self
+        let imageKey = key
+        let imageData = data
         let decodeQueue = imageDecodeQueue
         return await withCheckedContinuation
         { continuation in
@@ -146,7 +152,7 @@ public class UURemoteImage
             {
                 Task
                 {
-                    let image = await self.decodeAndCacheImage(for: key, data: data)
+                    let image = await instance.decodeAndCacheImage(for: imageKey, data: imageData)
                     continuation.resume(returning: image)
                 }
             }
