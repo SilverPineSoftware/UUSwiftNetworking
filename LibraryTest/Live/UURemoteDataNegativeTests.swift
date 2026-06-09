@@ -58,6 +58,7 @@ class UURemoteDataNegativeTests: BaseOnlineTest
         try await super.setUp()
 
         await remoteDataForTest.dataCache.clearCache()
+        remoteDataForTest.clearMemoryCache()
         remoteDataForTest.maxActiveRequests = 50
     }
 

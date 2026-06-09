@@ -32,6 +32,17 @@ public class UURemoteImage
     nonisolated(unsafe) public static var useDiskCache = true
     
     private let remoteData: UURemoteData
+
+    /// Serial queue for image decode work. Defaults to utility QoS.
+    public var imageDecodeQueue: DispatchQueue = DispatchQueue(
+        label: "com.silverpine.uu.remoteImage.decode",
+        qos: .utility)
+
+    /// Queue used to deliver `remoteLoadCompletion` handlers. Defaults to main.
+    public var imageCallbackQueue: DispatchQueue = .main
+
+    /// Queue used to post image download notifications. Defaults to main.
+    public var imageNotificationQueue: DispatchQueue = .main
     
     required init(remoteData: UURemoteData)
     {
@@ -47,7 +58,7 @@ public class UURemoteImage
     {
         if UURemoteImage.useDiskCache
         {
-            let md = await remoteData.dataCache.metaData(for: path)
+            let md = await remoteData.metaData(for: path)
             
             if let w = md[MetaData.ImageWidth] as? NSNumber,
                let h = md[MetaData.ImageHeight] as? NSNumber
@@ -78,7 +89,7 @@ public class UURemoteImage
         
         if UURemoteImage.useDiskCache
         {
-            return await remoteData.dataCache.dataExists(for: key)
+            return await remoteData.cachedDataExists(for: key)
         }
         
         return false
@@ -95,29 +106,54 @@ public class UURemoteImage
         {
             return image
         }
-        else
+
+        let data = await remoteData.data(for: key)
+        { data, error in
+            let image = await self.processImageData(for: key, data: data)
+            self.deliverImageCompletion(remoteLoadCompletion, image: image, error: error)
+        }
+        
+        if let imageData = data
         {
-            let data = await remoteData.data(for: key)
-            { data, error in
-                let image = await self.processImageData(for: key, data: data)
-                
-                if let completion = remoteLoadCompletion
-                {
-                    completion(image, error)
-                }
-            }
-            
-            if let imageData = data
-            {
-                let image = await self.processImageData(for: key, data: imageData)
-                return image
-            }
+            return await processImageData(for: key, data: imageData)
         }
         
         return nil
     }
 
-    private func processImageData(for key: String, data : Data?) async -> UUImage?
+    private func deliverImageCompletion(
+        _ completion: UUImageLoadedCompletionBlock?,
+        image: UUImage?,
+        error: Error?)
+    {
+        guard let completion else
+        {
+            return
+        }
+
+        imageCallbackQueue.async
+        {
+            completion(image, error)
+        }
+    }
+
+    private func processImageData(for key: String, data: Data?) async -> UUImage?
+    {
+        let decodeQueue = imageDecodeQueue
+        return await withCheckedContinuation
+        { continuation in
+            decodeQueue.async
+            {
+                Task
+                {
+                    let image = await self.decodeAndCacheImage(for: key, data: data)
+                    continuation.resume(returning: image)
+                }
+            }
+        }
+    }
+
+    private func decodeAndCacheImage(for key: String, data: Data?) async -> UUImage?
     {
         if let imageData = data, let image = UUImage(data: imageData)
         {
@@ -125,13 +161,13 @@ public class UURemoteImage
             
             if UURemoteImage.useDiskCache
             {
-                var md = await remoteData.dataCache.metaData(for: key)
+                var md = await remoteData.metaData(for: key)
                 md[MetaData.ImageWidth] = NSNumber(value: Float(image.size.width))
                 md[MetaData.ImageHeight] = NSNumber(value: Float(image.size.height))
-                await remoteData.dataCache.set(metaData: md, for: key)
+                await remoteData.set(metaData: md, for: key)
             }
 
-            self.notifyImageDownloaded(key)
+            notifyImageDownloaded(key)
             
             return image
         }
@@ -141,7 +177,8 @@ public class UURemoteImage
         
     private func notifyImageDownloaded(_ key: String)
     {
-        DispatchQueue.global(qos: .userInitiated).async
+        let queue = imageNotificationQueue
+        queue.async
         {
             var metaData : [String:Any] = [:]
             metaData[UURemoteData.NotificationKeys.RemotePath] = key

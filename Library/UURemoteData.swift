@@ -19,6 +19,12 @@
 //  UUHttpSession
 //  UUDataCache
 //
+//  Threading contract:
+//  | API              | Returns on caller | Completion on     | Heavy work on              |
+//  |------------------|-------------------|-------------------|----------------------------|
+//  | data(for:)       | caller (await)    | callbackQueue     | cacheQueue + detached dl   |
+//  | save(data:)      | caller (await)    | N/A               | cacheQueue                 |
+//  | Notifications    | N/A               | notificationQueue | JSON prep on caller thread |
 
 import Foundation
 import UUSwiftCore
@@ -83,6 +89,7 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
 
     private let downloadCoalescer = UUAsyncCoalescer<String, CoalescedDownloadResponse>()
     private let pendingQueue = UURemoteDataPendingQueue()
+    private let memoryCache = NSCache<NSString, NSData>()
 
     private var httpRequestLookups: [String: [UUDataLoadedCompletionBlock]] = [:]
     private var httpRequestLookupsLock = NSRecursiveLock()
@@ -91,9 +98,18 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
     public var maxActiveRequests: Int = 4
     
     public var networkTimeout: TimeInterval = UUHttpConfig.shared.defaultTimeout
+
+    /// Serial queue for disk cache reads/writes initiated by UURemoteData.
+    public var cacheQueue: DispatchQueue = DispatchQueue(
+        label: "com.silverpine.uu.remoteData.cache",
+        qos: .utility)
+
+    /// Queue used to deliver `remoteLoadCompletion` handlers. Defaults to main.
+    public var callbackQueue: DispatchQueue = .main
+
+    /// Queue used to post download notifications. Defaults to main.
+    public var notificationQueue: DispatchQueue = .main
     
-    // Optional hook to provide an instance of UURemoteApi.  When set UURemoteData sends
-    // requests through the remoteApi
     let remoteApi: UURemoteApi
     let dataCache: UUDataCache
     
@@ -120,44 +136,121 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
         {
             return nil
         }
-        
-		if (await dataCache.dataExists(for: key))
+
+        if let cached = memoryCache.object(forKey: key as NSString) as Data?
         {
-			let data = await dataCache.data(for: key)
-			if (data != nil)
-			{
-				return data
-			}
+            return cached
+        }
+
+        if await cacheDataExists(for: key)
+        {
+            let data = await cacheData(for: key)
+            if let data
+            {
+                storeInMemoryCache(data, for: key)
+                return data
+            }
         }
 
         appendRemoteHandler(for: key, handler: remoteLoadCompletion)
 
-        Task
+        let instance = self
+        Task.detached(priority: .utility)
         {
-            await beginDownloadIfNeeded(for: key)
+            await instance.beginDownloadIfNeeded(for: key)
         }
 
         return nil
     }
 
-    public func isDownloadActive(for key: String) -> Bool
+    public func isDownloadActive(for key: String) async -> Bool
     {
         downloadCoalescer.isInFlightSync(key: key)
     }
     
     public func metaData(for key: String) async -> [String:Any]
     {
-        return await dataCache.metaData(for: key)
+        await performOnCacheQueue
+        {
+            await self.dataCache.metaData(for: key)
+        }
     }
     
     public func set(metaData: [String:Any], for key: String) async
     {
-        await dataCache.set(metaData: metaData, for: key)
+        await performOnCacheQueue
+        {
+            await self.dataCache.set(metaData: metaData, for: key)
+        }
+    }
+
+    /// Returns true when data is present in the memory hot cache or on disk, without starting a download.
+    public func cachedDataExists(for key: String) async -> Bool
+    {
+        if memoryCache.object(forKey: key as NSString) != nil
+        {
+            return true
+        }
+
+        return await cacheDataExists(for: key)
+    }
+
+    /// Clears the in-memory hot cache. Does not affect disk cache.
+    public func clearMemoryCache()
+    {
+        memoryCache.removeAllObjects()
     }
 
     ////////////////////////////////////////////////////////////////////////////
     // Private Implementation
     ////////////////////////////////////////////////////////////////////////////
+
+    private func cacheDataExists(for key: String) async -> Bool
+    {
+        await performOnCacheQueue
+        {
+            await self.dataCache.dataExists(for: key)
+        }
+    }
+
+    private func cacheData(for key: String) async -> Data?
+    {
+        await performOnCacheQueue
+        {
+            await self.dataCache.data(for: key)
+        }
+    }
+
+    private func cacheSet(data: Data, for key: String) async
+    {
+        await performOnCacheQueue
+        {
+            await self.dataCache.set(data: data, for: key)
+        }
+        storeInMemoryCache(data, for: key)
+    }
+
+    private func performOnCacheQueue<T: Sendable>(
+        _ operation: @Sendable @escaping () async -> T) async -> T
+    {
+        let queue = cacheQueue
+        return await withCheckedContinuation
+        { continuation in
+            queue.async
+            {
+                Task
+                {
+                    let result = await operation()
+                    continuation.resume(returning: result)
+                }
+            }
+        }
+    }
+
+    private func storeInMemoryCache(_ data: Data, for key: String)
+    {
+        memoryCache.setObject(data as NSData, forKey: key as NSString)
+    }
 
     private func beginDownloadIfNeeded(for key: String) async
     {
@@ -197,18 +290,6 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
         await checkForPendingRequests()
     }
 
-    /*internal func executeRequest(_ request: UUHttpRequest, completion: @escaping (UUHttpResponse) -> Void)
-    {
-        nonisolated(unsafe) let api = remoteApi
-        nonisolated(unsafe) let done = completion
-
-        Task
-        {
-            let response = await api.executeOneRequest(request)
-            done(response)
-        }
-    }*/
-
     private func checkForPendingRequests() async
     {
         while downloadCoalescer.syncInFlightCount < maxActiveRequests
@@ -233,7 +314,7 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
         {
             let responseData = response.rawResponse!
 
-            await dataCache.set(data: responseData, for: key)
+            await cacheSet(data: responseData, for: key)
             await updateMetaDataFromResponse(response, for: key)
             notifyDataDownloaded(metaData: md)
 
@@ -250,30 +331,37 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
     
     private func updateMetaDataFromResponse(_ response: UUHttpResponse, for key: String) async
     {
-        var md = await dataCache.metaData(for: key)
-        md[MetaData.MimeType] = response.httpResponse!.mimeType!
-        md[MetaData.DownloadTimestamp] = Date()
-        
-        await dataCache.set(metaData: md, for: key)
+        await performOnCacheQueue
+        {
+            var md = await self.dataCache.metaData(for: key)
+            md[MetaData.MimeType] = response.httpResponse!.mimeType!
+            md[MetaData.DownloadTimestamp] = Date()
+            await self.dataCache.set(metaData: md, for: key)
+        }
     }
     
     public func save(data: Data, key: String) async
     {
-        await dataCache.set(data: data, for: key)
+        await cacheSet(data: data, for: key)
         
-        var md = await dataCache.metaData(for: key)
-        md[MetaData.MimeType] = "raw"
-        md[MetaData.DownloadTimestamp] = Date()
-        md[UURemoteData.NotificationKeys.RemotePath] = key
+        await performOnCacheQueue
+        {
+            var md = await self.dataCache.metaData(for: key)
+            md[MetaData.MimeType] = "raw"
+            md[MetaData.DownloadTimestamp] = Date()
+            md[UURemoteData.NotificationKeys.RemotePath] = key
+            await self.dataCache.set(metaData: md, for: key)
+        }
         
-        await dataCache.set(metaData: md, for: key)
-        
-        notifyDataDownloaded(metaData: md)
+        var notifyMd: [String: Any] = [:]
+        notifyMd[UURemoteData.NotificationKeys.RemotePath] = key
+        notifyDataDownloaded(metaData: notifyMd)
     }
     
     private func notifyDownloadFailed(_ key: String, _ error: Error?)
     {
-        DispatchQueue.global(qos: .userInitiated).async
+        let queue = notificationQueue
+        queue.async
         {
             var metaData: [String: Any] = [:]
             metaData[UURemoteData.NotificationKeys.RemotePath] = key
@@ -285,7 +373,8 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
     private func notifyDataDownloaded(metaData: [String:Any])
     {
         let jsonData = metaData.uuToJson()
-        DispatchQueue.global(qos: .userInitiated).async
+        let queue = notificationQueue
+        queue.async
         {
             let jsonObject = jsonData?.uuToJson() as? [String:Any]
             NotificationCenter.default.post(name: Notifications.DataDownloaded, object: nil, userInfo: jsonObject)
@@ -294,9 +383,20 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
     
     private func notifyRemoteDownloadHandlers(key: String, data: Data?, error: Error?, handlers: [UUDataLoadedCompletionBlock]) async
     {
+        let queue = callbackQueue
         for handler in handlers
         {
-            await handler(data, error)
+            await withCheckedContinuation
+            { (continuation: CheckedContinuation<Void, Never>) in
+                queue.async
+                {
+                    Task
+                    {
+                        await handler(data, error)
+                        continuation.resume()
+                    }
+                }
+            }
         }
     }
 

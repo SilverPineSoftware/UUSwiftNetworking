@@ -28,6 +28,7 @@ class LiveUURemoteDataTests: BaseOnlineTest
         try await super.setUp()
 
         await remoteDataForTest.dataCache.clearCache()
+        remoteDataForTest.clearMemoryCache()
         remoteDataForTest.maxActiveRequests = 50
         remoteDataForTest.dataCache.contentExpirationLength = 30 * 24 * 60 * 60
     }
