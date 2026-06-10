@@ -43,18 +43,18 @@ open class UUHttpAuthorizationProvider
 {
     /// Authentication scheme, the first token in the header value (for example `"Bearer"` or `"Basic"`).
     /// Must not include a trailing space.
-    var scheme: String = ""
+    public var scheme: String = ""
 
     /// Credential string used by the default ``formatAuthorization()`` implementation.
     /// Subclasses may ignore this property and compute the value in ``formatAuthorization()`` instead.
-    var authorization: String? = nil
+    public var authorization: String? = nil
     
     /// Creates a provider with a fixed scheme and optional static credential.
     ///
     /// - Parameters:
     ///   - scheme: Authentication scheme prepended to the credential (default `"Bearer"`).
     ///   - authorization: Static credential returned by the default ``formatAuthorization()`` implementation.
-    init(scheme: String = "Bearer", authorization: String? = nil)
+    public init(scheme: String = "Bearer", authorization: String? = nil)
     {
         self.scheme = scheme
         self.authorization = authorization
