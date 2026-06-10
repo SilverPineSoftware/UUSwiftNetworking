@@ -8,8 +8,10 @@
 
 import Foundation
 
-nonisolated public struct ShutterstockApiConfig
+nonisolated public struct ShutterstockApiConfig: Codable
 {
+    private static let UserDefaultsKey = "shutterstock-api-config"
+    
     var clientKey: String = ""
     var clientSecret: String = ""
     
@@ -19,5 +21,31 @@ nonisolated public struct ShutterstockApiConfig
     {
         self.clientKey = clientKey
         self.clientSecret = clientSecret
+    }
+    
+    enum CodingKeys: String, CodingKey
+    {
+        case clientKey = "client_key"
+        case clientSecret = "client_secret"
+    }
+    
+    static func load() -> Self
+    {
+        guard let rawData = UserDefaults.standard.data(forKey: UserDefaultsKey) else
+        {
+            return Self()
+        }
+        
+        let decoded = try? JSONDecoder().decode(Self.self, from: rawData)
+        return decoded ?? Self()
+    }
+    
+    func save()
+    {
+        if let encoded = try? JSONEncoder().encode(self)
+        {
+            UserDefaults.standard.set(encoded, forKey: Self.UserDefaultsKey)
+            UserDefaults.standard.synchronize()
+        }
     }
 }
