@@ -1,0 +1,17 @@
+//
+//  Release.xcconfig
+//  UUSwiftNetworkingSample
+//
+//  Created by Ryan DeVore on 6/9/26.
+//  Copyright © 2026 Silver Pine Software, LLC. All rights reserved.
+//
+
+// Configuration settings file format documentation can be found at:
+// https://developer.apple.com/documentation/xcode/adding-a-build-configuration-file-to-your-project
+BUNDLE_DISPLAY_NAME = Networking
+PRODUCT_NAME = UUSwiftNetworkingSample
+PRODUCT_MODULE_NAME = UUSwiftNetworkingSample
+PRODUCT_BUNDLE_IDENTIFIER = com.silverpine.uu.networking.sample
+DEVELOPMENT_TEAM = SVT6H48N2C
+CODE_SIGN_IDENTITY = iPhone Distribution
+CODE_SIGN_STYLE = Manual
