@@ -42,6 +42,7 @@ func ListSection<Content: View>(_ title: String, @ViewBuilder content: () -> Con
     ListSection(header: { SectionTitle(title) }, content: content)
 }
 
+/*
 func SettingsGroup<Content: View, Footer: View>(
     _ title: String,
     @ViewBuilder content: () -> Content,
@@ -65,3 +66,4 @@ func SettingsGroup<Content: View, Footer: View>(
     }
     .applyCardStyle()
 }
+*/

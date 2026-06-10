@@ -53,7 +53,6 @@ struct MenuHeaderView<RightView: View>: View
              Text(title.uppercased())
                 .uuScreenTitleSytle()
         }
-        //.background(.appBackground)
     }
 }
 
