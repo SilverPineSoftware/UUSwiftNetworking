@@ -14,7 +14,8 @@
 		08D2A56F2FD4A5D800059110 /* UUSwiftTestCore in Frameworks */ = {isa = PBXBuildFile; productRef = 08D2A56E2FD4A5D800059110 /* UUSwiftTestCore */; };
 		08D2A5712FD4A5D800059110 /* UUSwiftTestCoreUX in Frameworks */ = {isa = PBXBuildFile; productRef = 08D2A5702FD4A5D800059110 /* UUSwiftTestCoreUX */; };
 		08D969502FD129310013F490 /* UUSwiftCore in Frameworks */ = {isa = PBXBuildFile; productRef = 08D9694F2FD129310013F490 /* UUSwiftCore */; };
-		08D969512FD129310013F490 /* UUSwiftNetworking.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C574961926BB5E7A00CECCC0 /* UUSwiftNetworking.framework */; };
+		08EDD7232FD92EE400688075 /* UUSwiftNetworking.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C574961926BB5E7A00CECCC0 /* UUSwiftNetworking.framework */; };
+		08EDD7242FD92EE400688075 /* UUSwiftNetworking.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = C574961926BB5E7A00CECCC0 /* UUSwiftNetworking.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		C574963726BB617F00CECCC0 /* UUSwiftCore in Frameworks */ = {isa = PBXBuildFile; productRef = C574963626BB617F00CECCC0 /* UUSwiftCore */; };
 /* End PBXBuildFile section */
 
@@ -34,6 +35,20 @@
 			remoteInfo = UUSwiftNetworkingSample;
 		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		08EDD7252FD92EE400688075 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				08EDD7242FD92EE400688075 /* UUSwiftNetworking.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		0840B4522FD5A20B006F57DE /* UUSwiftNetworkingTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UUSwiftNetworkingTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -109,7 +124,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				08D969512FD129310013F490 /* UUSwiftNetworking.framework in Frameworks */,
+				08EDD7232FD92EE400688075 /* UUSwiftNetworking.framework in Frameworks */,
 				08D969502FD129310013F490 /* UUSwiftCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -229,6 +244,7 @@
 				08F546512FCE89BF006EE7C9 /* Sources */,
 				08F546522FCE89BF006EE7C9 /* Frameworks */,
 				08F546532FCE89BF006EE7C9 /* Resources */,
+				08EDD7252FD92EE400688075 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
