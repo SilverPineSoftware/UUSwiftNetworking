@@ -43,6 +43,14 @@ struct ShutterstockConfigView: View
                 {
                     VStack
                     {
+                        HStack
+                        {
+                            Text("Client Key")
+                                .font(.body.monospaced())
+                            
+                            Spacer()
+                        }
+                        
                         TextField("Client Key", text: $viewModel.clientKey)
                             .padding(10)
                             .background(Color(.cardBackground))
@@ -55,6 +63,17 @@ struct ShutterstockConfigView: View
                             .autocapitalization(.words)
                             .foregroundColor(.textBody)
                             .font(.body.monospaced())
+                    }
+                    
+                    VStack
+                    {
+                        HStack
+                        {
+                            Text("Client Secret")
+                                .font(.body.monospaced())
+                            
+                            Spacer()
+                        }
                         
                         TextField("Client Secret", text: $viewModel.clientSecret)
                             .padding(10)
