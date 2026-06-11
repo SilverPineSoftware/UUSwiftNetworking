@@ -12,22 +12,43 @@ struct ShutterstockGalleryCell: View
 {
     let url: String
     @State private var image: UUImage?
+    @State private var isLoading = false
+    @State private var imageOpacity: Double = 0
+    @State private var placeholderOpacity: Double = 1.0
 
+    private var placeholder: some View
+    {
+        ZStack
+        {
+            Color(.cardBackground)
+            Image(systemName: "photo")
+                .font(.title2)
+                .foregroundStyle(.secondary)
+                .symbolEffect(.pulse, isActive: isLoading && image == nil)
+        }
+    }
+    
     var body: some View
     {
         GeometryReader
         { geo in
             Group
             {
+                placeholder
+                
                 if let image
                 {
                     Image(uiImage: image)
-                        .resizable()
-                        .scaledToFill()
-                }
-                else
-                {
-                    Color(.cardBackground)
+                            .resizable()
+                            .scaledToFill()
+                            .opacity(imageOpacity)
+                            .onAppear
+                            {
+                                withAnimation(.easeIn(duration: 0.25))
+                                {
+                                    imageOpacity = 1
+                                }
+                            }
                 }
             }
             .frame(width: geo.size.width, height: geo.size.width)
@@ -35,6 +56,7 @@ struct ShutterstockGalleryCell: View
         }
         .task(id: url)
         {
+            isLoading = true
             image = await UURemoteImage.shared.image(for: url)
             { remoteImage, error in
             
@@ -42,10 +64,13 @@ struct ShutterstockGalleryCell: View
                 {
                     DispatchQueue.main.async
                     {
+                        isLoading = false
                         self.image = img
                     }
                 }
             }
+            
+            isLoading = (image == nil)
         }
     }
 }
