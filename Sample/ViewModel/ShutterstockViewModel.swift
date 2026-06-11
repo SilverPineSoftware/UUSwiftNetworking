@@ -44,7 +44,7 @@ class ShutterstockViewModel: ObservableObject
     private var api: ShutterstockApi = ShutterstockApi()
     private var currentPage: Int = 0
     private var hasMore: Bool = true
-    private let perPage: Int = 30
+    private let perPage: Int = 500
 
     init()
     {
