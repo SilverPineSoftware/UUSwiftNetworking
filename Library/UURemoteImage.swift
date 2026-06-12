@@ -163,7 +163,14 @@ public class UURemoteImage: @unchecked Sendable
     {
         if let imageData = data, let image = UUImage(data: imageData)
         {
-            self.systemImageCache.setObject(image, forKey: key as NSString)
+            var preparedImage = image
+            
+            // If available, prepare the image
+            #if canImport(UIKit)
+            preparedImage = await image.byPreparingForDisplay() ?? image
+            #endif
+            
+            self.systemImageCache.setObject(preparedImage, forKey: key as NSString)
             
             if UURemoteImage.useDiskCache
             {
