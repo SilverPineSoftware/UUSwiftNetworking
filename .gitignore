@@ -93,3 +93,4 @@ iOSInjectionProject/
 /.swiftpm
 /SampleTest/SampleTestConfig.json
 /LibraryTest/TestConfig.json
+/UUSwiftNetworking.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
