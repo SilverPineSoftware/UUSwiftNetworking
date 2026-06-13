@@ -300,6 +300,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
+				CLASSPREFIX = UU;
 				LastSwiftUpdateCheck = 2650;
 				LastUpgradeCheck = 2650;
 				ORGANIZATIONNAME = "Silver Pine Software, LLC.";
