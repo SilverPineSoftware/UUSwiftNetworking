@@ -37,6 +37,17 @@ public actor UUAsyncCoalescer<Key: Hashable & Sendable, Value: Sendable>
         return inFlightMirror.count
     }
     
+    /// Cancels the in-flight task for `key`, if any. Waiters receive `CancellationError`.
+    public func cancel(key: Key)
+    {
+        if let task = inFlight[key]
+        {
+            task.cancel()
+            inFlight[key] = nil
+            trackInFlight(key, active: false)
+        }
+    }
+
     public func run(
         key: Key,
         operation: @Sendable @escaping () async throws -> Value

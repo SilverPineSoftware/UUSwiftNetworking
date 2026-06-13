@@ -81,7 +81,7 @@ class UURemoteDataNegativeTests: BaseOnlineTest
 
         let counter = FetchCounter()
 
-        for i in 0..<count
+        for _ in 0..<count
         {
             counter.recordStart()
 

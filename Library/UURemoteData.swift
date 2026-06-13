@@ -38,6 +38,8 @@ public protocol UURemoteDataProtocol
     
     func metaData(for key: String) async -> [String:Any]
     func set(metaData: [String:Any], for key: String) async
+    
+    func cancelDownload(for key: String)
 }
 
 public typealias UUDataLoadedCompletionBlock = @Sendable (Data?, Error?) async -> Void
@@ -53,23 +55,30 @@ private struct UncheckedSendableBox<T>: @unchecked Sendable
     init(_ value: T) { self.value = value }
 }
 
+private struct PendingDownload: Sendable
+{
+    let key: String
+    let requestGeneration: UInt64
+}
+
 private actor UURemoteDataPendingQueue
 {
-    private var pendingDownloads: [String] = []
+    private var pendingDownloads: [PendingDownload] = []
 
-    func queuePending(for key: String)
+    func queuePending(for key: String, generation: UInt64)
     {
-        if let index = pendingDownloads.firstIndex(of: key)
-        {
-            pendingDownloads.remove(at: index)
-        }
-
-        pendingDownloads.insert(key, at: 0)
+        pendingDownloads.removeAll { $0.key == key }
+        pendingDownloads.insert(PendingDownload(key: key, requestGeneration: generation), at: 0)
     }
 
-    func dequeuePending() -> String?
+    func dequeuePending() -> PendingDownload?
     {
         pendingDownloads.popLast()
+    }
+
+    func removePending(for key: String)
+    {
+        pendingDownloads.removeAll { $0.key == key }
     }
 }
 
@@ -99,6 +108,10 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
 
     private var httpRequestLookups: [String: [UUDataLoadedCompletionBlock]] = [:]
     private var httpRequestLookupsLock = NSRecursiveLock()
+
+    private var downloadGeneration: [String: UInt64] = [:]
+    private var downloadStartedGeneration: [String: UInt64] = [:]
+    private var downloadGenerationLock = NSLock()
     
     // Default to 4 active requests at a time...
     public var maxActiveRequests: Int = 4
@@ -160,10 +173,11 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
 
         appendRemoteHandler(for: key, handler: remoteLoadCompletion)
 
+        let requestGeneration = currentDownloadGeneration(for: key)
         let instance = self
         Task.detached(priority: .utility)
         {
-            await instance.beginDownloadIfNeeded(for: key)
+            await instance.beginDownloadIfNeeded(for: key, requestGeneration: requestGeneration)
         }
 
         return nil
@@ -189,6 +203,19 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
         await performOnCacheQueue
         {
             await self.dataCache.set(metaData: mdBox.value, for: cacheKey)
+        }
+    }
+    
+    public func cancelDownload(for key: String)
+    {
+        invalidateDownload(for: key)
+        _ = takeRemoteHandlers(for: key)
+
+        let instance = self
+        Task.detached(priority: .utility)
+        {
+            await instance.pendingQueue.removePending(for: key)
+            await instance.downloadCoalescer.cancel(key: key)
         }
     }
 
@@ -260,8 +287,13 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
         memoryCache.setObject(data as NSData, forKey: key as NSString)
     }
 
-    private func beginDownloadIfNeeded(for key: String) async
+    private func beginDownloadIfNeeded(for key: String, requestGeneration: UInt64) async
     {
+        if !isDownloadStillValid(for: key, requestGeneration: requestGeneration)
+        {
+            return
+        }
+
         if downloadCoalescer.isInFlightSync(key: key)
         {
             return
@@ -269,20 +301,33 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
 
         if downloadCoalescer.syncInFlightCount > maxActiveRequests
         {
-            await pendingQueue.queuePending(for: key)
+            await pendingQueue.queuePending(for: key, generation: requestGeneration)
             return
         }
 
-        await performCoalescedDownload(for: key)
+        await performCoalescedDownload(for: key, requestGeneration: requestGeneration)
     }
 
-    private func performCoalescedDownload(for key: String) async
+    private func performCoalescedDownload(for key: String, requestGeneration: UInt64) async
     {
+        if !isDownloadStillValid(for: key, requestGeneration: requestGeneration)
+        {
+            return
+        }
+
+        recordDownloadStarted(for: key, requestGeneration: requestGeneration)
+        defer { clearDownloadStarted(for: key) }
+
         nonisolated(unsafe) let api = remoteApi
         let timeout = networkTimeout
 
         let coalesced = try? await downloadCoalescer.run(key: key)
         {
+            if Task.isCancelled
+            {
+                throw CancellationError()
+            }
+
             let request = UUHttpRequest(url: key)
             request.responseHandler = UUPassthroughResponseHandler()
             request.timeout = timeout
@@ -300,19 +345,24 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
 
     private func checkForPendingRequests() async
     {
-        while downloadCoalescer.syncInFlightCount < maxActiveRequests
+        while downloadCoalescer.syncInFlightCount <= maxActiveRequests
         {
             guard let next = await pendingQueue.dequeuePending() else
             {
                 break
             }
 
-            await beginDownloadIfNeeded(for: next)
+            await beginDownloadIfNeeded(for: next.key, requestGeneration: next.requestGeneration)
         }
     }
 
     private func handleDownloadResponse(_ response: UUHttpResponse, _ key: String) async
     {
+        if isDownloadCancelled(for: key)
+        {
+            return
+        }
+
         let handlers = takeRemoteHandlers(for: key)
 
         var md: [String: Any] = [:]
@@ -430,6 +480,54 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
         httpRequestLookupsLock.lock()
 
         return httpRequestLookups.removeValue(forKey: key) ?? []
+    }
+
+    private func isDownloadCancelled(for key: String) -> Bool
+    {
+        downloadGenerationLock.lock()
+        defer { downloadGenerationLock.unlock() }
+
+        guard let startedGeneration = downloadStartedGeneration[key] else
+        {
+            return false
+        }
+
+        return (downloadGeneration[key] ?? 0) != startedGeneration
+    }
+
+    private func currentDownloadGeneration(for key: String) -> UInt64
+    {
+        downloadGenerationLock.lock()
+        defer { downloadGenerationLock.unlock() }
+        return downloadGeneration[key] ?? 0
+    }
+
+    private func invalidateDownload(for key: String)
+    {
+        downloadGenerationLock.lock()
+        downloadGeneration[key] = (downloadGeneration[key] ?? 0) + 1
+        downloadGenerationLock.unlock()
+    }
+
+    private func isDownloadStillValid(for key: String, requestGeneration: UInt64) -> Bool
+    {
+        downloadGenerationLock.lock()
+        defer { downloadGenerationLock.unlock() }
+        return (downloadGeneration[key] ?? 0) == requestGeneration
+    }
+
+    private func recordDownloadStarted(for key: String, requestGeneration: UInt64)
+    {
+        downloadGenerationLock.lock()
+        downloadStartedGeneration[key] = requestGeneration
+        downloadGenerationLock.unlock()
+    }
+
+    private func clearDownloadStarted(for key: String)
+    {
+        downloadGenerationLock.lock()
+        downloadStartedGeneration.removeValue(forKey: key)
+        downloadGenerationLock.unlock()
     }
 }
 
