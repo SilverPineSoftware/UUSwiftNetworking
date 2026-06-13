@@ -36,7 +36,7 @@ public class UUHttpSession: @unchecked Sendable
         urlSession = URLSession(configuration: sessionConfiguration, delegate: delegate, delegateQueue: nil)
     }
     
-    public func executeRequest(_ request: UUHttpRequest) async -> UUHttpResponse
+    open func executeRequest(_ request: UUHttpRequest) async -> UUHttpResponse
     {
         guard var httpRequest = await request.buildURLRequest() else
         {

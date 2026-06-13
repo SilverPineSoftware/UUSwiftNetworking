@@ -20,7 +20,7 @@ nonisolated class ShutterstockApi: UURemoteApi
     {
         didSet
         {
-            self.defaultAuthorizationProvider = UUBasicAuthorizationProvider(userName: config.clientKey, password: config.clientSecret)
+            self.authorizationProvider = UUBasicAuthorizationProvider(userName: config.clientKey, password: config.clientSecret)
         }
     }
     
@@ -69,7 +69,7 @@ nonisolated class ShutterstockApi: UURemoteApi
         
         req.queryArguments = args
         
-        let result = await executeOneAuthorizedCodableRequest(req)
+        let result = await executeCodableRequest(req)
         
         switch (result)
         {

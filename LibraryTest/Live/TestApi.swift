@@ -53,7 +53,7 @@ final class TestApi: UURemoteApi
             queryArguments: queryArgs
         )
 
-        return await executeOneCodableRequest(request)
+        return await executeCodableRequest(request)
     }
 
     func getArray(count: Int) async -> Result<[TestApiObject], Error>
@@ -63,7 +63,7 @@ final class TestApi: UURemoteApi
             queryArguments: ["count": "\(count)"]
         )
 
-        return await executeOneCodableRequest(request)
+        return await executeCodableRequest(request)
     }
 
     func postObject(_ object: TestApiObject) async -> Result<TestApiObject, Error>
@@ -75,7 +75,7 @@ final class TestApi: UURemoteApi
             body: body
         )
 
-        return await executeOneCodableRequest(request)
+        return await executeCodableRequest(request)
     }
 
     func postArray(_ objects: [TestApiObject]) async -> Result<[TestApiObject], Error>
@@ -87,23 +87,6 @@ final class TestApi: UURemoteApi
             body: body
         )
 
-        return await executeOneCodableRequest(request)
+        return await executeCodableRequest(request)
     }
-
-    /*private func executeCodable<Success: Codable>(_ request: UUCodableHttpRequest<Success, TestApiError>) async -> Result<Success, Error>
-    {
-        let response = await executeOneCodableRequest(request)
-
-        if let error = response.httpError
-        {
-            return .failure(error)
-        }
-
-        if let value = response.parsedResponse as? Success
-        {
-            return .success(value)
-        }
-
-        return .failure(UUErrorFactory.createError(.parseFailure, nil))
-    }*/
 }

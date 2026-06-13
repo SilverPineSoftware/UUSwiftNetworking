@@ -286,7 +286,7 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
             let request = UUHttpRequest(url: key)
             request.responseHandler = UUPassthroughResponseHandler()
             request.timeout = timeout
-            let response = await api.executeOneRequest(request)
+            let response = await api.executeRequest(request)
             return CoalescedDownloadResponse(response: response)
         }
 

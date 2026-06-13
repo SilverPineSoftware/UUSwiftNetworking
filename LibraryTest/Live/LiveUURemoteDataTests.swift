@@ -298,7 +298,7 @@ class LiveUURemoteDataTests: BaseOnlineTest
 
         request.body = form
 
-        let response = await remoteDataForTest.remoteApi.executeOneRequest(request)
+        let response = await remoteDataForTest.remoteApi.executeRequest(request)
         XCTAssertNil(response.httpError)
 
         try await verifyUploadedFile(fileName)
@@ -310,7 +310,7 @@ class LiveUURemoteDataTests: BaseOnlineTest
 
         let request = UUHttpRequest(url: url, method: .get)
 
-        let response = await remoteDataForTest.remoteApi.executeOneRequest(request)
+        let response = await remoteDataForTest.remoteApi.executeRequest(request)
 
         XCTAssertNotNil(response.parsedResponse)
         XCTAssertNil(response.httpError)

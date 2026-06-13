@@ -11,7 +11,7 @@ import Foundation
 open class UURemoteApi
 {
     public var session: UUHttpSession = UUHttpSession()
-    public var defaultAuthorizationProvider: UUHttpAuthorizationProvider? = nil
+    public var authorizationProvider: UUHttpAuthorizationProvider? = nil
     
     // MARK: Public Methods
 
@@ -25,7 +25,7 @@ open class UURemoteApi
      Also, if an error is returned, a check is done to determine if the error requires api authorization renewal.  After perforaming any api authorization renewal,
      the original request will be tried again
      */
-    open func executeAuthorizedRequest(_ request: UUHttpRequest) async -> UUHttpResponse
+    open func executeRequest(_ request: UUHttpRequest) async -> UUHttpResponse
     {
         let renewResult = await renewApiAuthorizationIfNeeded()
         if let authorizationRenewalError = renewResult.error
@@ -33,7 +33,8 @@ open class UURemoteApi
             return UUHttpResponse(request: request, response: nil, error: authorizationRenewalError)
         }
         
-        var response = await executeOneAuthorizedRequest(request)
+        await prepareRequest(request)
+        var response = await session.executeRequest(request)
         if let err = response.httpError, await shouldRenewApiAuthorization(err)
         {
             let innerRenewResult = await internalRenewApiAuthorization()
@@ -44,29 +45,24 @@ open class UURemoteApi
             
             if (innerRenewResult.didAttempt)
             {
-                response = await executeOneAuthorizedRequest(request)
+                // Prepare again (assuming authorization has changed)
+                await prepareRequest(request)
+                response = await session.executeRequest(request)
             }
         }
         
         return response
     }
     
-    open func executeOneAuthorizedRequest(_ request: UUHttpRequest) async -> UUHttpResponse
+    open func prepareRequest(_ request: UUHttpRequest) async
     {
         if (request.authorizationProvider == nil)
         {
-            request.authorizationProvider = defaultAuthorizationProvider
+            request.authorizationProvider = self.authorizationProvider
         }
-        
-        return await executeOneRequest(request)
     }
     
-    open func executeOneRequest(_ request: UUHttpRequest) async -> UUHttpResponse
-    {
-        return await session.executeRequest(request)
-    }
-    
-    open func executeAuthorizedCodableRequest<SuccessType: Codable, ErrorType: Codable>(
+    open func executeCodableRequest<SuccessType: Codable, ErrorType: Codable>(
         _ request: UUCodableHttpRequest<SuccessType, ErrorType>) async -> Result<SuccessType, Error>
     {
         let renewResult = await renewApiAuthorizationIfNeeded()
@@ -75,7 +71,8 @@ open class UURemoteApi
             return .failure(authorizationRenewalError)
         }
         
-        var result = await executeOneAuthorizedCodableRequest(request)
+        await prepareRequest(request)
+        var result = await session.executeCodableRequest(request)
         switch (result)
         {
             case .success(let success):
@@ -93,32 +90,15 @@ open class UURemoteApi
                     
                     if (innerRenewResult.didAttempt)
                     {
-                        result = await executeOneAuthorizedCodableRequest(request)
+                        // Prepare again (assuming authorization has changed)
+                        await prepareRequest(request)
+                        result = await session.executeCodableRequest(request)
                     }
                 }
             
             return result
         }
     }
-    
-    open func executeOneAuthorizedCodableRequest<SuccessType: Codable, ErrorType: Codable>(
-        _ request: UUCodableHttpRequest<SuccessType, ErrorType>) async -> Result<SuccessType, Error>
-    {
-        if (request.authorizationProvider == nil)
-        {
-            request.authorizationProvider = defaultAuthorizationProvider
-        }
-        
-        return await executeOneCodableRequest(request)
-    }
-    
-    open func executeOneCodableRequest<SuccessType: Codable, ErrorType: Codable>(
-        _ request: UUCodableHttpRequest<SuccessType, ErrorType>) async -> Result<SuccessType, Error>
-    {
-        return await session.executeCodableRequest(request)
-    }
-    
-    // MARK: Public Overridable Methods
     
     /**
      Perform an api authorization/renewal.  Typically this means fetching a JWT from a server,.
