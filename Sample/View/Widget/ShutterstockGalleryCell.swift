@@ -72,6 +72,10 @@ struct ShutterstockGalleryCell: View
             
             isLoading = (image == nil)
         }
+        .onDisappear
+        {
+            UURemoteData.shared.cancelDownload(for: url)
+        }
     }
 }
 
