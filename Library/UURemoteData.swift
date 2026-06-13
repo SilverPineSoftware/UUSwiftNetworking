@@ -31,17 +31,36 @@ import UUSwiftCore
 
 fileprivate let LOG_TAG = "UURemoteData"
 
+/// A protocol describing the remote data cache and download surface.
+///
+/// Implemented by ``UURemoteData``. Use the protocol when injecting a test double or
+/// alternate implementation.
 public protocol UURemoteDataProtocol
 {
+    /// Returns cached or freshly downloaded data for a remote URL key.
     func data(for key: String) async -> Data?
+
+    /// Returns whether a network download is currently in flight for the key.
     func isDownloadActive(for key: String) async -> Bool
-    
+
+    /// Returns persisted metadata for a cache key.
     func metaData(for key: String) async -> [String:Any]
+
+    /// Persists metadata for a cache key.
     func set(metaData: [String:Any], for key: String) async
-    
+
+    /// Cancels a pending or in-flight download for the key.
     func cancelDownload(for key: String)
 }
 
+/// An async completion handler invoked when a remote download finishes.
+///
+/// Called on ``UURemoteData/callbackQueue`` after the download succeeds or fails.
+/// Handlers are `@Sendable` and safe to capture across concurrency domains.
+///
+/// - Parameters:
+///   - data: The downloaded bytes, or `nil` on failure or cancellation.
+///   - error: The HTTP or network error, or `nil` on success.
 public typealias UUDataLoadedCompletionBlock = @Sendable (Data?, Error?) async -> Void
 
 private struct CoalescedDownloadResponse: @unchecked Sendable
@@ -82,23 +101,67 @@ private actor UURemoteDataPendingQueue
     }
 }
 
+/// A centralized remote data loader with memory and disk caching, download coalescing, and throttling.
+///
+/// `UURemoteData` is the recommended entry point for fetching binary content from URLs. Callers pass
+/// a URL string as the cache key. The type consults an in-memory hot cache, then ``UUDataCache`` on
+/// disk, and only then starts a coalesced network download through ``UURemoteApi``.
+///
+/// Multiple concurrent requests for the same key share one network transfer. Downloads are throttled
+/// by ``maxActiveRequests``; additional keys wait in a pending queue until a slot opens.
+///
+/// ## Cancellation
+///
+/// ``cancelDownload(for:)`` invalidates the current download generation for a key, drops registered
+/// completion handlers without calling them, removes the key from the pending queue, and cancels any
+/// in-flight coalesced task. A subsequent ``data(for:remoteLoadCompletion:)`` starts fresh work.
+///
+/// ## Threading
+///
+/// | API | Returns on | Completion / notifications | Heavy work |
+/// |-----|------------|------------------------------|------------|
+/// | ``data(for:)`` | Caller (await) | ``callbackQueue`` | ``cacheQueue`` + detached download |
+/// | ``save(data:key:)`` | Caller (await) | N/A | ``cacheQueue`` |
+/// | Notifications | N/A | ``notificationQueue`` | JSON prep on caller thread |
+///
+/// ## Dependencies
+///
+/// - ``UUHttpSession`` (via ``UURemoteApi``)
+/// - ``UUDataCache``
 public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
 {
+    /// Notification names posted when remote data events occur.
     public struct Notifications
     {
+        /// Posted when data is successfully downloaded and cached.
+        ///
+        /// The `userInfo` dictionary contains ``NotificationKeys/RemotePath``.
         public static let DataDownloaded = Notification.Name("UUDataDownloadedNotification")
+
+        /// Posted when a remote download fails.
+        ///
+        /// The `userInfo` dictionary contains ``NotificationKeys/RemotePath`` and
+        /// ``NotificationKeys/Error``.
         public static let DataDownloadFailed = Notification.Name("UUDataDownloadFailedNotification")
     }
 
+    /// Keys used in cache metadata and download notifications.
     public struct MetaData
     {
+        /// The MIME type reported by the HTTP response.
         public static let MimeType = "MimeType"
+
+        /// The date the content was downloaded or saved.
         public static let DownloadTimestamp = "DownloadTimestamp"
     }
-    
+
+    /// Keys available in notification `userInfo` dictionaries.
     public struct NotificationKeys
     {
+        /// The remote URL path (cache key) associated with the event.
         public static let RemotePath = "UUDataRemotePathKey"
+
+        /// The error that caused a download failure.
         public static let Error = "UURemoteDataErrorKey"
     }
 
@@ -113,27 +176,43 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
     private var downloadStartedGeneration: [String: UInt64] = [:]
     private var downloadGenerationLock = NSLock()
     
-    // Default to 4 active requests at a time...
+    /// The maximum number of concurrent in-flight downloads before additional keys are queued.
+    ///
+    /// Defaults to `4`. When the number of active coalesced downloads exceeds this value, further
+    /// keys are held in an internal pending queue until a slot becomes available.
     public var maxActiveRequests: Int = 4
-    
+
+    /// The timeout applied to each download ``UUHttpRequest``.
+    ///
+    /// Defaults to ``UUHttpConfig/shared`` `defaultTimeout`.
     public var networkTimeout: TimeInterval = UUHttpConfig.shared.defaultTimeout
 
-    /// Serial queue for disk cache reads/writes initiated by UURemoteData.
+    /// Serial queue for disk cache reads and writes initiated by this instance.
     public var cacheQueue: DispatchQueue = DispatchQueue(
         label: "com.silverpine.uu.remoteData.cache",
         qos: .utility)
 
-    /// Queue used to deliver `remoteLoadCompletion` handlers. Defaults to main.
+    /// Queue used to deliver ``UUDataLoadedCompletionBlock`` handlers. Defaults to the main queue.
     public var callbackQueue: DispatchQueue = .main
 
-    /// Queue used to post download notifications. Defaults to main.
+    /// Queue used to post ``Notifications`` events. Defaults to the main queue.
     public var notificationQueue: DispatchQueue = .main
-    
+
+    /// The API client used to perform authorized HTTP downloads.
     let remoteApi: UURemoteApi
+
+    /// The disk cache backing store for downloaded data.
     let dataCache: UUDataCache
-    
+
+    /// The shared remote data instance using ``UUDataCache/shared`` and a default ``UURemoteApi``.
     static public let shared = UURemoteData(dataCache: UUDataCache.shared, remoteApi: UURemoteApi())
-    
+
+    /// Creates a remote data loader with the given cache and API client.
+    ///
+    /// - Parameters:
+    ///   - dataCache: The disk cache used for persistence.
+    ///   - remoteApi: The API client used for network requests. Inject a subclass to add
+    ///     authorization or custom session configuration.
     required init(dataCache: UUDataCache, remoteApi: UURemoteApi)
     {
         self.dataCache = dataCache
@@ -143,11 +222,33 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
     ////////////////////////////////////////////////////////////////////////////
     // UURemoteDataProtocol Implementation
     ////////////////////////////////////////////////////////////////////////////
+    /// Returns cached or downloaded data for a remote URL.
+    ///
+    /// The `key` must be a string that ``URL/init(string:)`` accepts. Lookup order is memory hot
+    /// cache, disk cache, then network. When data is not immediately available, `nil` is returned
+    /// and a background download is started.
+    ///
+    /// - Parameter key: The remote URL string used as the cache key.
+    /// - Returns: Cached data when available synchronously from memory or disk, otherwise `nil`
+    ///   while a download is in progress.
     public func data(for key: String) async -> Data?
     {
         return await data(for: key, remoteLoadCompletion: nil)
     }
-    
+
+    /// Returns cached or downloaded data for a remote URL, invoking a completion when a background
+    /// download finishes.
+    ///
+    /// When data is already in the memory or disk cache, it is returned immediately and the
+    /// completion is not called. When a download is required, this method returns `nil` and the
+    /// completion is invoked on ``callbackQueue`` when the transfer completes, fails, or is
+    /// cancelled via ``cancelDownload(for:)``.
+    ///
+    /// - Parameters:
+    ///   - key: The remote URL string used as the cache key.
+    ///   - remoteLoadCompletion: An optional handler invoked when a background download completes.
+    ///     Ignored when data is returned synchronously from cache.
+    /// - Returns: Cached data when immediately available, otherwise `nil`.
     public func data(for key: String, remoteLoadCompletion: UUDataLoadedCompletionBlock? = nil) async -> Data?
     {
         let url = URL(string: key)
@@ -183,11 +284,21 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
         return nil
     }
 
+    /// Returns whether a coalesced network download is currently in flight for the key.
+    ///
+    /// Pending downloads waiting for an available slot in ``maxActiveRequests`` return `false`.
+    ///
+    /// - Parameter key: The remote URL string used as the cache key.
+    /// - Returns: `true` when an active download task exists for the key.
     public func isDownloadActive(for key: String) async -> Bool
     {
         downloadCoalescer.isInFlightSync(key: key)
     }
     
+    /// Returns persisted metadata for a cache key.
+    ///
+    /// - Parameter key: The cache key, typically a remote URL string.
+    /// - Returns: The metadata dictionary stored in ``dataCache``.
     public func metaData(for key: String) async -> [String:Any]
     {
         await performOnCacheQueue
@@ -196,6 +307,11 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
         }
     }
     
+    /// Persists metadata for a cache key.
+    ///
+    /// - Parameters:
+    ///   - metaData: The metadata dictionary to store.
+    ///   - key: The cache key, typically a remote URL string.
     public func set(metaData: [String:Any], for key: String) async
     {
         let mdBox = UncheckedSendableBox(metaData)
@@ -206,6 +322,17 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
         }
     }
     
+    /// Cancels a pending or in-flight download for the key.
+    ///
+    /// This method returns immediately. It bumps the internal download generation so detached and
+    /// queued work for the key is ignored, removes any registered ``UUDataLoadedCompletionBlock``
+    /// handlers without invoking them, dequeuing the key from the pending queue when applicable,
+    /// and cancels the coalesced in-flight task when one exists.
+    ///
+    /// Does not remove data already present in the memory or disk cache. A later call to
+    /// ``data(for:)`` starts a new download attempt.
+    ///
+    /// - Parameter key: The remote URL string used as the cache key.
     public func cancelDownload(for key: String)
     {
         invalidateDownload(for: key)
@@ -219,7 +346,10 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
         }
     }
 
-    /// Returns true when data is present in the memory hot cache or on disk, without starting a download.
+    /// Returns whether data exists in the memory hot cache or on disk without starting a download.
+    ///
+    /// - Parameter key: The remote URL string used as the cache key.
+    /// - Returns: `true` when cached data is available locally.
     public func cachedDataExists(for key: String) async -> Bool
     {
         if memoryCache.object(forKey: key as NSString) != nil
@@ -230,7 +360,9 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
         return await cacheDataExists(for: key)
     }
 
-    /// Clears the in-memory hot cache. Does not affect disk cache.
+    /// Clears the in-memory hot cache.
+    ///
+    /// Does not remove data from ``dataCache`` on disk.
     public func clearMemoryCache()
     {
         memoryCache.removeAllObjects()
@@ -400,6 +532,14 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
         }
     }
     
+    /// Writes data to the memory and disk cache and posts ``Notifications/DataDownloaded``.
+    ///
+    /// Use this to seed the cache without a network request. Metadata is updated with MIME type
+    /// `"raw"` and a download timestamp.
+    ///
+    /// - Parameters:
+    ///   - data: The bytes to store.
+    ///   - key: The cache key, typically a remote URL string.
     public func save(data: Data, key: String) async
     {
         await cacheSet(data: data, for: key)
@@ -533,11 +673,13 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
 
 extension Notification
 {
+    /// The remote path (cache key) from a ``UURemoteData`` notification, if present.
     public var uuRemoteDataPath : String?
     {
         return userInfo?[UURemoteData.NotificationKeys.RemotePath] as? String
     }
-    
+
+    /// The error from a ``UURemoteData/Notifications/DataDownloadFailed`` notification, if present.
     public var uuRemoteDataError : Error?
     {
         return userInfo?[UURemoteData.NotificationKeys.Error] as? Error
