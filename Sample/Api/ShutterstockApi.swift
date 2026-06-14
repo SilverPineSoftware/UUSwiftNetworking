@@ -16,14 +16,6 @@ nonisolated class ShutterstockApi: UURemoteApi
     private static let maxPerPage = 500
     private let baseUrl = "https://api.shutterstock.com"
     
-    public var config: ShutterstockApiConfig = ShutterstockApiConfig()
-    {
-        didSet
-        {
-            self.authorizationProvider = UUBasicAuthorizationProvider(userName: config.clientKey, password: config.clientSecret)
-        }
-    }
-    
     public override init()
     {
         super.init()

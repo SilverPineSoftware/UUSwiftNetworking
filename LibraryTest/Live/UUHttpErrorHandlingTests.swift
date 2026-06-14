@@ -191,7 +191,7 @@ fileprivate class PassthroughResponseHandler: UUBaseResponseHandler
         super.init()
     }
     
-    required init()
+    required override init()
     {
         super.init()
     }

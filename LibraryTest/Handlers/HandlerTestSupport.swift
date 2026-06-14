@@ -76,7 +76,7 @@ private final class ConfigurableHandler: UUBaseResponseHandler
         super.init()
     }
 
-    required init()
+    required override init()
     {
         configuredSuccess = UUBinaryDataParser()
         configuredError = UUBinaryDataParser()

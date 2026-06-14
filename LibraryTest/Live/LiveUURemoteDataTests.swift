@@ -271,7 +271,7 @@ class LiveUURemoteDataTests: BaseOnlineTest
         )
 
         let api = ShutterstockApi()
-        api.config = cfg
+        api.config = cfg.apiConfig
 
         let result = await api.searchImages(query: "forest", count: count, large: large)
         return (try? result.get()) ?? []

@@ -8,6 +8,7 @@
 
 import Foundation
 import Combine
+import UUSwiftNetworking
 
 @MainActor
 class ShutterstockViewModel: ObservableObject
@@ -25,7 +26,7 @@ class ShutterstockViewModel: ObservableObject
             cfg.clientKey = clientKey
             cfg.save()
 
-            api.config = cfg
+            api.config = cfg.apiConfig
         }
     }
 
@@ -37,7 +38,7 @@ class ShutterstockViewModel: ObservableObject
             cfg.clientSecret = clientSecret
             cfg.save()
 
-            api.config = cfg
+            api.config = cfg.apiConfig
         }
     }
 

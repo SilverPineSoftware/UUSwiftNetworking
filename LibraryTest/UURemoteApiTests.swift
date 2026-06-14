@@ -221,7 +221,7 @@ final class UURemoteApiTests: XCTestCase
         let provider = UUBasicAuthorizationProvider(userName: "user", password: "pass")
         let request = remoteApiTestRequest()
         let api = TestRemoteApi()
-        api.authorizationProvider = provider
+        api.config = UURemoteApiConfig(authorizationProvider: provider)
 
         await api.prepareRequest(request)
 
@@ -235,7 +235,7 @@ final class UURemoteApiTests: XCTestCase
         let request = remoteApiTestRequest()
         request.authorizationProvider = requestProvider
         let api = TestRemoteApi()
-        api.authorizationProvider = apiProvider
+        api.config = UURemoteApiConfig(authorizationProvider: apiProvider)
 
         await api.prepareRequest(request)
 

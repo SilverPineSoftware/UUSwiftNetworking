@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import UUSwiftNetworking
 
 nonisolated public struct ShutterstockApiConfig: Codable
 {
@@ -27,6 +28,13 @@ nonisolated public struct ShutterstockApiConfig: Codable
     {
         case clientKey = "client_key"
         case clientSecret = "client_secret"
+    }
+    
+    var apiConfig: UURemoteApiConfig
+    {
+        var cfg = UURemoteApiConfig()
+        cfg.authorizationProvider = UUBasicAuthorizationProvider(userName: clientKey, password: clientSecret)
+        return cfg
     }
     
     static func load() -> Self

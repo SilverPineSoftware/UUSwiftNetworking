@@ -42,4 +42,35 @@ public struct UURemoteApiConfig
     /// may still override ``UUHttpRequest/timeout`` before execution if a call site needs a
     /// different value.
     public var networkTimeout: TimeInterval = UUHttpConfig.shared.defaultTimeout
+    
+    /// Creates a remote API configuration with shared request defaults.
+    ///
+    /// Use this initializer when constructing a ``UURemoteApiConfig`` value directly—for example,
+    /// when injecting config into a ``UURemoteApi`` subclass or test double—instead of mutating
+    /// properties after creation.
+    ///
+    /// Values are applied by ``UURemoteApi/prepareRequest(_:)`` to each ``UUHttpRequest`` before
+    /// it is sent through ``UURemoteApi/session``.
+    ///
+    /// ```swift
+    /// let config = UURemoteApiConfig(
+    ///     authorizationProvider: UUBasicAuthorizationProvider(userName: "user", password: "pass"),
+    ///     networkTimeout: 30
+    /// )
+    /// api.config = config
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - authorizationProvider: The provider copied onto requests whose
+    ///     ``UUHttpRequest/authorizationProvider`` is `nil`. Pass `nil` for unauthenticated APIs.
+    ///   - networkTimeout: The timeout, in seconds, assigned to each request before execution.
+    ///     Defaults to ``UUHttpConfig/shared`` ``UUHttpConfig/defaultTimeout``.
+    public init(
+        authorizationProvider: UUHttpAuthorizationProvider? = nil,
+        networkTimeout: TimeInterval = UUHttpConfig.shared.defaultTimeout
+    )
+    {
+        self.authorizationProvider = authorizationProvider
+        self.networkTimeout = networkTimeout
+    }
 }

@@ -52,7 +52,7 @@ final class UUShutterstockApiTests: XCTestCase
         let cfg = try loadConfig()
         
         let api = ShutterstockApi()
-        api.config = cfg 
+        api.config = cfg.apiConfig
         
         let result = await api.searchImagePage(query: "cat", page: 1, count: 10, large: true)
         
