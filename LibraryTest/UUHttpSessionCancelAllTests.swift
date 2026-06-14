@@ -114,7 +114,7 @@ final class UUHttpSessionCancelAllTests: XCTestCase
         { group in
             group.addTask
             {
-                box.value = await session.executeRequest(request)
+                box.value = await session.execute(request)
             }
             group.addTask
             {
@@ -141,11 +141,11 @@ final class UUHttpSessionCancelAllTests: XCTestCase
         { group in
             group.addTask
             {
-                box1.value = await session.executeRequest(UUHttpRequest(url: hangingRequestURL(path: "/a")))
+                box1.value = await session.execute(UUHttpRequest(url: hangingRequestURL(path: "/a")))
             }
             group.addTask
             {
-                box2.value = await session.executeRequest(UUHttpRequest(url: hangingRequestURL(path: "/b")))
+                box2.value = await session.execute(UUHttpRequest(url: hangingRequestURL(path: "/b")))
             }
             group.addTask
             {
@@ -171,7 +171,7 @@ final class UUHttpSessionCancelAllTests: XCTestCase
         { group in
             group.addTask
             {
-                hungBox.value = await hangingSession.executeRequest(
+                hungBox.value = await hangingSession.execute(
                     UUHttpRequest(url: hangingRequestURL(path: "/hang")))
             }
             group.addTask
@@ -190,7 +190,7 @@ final class UUHttpSessionCancelAllTests: XCTestCase
         let followUpSession = makeCancelAllTestSession(protocolClasses: [ImmediateJSONURLProtocol.self])
         let followUp = UUCodableHttpRequest<CancelAllOkResponse, UUEmptyCodable>(
             url: hangingRequestURL(path: "/ok"))
-        let result = await followUpSession.executeCodableRequest(followUp)
+        let result = await followUpSession.executeTyped(followUp)
 
         switch result
         {
@@ -211,7 +211,7 @@ final class UUHttpSessionCancelAllTests: XCTestCase
 
         let work = Task
         {
-            box.value = await session.executeRequest(request)
+            box.value = await session.execute(request)
         }
 
         await waitUntil(timeout: 2)
@@ -235,7 +235,7 @@ final class UUHttpSessionCancelAllTests: XCTestCase
 
         let work = Task
         {
-            await session.executeCodableRequest(request)
+            await session.executeTyped(request)
         }
 
         await waitUntil(timeout: 2)
@@ -263,8 +263,8 @@ final class UUHttpSessionCancelAllTests: XCTestCase
         let boxA = HttpResponseBox()
         let boxB = HttpResponseBox()
 
-        let workA = Task { boxA.value = await session.executeRequest(requestA) }
-        let workB = Task { boxB.value = await session.executeRequest(requestB) }
+        let workA = Task { boxA.value = await session.execute(requestA) }
+        let workB = Task { boxB.value = await session.execute(requestB) }
 
         await waitUntil(timeout: 2)
         {

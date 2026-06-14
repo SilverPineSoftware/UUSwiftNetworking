@@ -61,7 +61,7 @@ nonisolated class ShutterstockApi: UURemoteApi
         
         req.queryArguments = args
         
-        let result = await executeCodableRequest(req)
+        let result = await executeTyped(req)
         
         switch (result)
         {

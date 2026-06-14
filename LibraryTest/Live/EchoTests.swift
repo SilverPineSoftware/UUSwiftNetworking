@@ -37,7 +37,7 @@ final class EchoTests: BaseOnlineTest
             method: .get,
             queryArguments: queryArgs)
         
-        let result = await session.executeCodableRequest(req)
+        let result = await session.executeTyped(req)
         switch (result)
         {
             case .success(let response):
@@ -63,7 +63,7 @@ final class EchoTests: BaseOnlineTest
             queryArguments: queryArgs,
             headers: echoHeaders(statusCode: 201))
         
-        let result = await session.executeCodableRequest(req)
+        let result = await session.executeTyped(req)
         switch (result)
         {
             case .success(let response):
@@ -88,7 +88,7 @@ final class EchoTests: BaseOnlineTest
             queryArguments: queryArgs,
             headers: echoHeaders(returnObjectCount: 3))
         
-        let result = await session.executeCodableRequest(req)
+        let result = await session.executeTyped(req)
         switch (result)
         {
             case .success(let response):
@@ -110,7 +110,7 @@ final class EchoTests: BaseOnlineTest
             queryArguments: ["fieldOne": "ErrorPath", "fieldTwo": 0],
             headers: echoHeaders(statusCode: 404))
         
-        let result = await session.executeCodableRequest(req)
+        let result = await session.executeTyped(req)
         switch (result)
         {
             case .success(let response):
@@ -136,7 +136,7 @@ final class EchoTests: BaseOnlineTest
             headers: echoHeaders(),
             body: body)
         
-        let result = await session.executeCodableRequest(req)
+        let result = await session.executeTyped(req)
         switch (result)
         {
             case .success(let response):
@@ -161,7 +161,7 @@ final class EchoTests: BaseOnlineTest
             headers: echoHeaders(statusCode: 200, returnObjectCount: 2),
             body: body)
         
-        let result = await session.executeCodableRequest(req)
+        let result = await session.executeTyped(req)
         switch (result)
         {
             case .success(let response):
@@ -188,7 +188,7 @@ final class EchoTests: BaseOnlineTest
             headers: echoHeaders(),
             body: body)
         
-        let result = await session.executeCodableRequest(req)
+        let result = await session.executeTyped(req)
         switch (result)
         {
             case .success(let response):
@@ -213,7 +213,7 @@ final class EchoTests: BaseOnlineTest
             headers: echoHeaders(statusCode: 202, returnObjectCount: 4),
             body: body)
         
-        let result = await session.executeCodableRequest(req)
+        let result = await session.executeTyped(req)
         switch (result)
         {
             case .success(let response):

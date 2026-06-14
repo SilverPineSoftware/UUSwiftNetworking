@@ -35,7 +35,7 @@ class UUHttpSessionInstanceTests: BaseOnlineTest
             queryArguments: queryArgs,
             headers: headers)
         
-        let result = await session.executeCodableRequest(request)
+        let result = await session.executeTyped(request)
         switch (result)
         {
             case .success(let response):
@@ -66,7 +66,7 @@ class UUHttpSessionInstanceTests: BaseOnlineTest
             queryArguments: queryArgs,
             headers: headers)
         
-        let result = await session.executeCodableRequest(request)
+        let result = await session.executeTyped(request)
         switch (result)
         {
             case .success(let response):
@@ -104,7 +104,7 @@ class UUHttpSessionInstanceTests: BaseOnlineTest
             UUTestLog("Form:\n\n\(str))\n\n")
         }
         
-        let response = await session.executeRequest(request)
+        let response = await session.execute(request)
         XCTAssertNil(response.httpError)
         
         try await verifyUploadedFile(fileName)
@@ -118,7 +118,7 @@ class UUHttpSessionInstanceTests: BaseOnlineTest
         
         let request = UUHttpRequest(url: url, method: .get)
         
-        let response = await session.executeRequest(request)
+        let response = await session.execute(request)
         
         XCTAssertNotNil(response.parsedResponse)
         XCTAssertNil(response.httpError)

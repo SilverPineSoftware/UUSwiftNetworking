@@ -53,7 +53,7 @@ final class TestApi: UURemoteApi
             queryArguments: queryArgs
         )
 
-        return await executeCodableRequest(request)
+        return await executeTyped(request)
     }
 
     func getArray(count: Int) async -> Result<[TestApiObject], Error>
@@ -63,7 +63,7 @@ final class TestApi: UURemoteApi
             queryArguments: ["count": "\(count)"]
         )
 
-        return await executeCodableRequest(request)
+        return await executeTyped(request)
     }
 
     func postObject(_ object: TestApiObject) async -> Result<TestApiObject, Error>
@@ -75,7 +75,7 @@ final class TestApi: UURemoteApi
             body: body
         )
 
-        return await executeCodableRequest(request)
+        return await executeTyped(request)
     }
 
     func postArray(_ objects: [TestApiObject]) async -> Result<[TestApiObject], Error>
@@ -87,6 +87,6 @@ final class TestApi: UURemoteApi
             body: body
         )
 
-        return await executeCodableRequest(request)
+        return await executeTyped(request)
     }
 }

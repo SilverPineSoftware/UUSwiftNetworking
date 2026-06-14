@@ -16,21 +16,25 @@ import Foundation
 ///
 /// ## Request flow
 ///
-/// Both ``executeRequest(_:)`` and ``executeCodableRequest(_:)`` follow the same pattern:
+/// Both ``execute(_:)`` and ``executeTyped(_:)`` follow the same pattern:
 ///
 /// 1. **Proactive renewal** — if ``isApiAuthorizationNeeded()`` is `true`, ``renewApiAuthorization()``
 ///    runs before the request is sent.
-/// 2. **Prepare** — ``prepareRequest(_:)`` assigns ``authorizationProvider`` to the request when
-///    the request does not already have one.
-/// 3. **Execute** — the request is sent through ``session``.
-/// 4. **Reactive renewal** — if the response error satisfies ``shouldRenewApiAuthorization(_:)``,
+/// 2. **Send** — ``executeWithoutAuthorizationRenewal(_:)`` or
+///    ``executeTypedWithoutAuthorizationRenewal(_:)`` applies shared configuration via
+///    ``prepareRequest(_:)`` and sends the request through ``session``.
+/// 3. **Reactive renewal** — if the response error satisfies ``shouldRenewApiAuthorization(_:)``,
 ///    renewal runs once more and the request is retried when `didAttempt` is `true`.
+///
+/// For login, token refresh, and other calls made *inside* ``renewApiAuthorization()``, use
+/// ``executeWithoutAuthorizationRenewal(_:)`` or ``executeTypedWithoutAuthorizationRenewal(_:)``
+/// directly instead of ``execute(_:)`` so proactive and reactive renewal are not re-entered.
 ///
 /// ## Subclassing
 ///
 /// Override ``renewApiAuthorization()``, ``isApiAuthorizationNeeded()``, and optionally
 /// ``shouldRenewApiAuthorization(_:)`` and ``prepareRequest(_:)`` for custom API behavior.
-/// Override ``executeRequest(_:)`` only when the full authorization wrapper must change.
+/// Override ``execute(_:)`` only when the full authorization wrapper must change.
 open class UURemoteApi
 {
     /// The HTTP session used to perform network requests.
@@ -68,7 +72,7 @@ open class UURemoteApi
     /// - Returns: The HTTP response. When proactive renewal fails, the response contains the
     ///   renewal error and no network call is made. When reactive renewal fails, the renewal
     ///   error is returned instead of the original authorization error.
-    open func executeRequest(_ request: UUHttpRequest) async -> UUHttpResponse
+    open func execute(_ request: UUHttpRequest) async -> UUHttpResponse
     {
         let renewResult = await renewApiAuthorizationIfNeeded()
         if let authorizationRenewalError = renewResult.error
@@ -76,8 +80,7 @@ open class UURemoteApi
             return UUHttpResponse(request: request, response: nil, error: authorizationRenewalError)
         }
 
-        await prepareRequest(request)
-        var response = await session.executeRequest(request)
+        var response = await executeWithoutAuthorizationRenewal(request)
         if let err = response.httpError, await shouldRenewApiAuthorization(err)
         {
             let innerRenewResult = await internalRenewApiAuthorization()
@@ -88,9 +91,7 @@ open class UURemoteApi
 
             if (innerRenewResult.didAttempt)
             {
-                // Prepare again (assuming authorization has changed)
-                await prepareRequest(request)
-                response = await session.executeRequest(request)
+                response = await executeWithoutAuthorizationRenewal(request)
             }
         }
 
@@ -113,17 +114,52 @@ open class UURemoteApi
         
         request.timeout = self.config.networkTimeout
     }
+    
+    /// Sends a single HTTP request without proactive or reactive authorization renewal.
+    ///
+    /// Calls ``prepareRequest(_:)`` then ``UUHttpSession/execute(_:)``. Unlike ``execute(_:)``, this
+    /// method does not perform proactive renewal, reactive renewal, or automatic retry.
+    ///
+    /// Use this inside ``renewApiAuthorization()`` for login, token refresh, and other requests that
+    /// must not re-enter the authorization lifecycle. Pair with ``UUEmptyAuthorizationProvider`` on
+    /// the request when the renewal call should not attach ``UURemoteApiConfig/authorizationProvider``
+    /// credentials.
+    ///
+    /// Example:
+    ///
+    /// ```swift
+    /// open override func renewApiAuthorization() async -> UURenewAuthorizationResponse
+    /// {
+    ///     let request = UUHttpRequest(url: tokenUrl, method: .post, body: credentialsBody)
+    ///     request.authorizationProvider = UUEmptyAuthorizationProvider()
+    ///     let response = await executeWithoutAuthorizationRenewal(request)
+    ///     // Parse tokens and update config.authorizationProvider ...
+    ///     return UURenewAuthorizationResponse(didAttempt: true, error: response.httpError)
+    /// }
+    /// ```
+    ///
+    /// - Parameter request: The request to prepare and send.
+    /// - Returns: The HTTP response from ``session``.
+    ///
+    /// - SeeAlso: ``execute(_:)``
+    /// - SeeAlso: ``executeTypedWithoutAuthorizationRenewal(_:)``
+    /// - SeeAlso: ``UUEmptyAuthorizationProvider``
+    open func executeWithoutAuthorizationRenewal(_ request: UUHttpRequest) async -> UUHttpResponse
+    {
+        await prepareRequest(request)
+        return await session.execute(request)
+    }
 
     /// Executes a typed codable request with proactive and reactive authorization handling.
     ///
-    /// Mirrors the authorization behavior of ``executeRequest(_:)`` but returns a
+    /// Mirrors the authorization behavior of ``execute(_:)`` but returns a
     /// `Result<SuccessType, Error>` parsed by the request's response handler.
     ///
     /// - Parameters:
     ///   - request: A codable HTTP request describing the expected success and error types.
     /// - Returns: `.success` with the parsed model, or `.failure` with a network, parse, or
     ///   authorization renewal error.
-    open func executeCodableRequest<SuccessType: Codable, ErrorType: Codable>(
+    open func executeTyped<SuccessType: Codable, ErrorType: Codable>(
         _ request: UUCodableHttpRequest<SuccessType, ErrorType>) async -> Result<SuccessType, Error>
     {
         let renewResult = await renewApiAuthorizationIfNeeded()
@@ -132,8 +168,7 @@ open class UURemoteApi
             return .failure(authorizationRenewalError)
         }
 
-        await prepareRequest(request)
-        var result = await session.executeCodableRequest(request)
+        var result = await executeTypedWithoutAuthorizationRenewal(request)
         switch (result)
         {
             case .success(let success):
@@ -151,14 +186,34 @@ open class UURemoteApi
 
                     if (innerRenewResult.didAttempt)
                     {
-                        // Prepare again (assuming authorization has changed)
-                        await prepareRequest(request)
-                        result = await session.executeCodableRequest(request)
+                        result = await executeTypedWithoutAuthorizationRenewal(request)
                     }
                 }
 
             return result
         }
+    }
+    
+    /// Sends a single typed HTTP request without proactive or reactive authorization renewal.
+    ///
+    /// Calls ``prepareRequest(_:)`` then ``UUHttpSession/executeTyped(_:)``. Unlike ``executeTyped(_:)``,
+    /// this method does not perform proactive renewal, reactive renewal, or automatic retry.
+    ///
+    /// Use this inside ``renewApiAuthorization()`` when the renewal flow expects a parsed codable
+    /// response. Pair with ``UUEmptyAuthorizationProvider`` when the renewal request should not
+    /// attach ``UURemoteApiConfig/authorizationProvider`` credentials.
+    ///
+    /// - Parameter request: A codable HTTP request describing the expected success and error types.
+    /// - Returns: `.success` with the parsed model, or `.failure` with a network or parse error.
+    ///
+    /// - SeeAlso: ``executeTyped(_:)``
+    /// - SeeAlso: ``executeWithoutAuthorizationRenewal(_:)``
+    /// - SeeAlso: ``UUEmptyAuthorizationProvider``
+    open func executeTypedWithoutAuthorizationRenewal<SuccessType: Codable, ErrorType: Codable>(
+        _ request: UUCodableHttpRequest<SuccessType, ErrorType>) async -> Result<SuccessType, Error>
+    {
+        await prepareRequest(request)
+        return await session.executeTyped(request)
     }
 
     /// Performs API authorization renewal.
@@ -179,7 +234,7 @@ open class UURemoteApi
 
     /// Returns whether API authorization should be renewed before the next request.
     ///
-    /// Called proactively at the start of ``executeRequest(_:)`` and ``executeCodableRequest(_:)``.
+    /// Called proactively at the start of ``execute(_:)`` and ``executeTyped(_:)``.
     /// Typical implementations inspect token expiration on ``authorizationProvider``.
     ///
     /// - Returns: `true` when renewal should run before sending a request. The default is `false`.

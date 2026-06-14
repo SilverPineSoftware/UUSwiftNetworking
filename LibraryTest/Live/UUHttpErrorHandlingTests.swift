@@ -27,7 +27,7 @@ class UUHttpErrorHandlingTests: BaseOnlineTest
         let url = testConfig.doesNotExistUrl
         
         let request = UUHttpRequest(url: url)
-        let response = await session.executeRequest(request)
+        let response = await session.execute(request)
         UUAssertResponseError(response, .cannotFindHost)
     }
     
@@ -45,7 +45,7 @@ class UUHttpErrorHandlingTests: BaseOnlineTest
         request.timeout = TimeInterval(timeout / 2)
         
         UUTestLog("Starting request, timeout: \(request.timeout)")
-        let response = await session.executeRequest(request)
+        let response = await session.execute(request)
         UUAssertResponseError(response, .timedOut)
     }
     
@@ -56,7 +56,7 @@ class UUHttpErrorHandlingTests: BaseOnlineTest
         let url = testConfig.redirectUrl
         
         let request = UUHttpRequest(url: url)
-        let response = await session.executeRequest(request)
+        let response = await session.execute(request)
         UUAssertResponseError(response, .httpFailure)
     }
     
@@ -92,7 +92,7 @@ class UUHttpErrorHandlingTests: BaseOnlineTest
         let session = uuHttpSessionForTest
         
         let request = UUHttpRequest(url: "?1234$%*()(")
-        let response = await session.executeRequest(request)
+        let response = await session.execute(request)
         UUAssertResponseError(response, .invalidRequest, expectValidRequest: false)
 
     }
@@ -113,7 +113,7 @@ class UUHttpErrorHandlingTests: BaseOnlineTest
 
         request.responseHandler = handler
         
-        let response = await session.executeRequest(request)
+        let response = await session.execute(request)
         UUAssertResponseError(response, .parseFailure)
     }
     
@@ -129,7 +129,7 @@ class UUHttpErrorHandlingTests: BaseOnlineTest
         let err = NSError(domain: "UnitTest", code: 1234, userInfo: nil)
         request.responseHandler = PassthroughResponseHandler(err)
         
-        let response = await session.executeRequest(request)
+        let response = await session.execute(request)
         //UUAssertResponseError(response, .invalidRequest, expectValidRequest: false)
         XCTAssertNotNil(response.httpError)
         XCTAssertEqual((response.httpError! as NSError).domain, "UnitTest")
@@ -152,7 +152,7 @@ class UUHttpErrorHandlingTests: BaseOnlineTest
         headers["UU-Status-Code"] = statusCode
         
         let request = UUHttpRequest(url: url, method: .get, headers: headers)
-        let response = await session.executeRequest(request)
+        let response = await session.execute(request)
         XCTAssertNotNil(response.httpError)
         XCTAssertNotNil(response.parsedResponse)
         UUAssertError(response.httpError, expectedError, expectValidRequest: true)

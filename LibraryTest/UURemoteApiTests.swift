@@ -68,7 +68,7 @@ private final class TestHttpSession: UUHttpSession, @unchecked Sendable
         UUHttpResponse(request: request, parsedResponse: "ok")
     }
 
-    override func executeRequest(_ request: UUHttpRequest) async -> UUHttpResponse
+    override func execute(_ request: UUHttpRequest) async -> UUHttpResponse
     {
         await executeRequestHandler(request)
     }
@@ -242,6 +242,118 @@ final class UURemoteApiTests: XCTestCase
         XCTAssertTrue(request.authorizationProvider === requestProvider)
     }
 
+    // MARK: - executeWithoutAuthorizationRenewal
+
+    func test_executeWithoutAuthorizationRenewal_skipsProactiveRenewalWhenAuthorizationIsNeeded() async
+    {
+        let request = remoteApiTestRequest()
+        let executeCount = ExecuteCounter()
+        let api = TestRemoteApi()
+        api.apiAuthorizationNeeded = true
+        api.executeRequestHandler =
+        { req in
+            executeCount.increment()
+            return remoteApiSuccessResponse(request: req)
+        }
+
+        let response = await api.executeWithoutAuthorizationRenewal(request)
+
+        XCTAssertEqual(response.parsedResponse as? String, "ok")
+        XCTAssertEqual(api.renewCallCount, 0)
+        XCTAssertEqual(executeCount.value, 1)
+    }
+
+    func test_executeWithoutAuthorizationRenewal_doesNotRetryOnAuthorizationNeededError() async
+    {
+        let request = remoteApiTestRequest()
+        let executeCount = ExecuteCounter()
+        let api = TestRemoteApi()
+        api.executeRequestHandler =
+        { req in
+            executeCount.increment()
+            return remoteApiAuthNeededResponse(request: req)
+        }
+
+        let response = await api.executeWithoutAuthorizationRenewal(request)
+
+        XCTAssertNotNil(response.httpError)
+        XCTAssertEqual(response.httpError?.uuHttpErrorCode, .authorizationNeeded)
+        XCTAssertEqual(api.renewCallCount, 0)
+        XCTAssertEqual(executeCount.value, 1)
+    }
+
+    func test_executeWithoutAuthorizationRenewal_stillAppliesPrepareRequest() async
+    {
+        let provider = UUBasicAuthorizationProvider(userName: "user", password: "pass")
+        let request = remoteApiTestRequest()
+        let api = TestRemoteApi()
+        api.config = UURemoteApiConfig(authorizationProvider: provider)
+
+        _ = await api.executeWithoutAuthorizationRenewal(request)
+
+        XCTAssertTrue(request.authorizationProvider === provider)
+    }
+
+    func test_executeTypedWithoutAuthorizationRenewal_skipsProactiveRenewalWhenAuthorizationIsNeeded() async
+    {
+        struct TokenResponse: Codable, Equatable
+        {
+            var accessToken: String
+        }
+
+        let request = UUCodableHttpRequest<TokenResponse, TestApiError>(
+            url: remoteApiTestRequestUrl
+        )
+        let executeCount = ExecuteCounter()
+        let api = TestRemoteApi()
+        api.apiAuthorizationNeeded = true
+        api.executeRequestHandler =
+        { req in
+            executeCount.increment()
+            return UUHttpResponse(
+                request: req,
+                parsedResponse: TokenResponse(accessToken: "token")
+            )
+        }
+
+        let result = await api.executeTypedWithoutAuthorizationRenewal(request)
+
+        XCTAssertEqual(try? result.get(), TokenResponse(accessToken: "token"))
+        XCTAssertEqual(api.renewCallCount, 0)
+        XCTAssertEqual(executeCount.value, 1)
+    }
+
+    func test_executeTypedWithoutAuthorizationRenewal_doesNotRetryOnAuthorizationNeededError() async
+    {
+        struct TokenResponse: Codable, Equatable
+        {
+            var accessToken: String
+        }
+
+        let request = UUCodableHttpRequest<TokenResponse, TestApiError>(
+            url: remoteApiTestRequestUrl
+        )
+        let executeCount = ExecuteCounter()
+        let api = TestRemoteApi()
+        api.executeRequestHandler =
+        { req in
+            executeCount.increment()
+            return remoteApiAuthNeededResponse(request: req)
+        }
+
+        let result = await api.executeTypedWithoutAuthorizationRenewal(request)
+
+        switch result
+        {
+            case .success:
+                XCTFail("Expected authorizationNeeded failure")
+            case .failure(let error):
+                XCTAssertEqual(error.uuHttpErrorCode, .authorizationNeeded)
+        }
+        XCTAssertEqual(api.renewCallCount, 0)
+        XCTAssertEqual(executeCount.value, 1)
+    }
+
     // MARK: - Proactive renewal
 
     func test_proactiveRenewal_skipsRenewalWhenAuthorizationIsNotNeeded() async
@@ -255,7 +367,7 @@ final class UURemoteApiTests: XCTestCase
             return remoteApiSuccessResponse(request: req)
         }
 
-        let response = await api.executeRequest(request)
+        let response = await api.execute(request)
 
         XCTAssertEqual(response.parsedResponse as? String, "ok")
         XCTAssertEqual(api.renewCallCount, 0)
@@ -276,7 +388,7 @@ final class UURemoteApiTests: XCTestCase
             return remoteApiSuccessResponse(request: req)
         }
 
-        let response = await api.executeRequest(request)
+        let response = await api.execute(request)
 
         assertSameErrorInstance(response, renewalError)
         XCTAssertEqual(api.renewCallCount, 1)
@@ -302,7 +414,7 @@ final class UURemoteApiTests: XCTestCase
             {
                 group.addTask
                 {
-                    _ = await api.executeRequest(request)
+                    _ = await api.execute(request)
                 }
             }
             for await _ in group { }
@@ -328,7 +440,7 @@ final class UURemoteApiTests: XCTestCase
             return remoteApiSuccessResponse(request: req, body: "after-renew")
         }
 
-        let response = await api.executeRequest(request)
+        let response = await api.execute(request)
 
         XCTAssertEqual(response.parsedResponse as? String, "after-renew")
         XCTAssertNil(response.httpError)
@@ -349,7 +461,7 @@ final class UURemoteApiTests: XCTestCase
             return remoteApiAuthNeededResponse(request: req)
         }
 
-        let response = await api.executeRequest(request)
+        let response = await api.execute(request)
 
         assertSameErrorInstance(response, renewalError)
         XCTAssertEqual(api.renewCallCount, 1)
@@ -368,7 +480,7 @@ final class UURemoteApiTests: XCTestCase
             return remoteApiAuthNeededResponse(request: req)
         }
 
-        let response = await api.executeRequest(request)
+        let response = await api.execute(request)
 
         XCTAssertNotNil(response.httpError)
         XCTAssertEqual(response.httpError?.uuHttpErrorCode, .authorizationNeeded)
@@ -392,7 +504,7 @@ final class UURemoteApiTests: XCTestCase
             {
                 group.addTask
                 {
-                    _ = await api.executeRequest(request)
+                    _ = await api.execute(request)
                 }
             }
             for await _ in group { }
@@ -413,10 +525,10 @@ final class UURemoteApiTests: XCTestCase
             remoteApiSuccessResponse(request: req)
         }
 
-        _ = await api.executeRequest(request)
+        _ = await api.execute(request)
         XCTAssertEqual(api.renewCallCount, 1)
 
-        _ = await api.executeRequest(request)
+        _ = await api.execute(request)
         XCTAssertEqual(api.renewCallCount, 2)
     }
 
@@ -433,14 +545,14 @@ final class UURemoteApiTests: XCTestCase
 
         let first: Task<Void, Never> = Task
         {
-            _ = await api.executeRequest(request)
+            _ = await api.execute(request)
         }
         await Task.yield()
         try await api.awaitRenewStarted()
 
         let second: Task<Void, Never> = Task
         {
-            _ = await api.executeRequest(request)
+            _ = await api.execute(request)
         }
 
         try await api.awaitRenewCoalescedWaiter()

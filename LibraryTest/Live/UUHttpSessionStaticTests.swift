@@ -30,7 +30,7 @@ class UUHttpSessionStaticTests: BaseOnlineTest
             queryArguments: queryArgs,
             headers: headers)
         
-        let result = await UUHttpSession.executeCodableRequest(req)
+        let result = await UUHttpSession.executeTyped(req)
         switch (result)
         {
             case .success(let obj):
@@ -58,7 +58,7 @@ class UUHttpSessionStaticTests: BaseOnlineTest
             queryArguments: queryArgs,
             headers: headers)
         
-        let result = await UUHttpSession.executeCodableRequest(req)
+        let result = await UUHttpSession.executeTyped(req)
         switch (result)
         {
             case .success(let obj):

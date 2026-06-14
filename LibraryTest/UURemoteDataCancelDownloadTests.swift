@@ -164,7 +164,7 @@ private final class TestHttpSession: UUHttpSession, @unchecked Sendable
         UUHttpResponse(request: request, parsedResponse: "ok")
     }
 
-    override func executeRequest(_ request: UUHttpRequest) async -> UUHttpResponse
+    override func execute(_ request: UUHttpRequest) async -> UUHttpResponse
     {
         await executeRequestHandler(request)
     }

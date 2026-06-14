@@ -36,7 +36,7 @@ public class UUHttpSession: @unchecked Sendable
         urlSession = URLSession(configuration: sessionConfiguration, delegate: delegate, delegateQueue: nil)
     }
     
-    open func executeRequest(_ request: UUHttpRequest) async -> UUHttpResponse
+    open func execute(_ request: UUHttpRequest) async -> UUHttpResponse
     {
         guard var httpRequest = await request.buildURLRequest() else
         {
@@ -148,10 +148,10 @@ public class UUHttpSession: @unchecked Sendable
 // MARK: Codable Convenience Methods
 public extension UUHttpSession
 {
-    func executeCodableRequest<SuccessType: Codable, ErrorType: Codable>(
+    func executeTyped<SuccessType: Codable, ErrorType: Codable>(
         _ request: UUCodableHttpRequest<SuccessType, ErrorType>) async -> Result<SuccessType, Error>
     {
-        let result = await executeRequest(request)
+        let result = await execute(request)
         
         if let err = result.httpError
         {
@@ -172,42 +172,42 @@ public extension UUHttpSession
 // MARK: Static Convenience Methods
 extension UUHttpSession
 {
-    public static func executeRequest(_ request : UUHttpRequest) async -> UUHttpResponse
+    public static func execute(_ request : UUHttpRequest) async -> UUHttpResponse
     {
-        return await shared.executeRequest(request)
+        return await shared.execute(request)
     }
     
     public static func get(url : String, queryArguments : UUQueryStringArgs = [:], headers: UUHttpHeaders = [:]) async -> UUHttpResponse
     {
         let req = UUHttpRequest(url: url, method: .get, queryArguments: queryArguments, headers: headers)
-        return await executeRequest(req)
+        return await execute(req)
     }
     
     public static func delete(url : String, queryArguments : UUQueryStringArgs = [:], headers: UUHttpHeaders = [:]) async -> UUHttpResponse
     {
         let req = UUHttpRequest(url: url, method: .delete, queryArguments: queryArguments, headers: headers)
-        return await executeRequest(req)
+        return await execute(req)
     }
     
     public static func put(url : String, queryArguments : UUQueryStringArgs = [:], headers: UUHttpHeaders = [:], body: UUHttpBody?) async -> UUHttpResponse
     {
         let req = UUHttpRequest(url: url, method: .put, queryArguments: queryArguments, headers: headers, body: body)
-        return await executeRequest(req)
+        return await execute(req)
     }
     
     public static func post(url : String, queryArguments : UUQueryStringArgs = [:], headers: UUHttpHeaders = [:], body: UUHttpBody?) async -> UUHttpResponse
     {
         let req = UUHttpRequest(url: url, method: .post, queryArguments: queryArguments, headers: headers, body: body)
-        return await executeRequest(req)
+        return await execute(req)
     }
 }
 
 // MARK: Static Codable Convenience Methods
 public extension UUHttpSession
 {
-    static func executeCodableRequest<SuccessType: Codable, ErrorType: Codable>(
+    static func executeTyped<SuccessType: Codable, ErrorType: Codable>(
         _ request: UUCodableHttpRequest<SuccessType, ErrorType>) async -> Result<SuccessType, Error>
     {
-        return await shared.executeCodableRequest(request)
+        return await shared.executeTyped(request)
     }
 }
