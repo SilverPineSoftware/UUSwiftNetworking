@@ -56,9 +56,21 @@ struct ShutterstockGalleryCell: View
         }
         .task(id: url)
         {
+            defer {
+                isLoading = false
+            }
+            
             isLoading = true
-            image = await UURemoteImage.shared.image(for: url)
-            { remoteImage, error in
+            
+            do
+            {
+                image = try await UURemoteImageV2.shared.image(for: url)
+            }
+            catch (let err)
+            {
+                NSLog("Remote fetch error")
+            }
+            /*{ remoteImage, error in
             
                 if let img = remoteImage
                 {
@@ -71,6 +83,7 @@ struct ShutterstockGalleryCell: View
             }
             
             isLoading = (image == nil)
+            */
         }
         .onDisappear
         {
