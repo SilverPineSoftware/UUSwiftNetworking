@@ -15,7 +15,7 @@ fileprivate let LOG_TAG = "UUPassthroughResponseHandler"
 /// Use for file downloads, binary APIs, or when MIME-based dispatch is not desired.
 open class UUPassthroughResponseHandler: UUBaseResponseHandler
 {
-    public required init()
+    public override init()
     {
         super.init()
     }

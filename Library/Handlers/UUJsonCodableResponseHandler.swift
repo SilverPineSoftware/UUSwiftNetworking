@@ -16,7 +16,7 @@ fileprivate let LOG_TAG = "UUJsonCodableResponseHandler"
 /// ``jsonDecoder`` when the parser instances are created.
 open class UUJsonCodableResponseHandler<SuccessType: Codable, ErrorType: Codable>: UUBaseResponseHandler
 {
-    public required init()
+    public override init()
     {
         super.init()
     }

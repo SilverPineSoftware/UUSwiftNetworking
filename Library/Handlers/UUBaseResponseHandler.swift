@@ -21,7 +21,7 @@ fileprivate let LOG_TAG = "UUBaseResponseHandler"
 /// Default parsers are ``UUMimeTypeDataParser`` for both success and error paths.
 open class UUBaseResponseHandler: UUHttpResponseHandler
 {
-    public required init()
+    public init()
     {
     }
     
