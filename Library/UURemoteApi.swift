@@ -39,12 +39,17 @@ open class UURemoteApi
     /// per-API configuration such as timeouts or protocol classes.
     public var session: UUHttpSession = UUHttpSession()
 
-    /// The authorization provider applied to requests that do not specify their own.
+    /// Shared request defaults for this API client.
     ///
-    /// Used by ``prepareRequest(_:)``. Set this once on the API instance rather than on every
-    /// individual ``UUHttpRequest``.
-    public var authorizationProvider: UUHttpAuthorizationProvider? = nil
-
+    /// ``prepareRequest(_:)`` applies ``UURemoteApiConfig/authorizationProvider`` and
+    /// ``UURemoteApiConfig/networkTimeout`` to each ``UUHttpRequest`` before it is sent through
+    /// ``session``. Set this once on the API instance instead of configuring every request
+    /// manually.
+    ///
+    /// - Note: Requests that already have an ``UUHttpRequest/authorizationProvider`` keep their
+    ///   existing provider; only `nil` providers are populated from config.
+    public var config = UURemoteApiConfig()
+    
     /// Creates a remote API with default session and no authorization provider.
     public init()
     {
@@ -103,8 +108,10 @@ open class UURemoteApi
     {
         if (request.authorizationProvider == nil)
         {
-            request.authorizationProvider = self.authorizationProvider
+            request.authorizationProvider = self.config.authorizationProvider
         }
+        
+        request.timeout = self.config.networkTimeout
     }
 
     /// Executes a typed codable request with proactive and reactive authorization handling.
