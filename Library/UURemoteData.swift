@@ -20,11 +20,11 @@
 //  UUDataCache
 //
 //  Threading contract:
-//  | API              | Returns on caller | Completion on     | Heavy work on              |
-//  |------------------|-------------------|-------------------|----------------------------|
-//  | data(for:)       | caller (await)    | callbackQueue     | cacheQueue + detached dl   |
-//  | save(data:)      | caller (await)    | N/A               | cacheQueue                 |
-//  | Notifications    | N/A               | notificationQueue | JSON prep on caller thread |
+//  | API              | Returns on caller | Completion on              | Heavy work on              |
+//  |------------------|-------------------|----------------------------|----------------------------|
+//  | data(for:)       | caller (await)    | utility Task (not main)    | cacheQueue + detached dl   |
+//  | save(data:)      | caller (await)    | N/A                        | cacheQueue                 |
+//  | Notifications    | N/A               | notificationQueue          | JSON prep on caller thread |
 
 import Foundation
 import UUSwiftCore
@@ -55,7 +55,8 @@ public protocol UURemoteDataProtocol
 
 /// An async completion handler invoked when a remote download finishes.
 ///
-/// Called on ``UURemoteData/callbackQueue`` after the download succeeds or fails.
+/// Invoked on a utility-priority `Task` after the download succeeds or fails — not on the main
+/// thread. Hop to `@MainActor` or a `DispatchQueue` inside the handler when updating UI.
 /// Handlers are `@Sendable` and safe to capture across concurrency domains.
 ///
 /// - Parameters:
@@ -120,7 +121,7 @@ private actor UURemoteDataPendingQueue
 ///
 /// | API | Returns on | Completion / notifications | Heavy work |
 /// |-----|------------|------------------------------|------------|
-/// | ``data(for:)`` | Caller (await) | ``callbackQueue`` | ``cacheQueue`` + detached download |
+/// | ``data(for:)`` | Caller (await) | Utility `Task` (not main) | ``cacheQueue`` + detached download |
 /// | ``save(data:key:)`` | Caller (await) | N/A | ``cacheQueue`` |
 /// | Notifications | N/A | ``notificationQueue`` | JSON prep on caller thread |
 ///
@@ -192,9 +193,6 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
         label: "com.silverpine.uu.remoteData.cache",
         qos: .utility)
 
-    /// Queue used to deliver ``UUDataLoadedCompletionBlock`` handlers. Defaults to the main queue.
-    public var callbackQueue: DispatchQueue = .main
-
     /// Queue used to post ``Notifications`` events. Defaults to the main queue.
     public var notificationQueue: DispatchQueue = .main
 
@@ -241,7 +239,7 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
     ///
     /// When data is already in the memory or disk cache, it is returned immediately and the
     /// completion is not called. When a download is required, this method returns `nil` and the
-    /// completion is invoked on ``callbackQueue`` when the transfer completes, fails, or is
+    /// completion is invoked on a utility-priority `Task` when the transfer completes, fails, or is
     /// cancelled via ``cancelDownload(for:)``.
     ///
     /// - Parameters:
@@ -276,6 +274,8 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
 
         let requestGeneration = currentDownloadGeneration(for: key)
         let instance = self
+        
+        // Invoke the download on a separate Task
         Task.detached(priority: .utility)
         {
             await instance.beginDownloadIfNeeded(for: key, requestGeneration: requestGeneration)
@@ -508,14 +508,14 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
             await updateMetaDataFromResponse(response, for: key)
             notifyDataDownloaded(metaData: md)
 
-            await notifyRemoteDownloadHandlers(key: key, data: responseData, error: nil, handlers: handlers)
+            notifyRemoteDownloadHandlers(key: key, data: responseData, error: nil, handlers: handlers)
         }
         else
         {
             UULog.debug(tag: LOG_TAG, message: "Remote download failed!\n\nPath: \(key)\nStatusCode: \(String(describing: response.httpResponse?.statusCode))\nError: \(String(describing: response.httpError))\n")
 
             notifyDownloadFailed(key, response.httpError)
-            await notifyRemoteDownloadHandlers(key: key, data: nil, error: response.httpError, handlers: handlers)
+            notifyRemoteDownloadHandlers(key: key, data: nil, error: response.httpError, handlers: handlers)
         }
     }
     
@@ -582,21 +582,13 @@ public class UURemoteData: UURemoteDataProtocol, @unchecked Sendable
         }
     }
     
-    private func notifyRemoteDownloadHandlers(key: String, data: Data?, error: Error?, handlers: [UUDataLoadedCompletionBlock]) async
+    private func notifyRemoteDownloadHandlers(key: String, data: Data?, error: Error?, handlers: [UUDataLoadedCompletionBlock])
     {
-        let queue = callbackQueue
         for handler in handlers
         {
-            await withCheckedContinuation
-            { (continuation: CheckedContinuation<Void, Never>) in
-                queue.async
-                {
-                    Task
-                    {
-                        await handler(data, error)
-                        continuation.resume()
-                    }
-                }
+            Task(priority: .utility)
+            {
+                await handler(data, error)
             }
         }
     }

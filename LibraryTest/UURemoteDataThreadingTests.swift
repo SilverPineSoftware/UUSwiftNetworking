@@ -38,11 +38,9 @@ final class UURemoteDataThreadingTests: XCTestCase
         XCTAssertEqual(cached, payload)
     }
 
-    func test_callbackQueue_deliversOnConfiguredQueue() async
+    func test_remoteLoadCompletion_isNotDeliveredOnMainThread() async
     {
         let api = UURemoteData.shared
-        api.callbackQueue = DispatchQueue(label: "com.silverpine.uu.test.callback", qos: .utility)
-
         let badKey = "http://this.is.a.fake.url/non_existent_threading.jpg"
         let exp = expectation(description: #function)
 
@@ -58,7 +56,7 @@ final class UURemoteDataThreadingTests: XCTestCase
             #if canImport(Darwin)
             box.isMainThread = pthread_main_np() != 0
             #else
-            box.isMainThread = false
+            box.isMainThread = Thread.isMainThread
             #endif
             exp.fulfill()
         })

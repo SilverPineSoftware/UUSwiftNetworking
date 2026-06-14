@@ -190,7 +190,6 @@ final class UURemoteDataCancelDownloadTests: XCTestCase
         remoteApi = ControllableRemoteApi()
         remoteData = UURemoteData(dataCache: cache, remoteApi: remoteApi)
         remoteData.maxActiveRequests = 0
-        remoteData.callbackQueue = DispatchQueue(label: "com.silverpine.uu.test.cancel.callback", qos: .utility)
         remoteData.notificationQueue = DispatchQueue(label: "com.silverpine.uu.test.cancel.notification", qos: .utility)
 
         await gate.release()
