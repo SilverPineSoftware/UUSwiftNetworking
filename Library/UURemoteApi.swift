@@ -26,9 +26,18 @@ import Foundation
 /// 3. **Reactive renewal** — if the response error satisfies ``shouldRenewApiAuthorization(_:)``,
 ///    renewal runs once more and the request is retried when `didAttempt` is `true`.
 ///
-/// For login, token refresh, and other calls made *inside* ``renewApiAuthorization()``, use
-/// ``executeWithoutAuthorizationRenewal(_:)`` or ``executeTypedWithoutAuthorizationRenewal(_:)``
-/// directly instead of ``execute(_:)`` so proactive and reactive renewal are not re-entered.
+/// For login, token refresh, and other calls made *inside* ``renewApiAuthorization()``, prefer
+/// ``executeWithoutAuthorizationRenewal(_:)`` or ``executeTypedWithoutAuthorizationRenewal(_:)``.
+/// If ``execute(_:)`` or ``executeTyped(_:)`` is called from within ``renewApiAuthorization()`` on
+/// the same task, renewal is skipped automatically so the call cannot deadlock on the renewal gate.
+///
+/// ## Re-entrancy
+///
+/// A `@TaskLocal` flag is set for the duration of ``renewApiAuthorization()``. Calls to
+/// ``execute(_:)`` or ``executeTyped(_:)`` made on that same task are downgraded to
+/// ``executeWithoutAuthorizationRenewal(_:)`` or ``executeTypedWithoutAuthorizationRenewal(_:)``.
+/// Concurrent ``execute(_:)`` calls from other tasks are unaffected and still coalesce on the
+/// renewal gate.
 ///
 /// ## Subclassing
 ///
@@ -72,30 +81,17 @@ open class UURemoteApi
     /// - Returns: The HTTP response. When proactive renewal fails, the response contains the
     ///   renewal error and no network call is made. When reactive renewal fails, the renewal
     ///   error is returned instead of the original authorization error.
+    ///
+    /// - Note: When called from within ``renewApiAuthorization()`` on the same task, behaves like
+    ///   ``executeWithoutAuthorizationRenewal(_:)`` to avoid re-entering the authorization lifecycle.
     open func execute(_ request: UUHttpRequest) async -> UUHttpResponse
     {
-        let renewResult = await renewApiAuthorizationIfNeeded()
-        if let authorizationRenewalError = renewResult.error
+        if RenewalContext.isActive
         {
-            return UUHttpResponse(request: request, response: nil, error: authorizationRenewalError)
+            return await executeWithoutAuthorizationRenewal(request)
         }
 
-        var response = await executeWithoutAuthorizationRenewal(request)
-        if let err = response.httpError, await shouldRenewApiAuthorization(err)
-        {
-            let innerRenewResult = await internalRenewApiAuthorization()
-            if let innerAuthorizationRenewalError = innerRenewResult.error
-            {
-                return UUHttpResponse(request: request, response: nil, error: innerAuthorizationRenewalError)
-            }
-
-            if (innerRenewResult.didAttempt)
-            {
-                response = await executeWithoutAuthorizationRenewal(request)
-            }
-        }
-
-        return response
+        return await executeWithAuthorizationRenewal(request)
     }
 
     /// Prepares a request for execution by applying shared API configuration.
@@ -159,39 +155,18 @@ open class UURemoteApi
     ///   - request: A codable HTTP request describing the expected success and error types.
     /// - Returns: `.success` with the parsed model, or `.failure` with a network, parse, or
     ///   authorization renewal error.
+    ///
+    /// - Note: When called from within ``renewApiAuthorization()`` on the same task, behaves like
+    ///   ``executeTypedWithoutAuthorizationRenewal(_:)`` to avoid re-entering the authorization lifecycle.
     open func executeTyped<SuccessType: Codable, ErrorType: Codable>(
         _ request: UUCodableHttpRequest<SuccessType, ErrorType>) async -> Result<SuccessType, Error>
     {
-        let renewResult = await renewApiAuthorizationIfNeeded()
-        if let authorizationRenewalError = renewResult.error
+        if RenewalContext.isActive
         {
-            return .failure(authorizationRenewalError)
+            return await executeTypedWithoutAuthorizationRenewal(request)
         }
 
-        var result = await executeTypedWithoutAuthorizationRenewal(request)
-        switch (result)
-        {
-            case .success(let success):
-                return .success(success)
-
-            case .failure(let error):
-
-                if (await shouldRenewApiAuthorization(error))
-                {
-                    let innerRenewResult = await internalRenewApiAuthorization()
-                    if let innerAuthorizationRenewalError = innerRenewResult.error
-                    {
-                        return .failure(innerAuthorizationRenewalError)
-                    }
-
-                    if (innerRenewResult.didAttempt)
-                    {
-                        result = await executeTypedWithoutAuthorizationRenewal(request)
-                    }
-                }
-
-            return result
-        }
+        return await executeTypedWithAuthorizationRenewal(request)
     }
     
     /// Sends a single typed HTTP request without proactive or reactive authorization renewal.
@@ -224,6 +199,11 @@ open class UURemoteApi
     ///
     /// Concurrent callers are coalesced: only one renewal runs at a time and all waiters receive
     /// the same ``UURenewAuthorizationResponse``.
+    ///
+    /// A `@TaskLocal` flag is active for the duration of this method. ``execute(_:)`` and
+    /// ``executeTyped(_:)`` called on the same task during renewal skip proactive and reactive
+    /// renewal automatically. Prefer ``executeWithoutAuthorizationRenewal(_:)`` for renewal HTTP
+    /// calls so intent is explicit.
     ///
     /// - Returns: A response indicating whether renewal was attempted and any error that occurred.
     ///   The default implementation returns `didAttempt: false` with no error.
@@ -268,6 +248,82 @@ open class UURemoteApi
     }
 
     // MARK: Private Implementation
+
+    /// Task-local flag set while ``renewApiAuthorization()`` runs on the current task.
+    ///
+    /// Child tasks created with `async let` or `Task { }` inherit this value.
+    /// ``Task/detached`` does not; use ``executeWithoutAuthorizationRenewal(_:)`` in detached work.
+    private enum RenewalContext
+    {
+        @TaskLocal static var isActive = false
+    }
+
+    /// Visible to unit tests via `@testable import`.
+    internal static var isAuthorizationRenewalActiveForCurrentTask: Bool
+    {
+        RenewalContext.isActive
+    }
+
+    private func executeWithAuthorizationRenewal(_ request: UUHttpRequest) async -> UUHttpResponse
+    {
+        let renewResult = await renewApiAuthorizationIfNeeded()
+        if let authorizationRenewalError = renewResult.error
+        {
+            return UUHttpResponse(request: request, response: nil, error: authorizationRenewalError)
+        }
+
+        var response = await executeWithoutAuthorizationRenewal(request)
+        if let err = response.httpError, await shouldRenewApiAuthorization(err)
+        {
+            let innerRenewResult = await internalRenewApiAuthorization()
+            if let innerAuthorizationRenewalError = innerRenewResult.error
+            {
+                return UUHttpResponse(request: request, response: nil, error: innerAuthorizationRenewalError)
+            }
+
+            if innerRenewResult.didAttempt
+            {
+                response = await executeWithoutAuthorizationRenewal(request)
+            }
+        }
+
+        return response
+    }
+
+    private func executeTypedWithAuthorizationRenewal<SuccessType: Codable, ErrorType: Codable>(
+        _ request: UUCodableHttpRequest<SuccessType, ErrorType>) async -> Result<SuccessType, Error>
+    {
+        let renewResult = await renewApiAuthorizationIfNeeded()
+        if let authorizationRenewalError = renewResult.error
+        {
+            return .failure(authorizationRenewalError)
+        }
+
+        var result = await executeTypedWithoutAuthorizationRenewal(request)
+        switch result
+        {
+            case .success(let success):
+                return .success(success)
+
+            case .failure(let error):
+
+                if await shouldRenewApiAuthorization(error)
+                {
+                    let innerRenewResult = await internalRenewApiAuthorization()
+                    if let innerAuthorizationRenewalError = innerRenewResult.error
+                    {
+                        return .failure(innerAuthorizationRenewalError)
+                    }
+
+                    if innerRenewResult.didAttempt
+                    {
+                        result = await executeTypedWithoutAuthorizationRenewal(request)
+                    }
+                }
+
+            return result
+        }
+    }
 
     private func renewApiAuthorizationIfNeeded() async -> UURenewAuthorizationResponse
     {
@@ -328,7 +384,10 @@ open class UURemoteApi
             return coalesced
         }
 
-        let result = await renewApiAuthorization()
+        let result = await RenewalContext.$isActive.withValue(true)
+        {
+            await renewApiAuthorization()
+        }
         return await renewalGate.finish(result)
     }
 }

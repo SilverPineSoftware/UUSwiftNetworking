@@ -94,6 +94,16 @@ final class UURemoteApiTests: XCTestCase
         /// Delay after optional release gate, in milliseconds.
         var renewDelayMs: UInt64 = 50
         var blockRenewalUntilReleased = false
+        /// When true, ``renewApiAuthorization()`` calls ``execute(_:)`` before returning.
+        var executeDuringRenewal = false
+        /// When true, ``renewApiAuthorization()`` calls ``executeTyped(_:)`` before returning.
+        var executeTypedDuringRenewal = false
+        /// Response body returned by the inner ``execute(_:)`` call during renewal.
+        var innerExecuteResponseBody: Any? = "inner-ok"
+        /// When true, inner ``execute(_:)`` during renewal returns an authorization-needed error.
+        var innerExecuteReturnsAuthNeeded = false
+        /// Set by ``renewApiAuthorization()`` when it observes the task-local renewal flag.
+        var renewalContextWasActiveDuringRenew = false
 
         var executeRequestHandler: (UUHttpRequest) async -> UUHttpResponse
         {
@@ -179,6 +189,7 @@ final class UURemoteApiTests: XCTestCase
         public override func renewApiAuthorization() async -> UURenewAuthorizationResponse
         {
             recordRenewStart()
+            renewalContextWasActiveDuringRenew = UURemoteApi.isAuthorizationRenewalActiveForCurrentTask
 
             if blockRenewalUntilReleased
             {
@@ -186,6 +197,49 @@ final class UURemoteApiTests: XCTestCase
                 { continuation in
                     storeReleaseWaiter(continuation)
                 }
+            }
+
+            if executeDuringRenewal
+            {
+                let innerRequest = remoteApiTestRequest()
+                let previousHandler = executeRequestHandler
+                if innerExecuteReturnsAuthNeeded
+                {
+                    executeRequestHandler =
+                    { req in
+                        remoteApiAuthNeededResponse(request: req)
+                    }
+                }
+                else
+                {
+                    executeRequestHandler =
+                    { req in
+                        remoteApiSuccessResponse(request: req, body: self.innerExecuteResponseBody)
+                    }
+                }
+
+                _ = await execute(innerRequest)
+                executeRequestHandler = previousHandler
+            }
+
+            if executeTypedDuringRenewal
+            {
+                struct InnerToken: Codable, Equatable
+                {
+                    var token: String
+                }
+
+                let innerRequest = UUCodableHttpRequest<InnerToken, TestApiError>(
+                    url: remoteApiTestRequestUrl
+                )
+                let previousHandler = executeRequestHandler
+                executeRequestHandler =
+                { req in
+                    UUHttpResponse(request: req, parsedResponse: InnerToken(token: "inner-typed"))
+                }
+
+                _ = await executeTyped(innerRequest)
+                executeRequestHandler = previousHandler
             }
 
             if renewDelayMs > 0
@@ -562,5 +616,193 @@ final class UURemoteApiTests: XCTestCase
         await second.value
 
         XCTAssertEqual(api.renewCallCount, 1)
+    }
+
+    // MARK: - Re-entrant execute during renewal
+
+    func test_reentrantExecute_duringProactiveRenewal_completesWithoutDeadlock() async
+    {
+        let request = remoteApiTestRequest()
+        let outerExecuteCount = ExecuteCounter()
+        let api = TestRemoteApi()
+        api.apiAuthorizationNeeded = true
+        api.executeDuringRenewal = true
+        api.innerExecuteResponseBody = "token-from-renewal"
+        api.renewDelayMs = 0
+        api.executeRequestHandler =
+        { req in
+            outerExecuteCount.increment()
+            return remoteApiSuccessResponse(request: req, body: "outer-ok")
+        }
+
+        let response = await api.execute(request)
+
+        XCTAssertEqual(response.parsedResponse as? String, "outer-ok")
+        XCTAssertEqual(api.renewCallCount, 1)
+        XCTAssertEqual(outerExecuteCount.value, 1)
+        XCTAssertTrue(api.renewalContextWasActiveDuringRenew)
+    }
+
+    func test_reentrantExecute_duringProactiveRenewal_doesNotStartNestedRenewal() async
+    {
+        let api = TestRemoteApi()
+        api.apiAuthorizationNeeded = true
+        api.executeDuringRenewal = true
+        api.renewDelayMs = 0
+        api.executeRequestHandler =
+        { req in
+            remoteApiSuccessResponse(request: req)
+        }
+
+        _ = await api.execute(remoteApiTestRequest())
+
+        XCTAssertEqual(api.renewCallCount, 1)
+    }
+
+    func test_reentrantExecute_duringProactiveRenewal_returnsInnerResponseWithoutSecondRenewal() async
+    {
+        let api = TestRemoteApi()
+        api.apiAuthorizationNeeded = true
+        api.executeDuringRenewal = true
+        api.innerExecuteResponseBody = "login-success"
+        api.renewDelayMs = 0
+        api.executeRequestHandler =
+        { req in
+            remoteApiSuccessResponse(request: req, body: "should-not-run")
+        }
+
+        _ = await api.execute(remoteApiTestRequest())
+
+        XCTAssertEqual(api.renewCallCount, 1)
+    }
+
+    func test_reentrantExecute_duringRenewal_skipsReactiveRenewalWhenInnerRequestReturnsAuthNeeded() async
+    {
+        let request = remoteApiTestRequest()
+        let executeCount = ExecuteCounter()
+        let api = TestRemoteApi()
+        api.apiAuthorizationNeeded = true
+        api.executeDuringRenewal = true
+        api.innerExecuteReturnsAuthNeeded = true
+        api.renewDelayMs = 0
+        api.executeRequestHandler =
+        { req in
+            executeCount.increment()
+            return remoteApiSuccessResponse(request: req, body: "outer")
+        }
+
+        let response = await api.execute(request)
+
+        XCTAssertEqual(response.parsedResponse as? String, "outer")
+        XCTAssertEqual(api.renewCallCount, 1)
+        XCTAssertEqual(executeCount.value, 1)
+    }
+
+    func test_reentrantExecuteTyped_duringProactiveRenewal_completesWithoutDeadlock() async
+    {
+        struct OuterValue: Codable, Equatable
+        {
+            var value: String
+        }
+
+        let request = UUCodableHttpRequest<OuterValue, TestApiError>(url: remoteApiTestRequestUrl)
+        let executeCount = ExecuteCounter()
+        let api = TestRemoteApi()
+        api.apiAuthorizationNeeded = true
+        api.executeTypedDuringRenewal = true
+        api.renewDelayMs = 0
+        api.executeRequestHandler =
+        { req in
+            executeCount.increment()
+            return UUHttpResponse(request: req, parsedResponse: OuterValue(value: "outer"))
+        }
+
+        let result = await api.executeTyped(request)
+
+        XCTAssertEqual(try? result.get(), OuterValue(value: "outer"))
+        XCTAssertEqual(api.renewCallCount, 1)
+        XCTAssertEqual(executeCount.value, 1)
+        XCTAssertTrue(api.renewalContextWasActiveDuringRenew)
+    }
+
+    func test_reentrantExecute_duringReactiveRenewal_completesWithoutDeadlock() async
+    {
+        let request = remoteApiTestRequest()
+        let executeCount = ExecuteCounter()
+        let api = TestRemoteApi()
+        api.executeDuringRenewal = true
+        api.innerExecuteResponseBody = "refresh-ok"
+        api.renewDelayMs = 0
+        api.executeRequestHandler =
+        { req in
+            if executeCount.increment() == 1
+            {
+                return remoteApiAuthNeededResponse(request: req)
+            }
+            return remoteApiSuccessResponse(request: req, body: "after-reactive-renew")
+        }
+
+        let response = await api.execute(request)
+
+        XCTAssertEqual(response.parsedResponse as? String, "after-reactive-renew")
+        XCTAssertEqual(api.renewCallCount, 1)
+        XCTAssertEqual(executeCount.value, 2)
+    }
+
+    func test_reentrantExecute_concurrentTaskStillCoalescesOnRenewalGate() async throws
+    {
+        let request = remoteApiTestRequest()
+        let api = TestRemoteApi()
+        api.apiAuthorizationNeeded = true
+        api.blockRenewalUntilReleased = true
+        api.executeRequestHandler =
+        { req in
+            remoteApiSuccessResponse(request: req)
+        }
+
+        let first = Task { _ = await api.execute(request) }
+        await Task.yield()
+        try await api.awaitRenewStarted()
+        XCTAssertTrue(api.renewalContextWasActiveDuringRenew)
+
+        let second = Task { _ = await api.execute(request) }
+        try await api.awaitRenewCoalescedWaiter()
+
+        api.releaseBlockedRenewal()
+        await first.value
+        await second.value
+
+        XCTAssertEqual(api.renewCallCount, 1)
+        XCTAssertFalse(UURemoteApi.isAuthorizationRenewalActiveForCurrentTask)
+    }
+
+    func test_authorizationRenewalContext_isNotActiveOutsideRenewal() async
+    {
+        let api = TestRemoteApi()
+        api.executeRequestHandler =
+        { req in
+            XCTAssertFalse(UURemoteApi.isAuthorizationRenewalActiveForCurrentTask)
+            return remoteApiSuccessResponse(request: req)
+        }
+
+        _ = await api.execute(remoteApiTestRequest())
+
+        XCTAssertFalse(UURemoteApi.isAuthorizationRenewalActiveForCurrentTask)
+    }
+
+    func test_authorizationRenewalContext_isActiveOnlyInsideRenewApiAuthorization() async
+    {
+        let api = TestRemoteApi()
+        api.apiAuthorizationNeeded = true
+        api.renewDelayMs = 0
+        api.executeRequestHandler =
+        { req in
+            remoteApiSuccessResponse(request: req)
+        }
+
+        _ = await api.execute(remoteApiTestRequest())
+
+        XCTAssertTrue(api.renewalContextWasActiveDuringRenew)
+        XCTAssertFalse(UURemoteApi.isAuthorizationRenewalActiveForCurrentTask)
     }
 }
