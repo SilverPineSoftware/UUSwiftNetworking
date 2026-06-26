@@ -41,11 +41,13 @@ class ShutterstockViewModel: ObservableObject
             api.config = cfg.apiConfig
         }
     }
+    
+    @Published var perPage: Int = 20
 
-    private var api: ShutterstockApi = ShutterstockApi()
+    nonisolated(unsafe) private var api: ShutterstockApi = ShutterstockApi()
     private var currentPage: Int = 0
     private var hasMore: Bool = true
-    private let perPage: Int = 500
+    //private let perPage: Int = 20
 
     init()
     {

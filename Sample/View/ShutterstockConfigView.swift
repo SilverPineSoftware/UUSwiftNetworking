@@ -39,7 +39,7 @@ struct ShutterstockConfigView: View
             
             List
             {
-                SettingsGroup("Shutterstock Config")
+                SettingsGroup("Credentials")
                 {
                     VStack
                     {
@@ -88,6 +88,33 @@ struct ShutterstockConfigView: View
                             .foregroundColor(.textBody)
                             .font(.body.monospaced())
 
+                    }
+                }
+                
+                SettingsGroup("Config")
+                {
+                    VStack
+                    {
+                        HStack
+                        {
+                            Text("Records per page")
+                                .font(.body.monospaced())
+                            
+                            Spacer()
+                        }
+                        
+                        TextField("number", value: $viewModel.perPage, format: .number)
+                            .padding(10)
+                            .background(Color(.cardBackground))
+                            .cornerRadius(8)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Color(.cardBackgroundBorder), lineWidth: 1)
+                            )
+                            .keyboardType(.numberPad)
+                            .autocapitalization(.words)
+                            .foregroundColor(.textBody)
+                            .font(.body.monospaced())
                     }
                 }
             }
