@@ -40,20 +40,7 @@ class LoginViewModel: ObservableObject
     {
         self.state = UURandom.bytes(length: 32).uuToHexString()
         let pkce = UUPKCE.generate()
-        /*self.codeChallenge = UURandom.bytes(length: 64).uuToHexString()
         
-        guard let codeVerifierBytes = self.codeChallenge?.data(using: .utf8) else
-        {
-            UULog.debug(tag: LOG_TAG, message: "Failed to create code verifier")
-            return
-        }
-        
-        let codeVerifierDigest = SHA256.hash(data: codeVerifierBytes)
-        let codeVerifierHashBytes = Data(codeVerifierDigest)
-        let codeVerifierBase64 = codeVerifierHashBytes.uuBase64UrlEncode()
-         */
-        
-        //let callbackUrl = "uu://networking.sample/login"
         let callbackUrl = "https://uu-static.spsw.io/login"
         
         var urlComponents = URLComponents()
