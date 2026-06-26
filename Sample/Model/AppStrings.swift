@@ -33,6 +33,15 @@ Use the menu option in the upper left to explore the different samples.
 We hope you enjoy it!
 """
     
+    static let notLoggedInMessage =
+"""
+You are not logged into the application at this time.
+
+Choose an option below to login to the application.
+
+These login flows demostrate some common ways a mobile application can handle user login. 
+"""
+    
     static let noteFromTheDevsSectionTitle = "A note from the devs"
     
     static let noteFromTheDevs =

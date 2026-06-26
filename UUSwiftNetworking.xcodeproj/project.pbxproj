@@ -58,6 +58,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		081EC1FA2FEE410D0018424C /* UUSwiftNetworkingSample.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = UUSwiftNetworkingSample.entitlements; sourceTree = "<group>"; };
 		0840B4522FD5A20B006F57DE /* UUSwiftNetworkingTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UUSwiftNetworkingTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		08D2A55F2FD49AE900059110 /* UUSwiftNetworkingSampleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UUSwiftNetworkingSampleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		08F546552FCE89BF006EE7C9 /* UUSwiftNetworkingSample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = UUSwiftNetworkingSample.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -68,6 +69,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		081EC1F72FEE01BF0018424C /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 08F546542FCE89BF006EE7C9 /* UUSwiftNetworkingSample */;
+		};
 		0840B4DE2FD5A2B7006F57DE /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -102,7 +110,7 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		0840B42E2FD5A1E8006F57DE /* Library */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (0840B4DE2FD5A2B7006F57DE /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Library; sourceTree = "<group>"; };
 		0840B4862FD5A224006F57DE /* LibraryTest */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (0840B6712FD65C20006F57DE /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = LibraryTest; sourceTree = "<group>"; };
-		0840B4C62FD5A22E006F57DE /* Sample */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (0840B65F2FD5D580006F57DE /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Sample; sourceTree = "<group>"; };
+		0840B4C62FD5A22E006F57DE /* Sample */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (0840B65F2FD5D580006F57DE /* PBXFileSystemSynchronizedBuildFileExceptionSet */, 081EC1F72FEE01BF0018424C /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Sample; sourceTree = "<group>"; };
 		0840B4DC2FD5A23B006F57DE /* SampleTest */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (0840B6692FD61FB5006F57DE /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = SampleTest; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
@@ -157,6 +165,7 @@
 		C574960F26BB5E7A00CECCC0 = {
 			isa = PBXGroup;
 			children = (
+				081EC1FA2FEE410D0018424C /* UUSwiftNetworkingSample.entitlements */,
 				0840B42E2FD5A1E8006F57DE /* Library */,
 				0840B4862FD5A224006F57DE /* LibraryTest */,
 				0840B4C62FD5A22E006F57DE /* Sample */,
@@ -532,6 +541,7 @@
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_ENTITLEMENTS = UUSwiftNetworkingSample.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = SVT6H48N2C;
@@ -539,7 +549,8 @@
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "${BUNDLE_DISPLAY_NAME}";
+				INFOPLIST_FILE = Sample/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Networking Dev";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -552,7 +563,7 @@
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.silverpine.uu.networking.sample;
+				PRODUCT_BUNDLE_IDENTIFIER = com.silverpine.uu.networking.sample.d;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
@@ -572,6 +583,7 @@
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_ENTITLEMENTS = UUSwiftNetworkingSample.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = SVT6H48N2C;
@@ -579,7 +591,8 @@
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "${BUNDLE_DISPLAY_NAME}";
+				INFOPLIST_FILE = Sample/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Networking Dev";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -850,8 +863,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/SilverPineSoftware/UUSwiftCore";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.6.0;
+				branch = develop;
+				kind = branch;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

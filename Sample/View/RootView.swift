@@ -12,6 +12,7 @@ import UUSwiftCore
 struct RootView: View
 {
     @EnvironmentObject var menuViewModel: MenuViewModel
+    @EnvironmentObject var loginViewModel: LoginViewModel
     
     var body: some View
     {
@@ -23,8 +24,12 @@ struct RootView: View
                 {
                     case .home:
                         HomeView()
-                        .zIndex(0)
+                            .zIndex(0)
                 
+                    case .login:
+                        LoginView(viewModel: loginViewModel)
+                            .zIndex(0)
+                    
                     case .shutterstock:
                         ShutterstockView()
                             .zIndex(0)

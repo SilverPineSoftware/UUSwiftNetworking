@@ -86,6 +86,13 @@ extension View
             .navigationBarBackButtonHidden(true)
     }
     
+    func applyListItemStyle() -> some View
+    {
+        return self
+            .listRowSeparator(.hidden)
+            .listRowBackground(EmptyView().background(.clear))
+    }
+    
     func applyLabelValueStyle() -> some View
     {
         return self.padding(EdgeInsets(top: 12, leading: 8, bottom: 12, trailing: 8))
