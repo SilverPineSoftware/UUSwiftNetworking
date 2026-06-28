@@ -16,8 +16,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "08F546542FCE89BF006EE7C9"
-               BuildableName = "UUSwiftNetworkingSample.app"
-               BlueprintName = "UUSwiftNetworkingSample"
+               BuildableName = "Sample.app"
+               BlueprintName = "Sample"
                ReferencedContainer = "container:UUSwiftNetworking.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -41,8 +41,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "08D2A55E2FD49AE900059110"
-               BuildableName = "UUSwiftNetworkingSampleTests.xctest"
-               BlueprintName = "UUSwiftNetworkingSampleTests"
+               BuildableName = "SampleTests.xctest"
+               BlueprintName = "SampleTests"
                ReferencedContainer = "container:UUSwiftNetworking.xcodeproj">
             </BuildableReference>
          </TestableReference>
@@ -64,8 +64,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "08F546542FCE89BF006EE7C9"
-            BuildableName = "UUSwiftNetworkingSample.app"
-            BlueprintName = "UUSwiftNetworkingSample"
+            BuildableName = "Sample.app"
+            BlueprintName = "Sample"
             ReferencedContainer = "container:UUSwiftNetworking.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -81,8 +81,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "08F546542FCE89BF006EE7C9"
-            BuildableName = "UUSwiftNetworkingSample.app"
-            BlueprintName = "UUSwiftNetworkingSample"
+            BuildableName = "Sample.app"
+            BlueprintName = "Sample"
             ReferencedContainer = "container:UUSwiftNetworking.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

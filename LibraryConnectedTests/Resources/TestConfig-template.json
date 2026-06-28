@@ -1,7 +1,7 @@
 {
     "api_host": "<<UU-TEST-URL-HERE>>",
     "static_files_url": "<<UU-STATIC-TEST-URL-HERE>>",
-    "does_not_exist_url":"http://this.is.a.fake.url",
+    "does_not_exist_url":"https://this.is.a.fake.url",
     "upload_image_file_name":"TestJpeg_0001.JPG",
     "download_image_file_name":"test_download.png",
     

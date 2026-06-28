@@ -31,7 +31,7 @@ class LoginViewModel: ObservableObject
     {
     }
 
-    func ssoLogin() async
+    func ssoLogin_test() async
     {
         //https://uu-networking.spsw.io/test/as-web-auth?redirect_uri=uu-networking%3A%2F%2Flogin
         self.state = UURandom.bytes(length: 32).uuToHexString()
@@ -53,6 +53,9 @@ class LoginViewModel: ObservableObject
             
             // Uncomment this line and it'll fail just like SSO
             //URLQueryItem(name: "csp", value: "1"),
+            
+            // This line directs the test server to form a dynamic csp header that works
+            URLQueryItem(name: "csp", value: "2"),
             
             URLQueryItem(name: "x_frame_options", value: "DENY"),
             URLQueryItem(name: "cors", value: "1"),
@@ -89,13 +92,12 @@ class LoginViewModel: ObservableObject
         }
     }
     
-    func ssoLogin_real() async
+    func ssoLogin() async
     {
         self.state = UURandom.bytes(length: 32).uuToHexString()
         let pkce = UUPKCE.generate()
         
         //let callbackUrl = "https://uu-static.spsw.io/login"
-        //let callbackUrl = "uu://networking_sample_login"
         let callbackUrl = "uu-networking://login"
         let callbackUrlScheme = "uu-networking"
         
@@ -121,8 +123,6 @@ class LoginViewModel: ObservableObject
         
         DispatchQueue.main.async
         {
-            
-            
             UULog.debug(tag: LOG_TAG, message: "Opening SSO Login URL: \(url)")
             
             let session = ASWebAuthenticationSession(

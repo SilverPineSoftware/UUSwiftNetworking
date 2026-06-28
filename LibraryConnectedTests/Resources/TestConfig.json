@@ -1,0 +1,10 @@
+{
+    "api_host": "https://uu.spsw.io",
+    "static_files_url": "https://uu-static.spsw.io",
+    "does_not_exist_url":"https://this.is.a.fake.url",
+    "upload_image_file_name":"TestJpeg_0001.JPG",
+    "download_image_file_name":"test_download.png",
+    
+    "shutterstock_client_key": "d4a89-1400b-04251-4faee-f7a23-12271",
+    "shutterstock_client_secret": "61764-d9c3c-8a832-a7bdf-098e4-0b382"
+}
