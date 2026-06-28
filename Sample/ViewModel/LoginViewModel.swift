@@ -19,29 +19,27 @@ private let LOG_TAG = "LoginViewModel"
 @MainActor
 class LoginViewModel: ObservableObject
 {
-//    @Published var showConfig: Bool = false
-//    @Published var searchQuery: String = "labrador"
-//    @Published var imageUrls: [String] = []
     @Published var isLoading: Bool = false
     
     private var session: ASWebAuthenticationSession? = nil
-    //private var codeChallenge: String? = nil
     private var state: String? = nil
     private var pkce: UUPKCE? = nil
+    
+    let context = SsoPresentationAnchor()
 
     init()
     {
-//        let cfg = ShutterstockApiConfig.load()
-//        clientKey = cfg.clientKey
-//        clientSecret = cfg.clientSecret
     }
 
-    func ssoLogin() async //_ session: WebAuthenticationSession) async
+    func ssoLogin() async
     {
         self.state = UURandom.bytes(length: 32).uuToHexString()
         let pkce = UUPKCE.generate()
         
-        let callbackUrl = "https://uu-static.spsw.io/login"
+        //let callbackUrl = "https://uu-static.spsw.io/login"
+        //let callbackUrl = "uu://networking_sample_login"
+        let callbackUrl = "uu-networking://login"
+        let callbackUrlScheme = "uu-networking"
         
         var urlComponents = URLComponents()
         urlComponents.scheme = "https"
@@ -57,7 +55,6 @@ class LoginViewModel: ObservableObject
             URLQueryItem(name: "code_challenge_method", value: pkce.challengeMethod),
         ]
         
-        //let url = "https://sso.spsw.dev/authorize?response_type=code&client_id=uu-networking-sample&redirect_uri=uu%3A%2F%2Fnetworking.sample%2Flogin&scope=openid+email+profile&state=REPLACE_WITH_STATE&code_challenge=REPLACE_WITH_PKCE_CODE_CHALLENGE&code_challenge_method=S256"
         guard let url = urlComponents.url else
         {
             NSLog("ERROR! Unable to create URL")
@@ -66,24 +63,22 @@ class LoginViewModel: ObservableObject
         
         DispatchQueue.main.async
         {
-            let context = SsoPresentationAnchor()
+            
             
             UULog.debug(tag: LOG_TAG, message: "Opening SSO Login URL: \(url)")
             
             let session = ASWebAuthenticationSession(
                 url: url,
-                callbackURLScheme: "https",
+                callbackURLScheme: callbackUrlScheme,
                 completionHandler: { callbackUrl, callbackError in
                     
                     UULog.debug(tag: LOG_TAG, message: "SSO Callback URL: \(String(describing: callbackUrl))")
                     UULog.debug(tag: LOG_TAG, message: "SSO Callback Error: \(String(describing: callbackError))")
-                    
-                    //continuation.resume(returning: callbackError)
                 })
         
         
             session.prefersEphemeralWebBrowserSession = false
-            session.presentationContextProvider = context
+            session.presentationContextProvider = self.context
             self.session = session
             self.pkce = pkce
             session.start()
@@ -149,14 +144,19 @@ class LoginViewModel: ObservableObject
             
             Task
             {
-                let result = await UUHttpSession.post(url: url.absoluteString, body: UUJsonBody(req))
+                let req = UUHttpRequest(url: url.absoluteString, method: .post, body: UUJsonBody(req))
+                req.responseHandler = UUJsonCodableResponseHandler<LoginCompleteResponse, LoginCompleteResponse>()
+                
+                let result = await UUHttpSession.execute(req)
                 if let error = result.httpError
                 {
                     UULog.debug(tag: LOG_TAG, message: "Error: \(error)")
                 }
-                else if let appResponse = result.parsedResponse as? Data
+                else if let appResponse = result.parsedResponse as? LoginCompleteResponse
                 {
-                    UULog.debug(tag: LOG_TAG, message: "\(String(describing: String(data: appResponse, encoding: .utf8)))")
+                    UULog.debug(tag: LOG_TAG, message: "\(appResponse))")
+                    
+                    _ = await UUSecurity.keychain.writeString(key: "access_token", accessLevel: .afterFirstUnlockThisDeviceOnly, string: appResponse.accessToken)
                 }
                 else
                 {
@@ -186,6 +186,26 @@ struct LoginCompleteRequest: Codable
         case clientId = "client_id"
         case ticket
         case codeVerifier = "code_verifier"
+    }
+}
+
+struct LoginCompleteResponse: Codable
+{
+    let accessToken: String
+    let tokenType: String
+    let expiresAt: String
+    let refreshToken: String?
+    let idToken: String?
+    let scope: String?
+    
+    enum CodingKeys: String, CodingKey
+    {
+        case accessToken = "access_token"
+        case tokenType = "token_type"
+        case expiresAt = "expires_at"
+        case refreshToken = "refresh_token"
+        case idToken = "id_token"
+        case scope
     }
 }
 

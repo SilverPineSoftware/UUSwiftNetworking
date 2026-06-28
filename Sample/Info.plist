@@ -5,13 +5,19 @@
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
 			<key>CFBundleURLName</key>
 			<string>uu</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>uu</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>uu-networking</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>uu-networking</string>
 			</array>
 		</dict>
 	</array>

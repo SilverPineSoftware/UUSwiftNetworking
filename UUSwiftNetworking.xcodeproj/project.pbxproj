@@ -88,6 +88,7 @@
 			membershipExceptions = (
 				Api/ShutterstockApi.swift,
 				Api/ShutterstockApiConfig.swift,
+				Api/SilverpineSsoApi.swift,
 			);
 			target = 0840B4512FD5A20B006F57DE /* UUSwiftNetworkingTests */;
 		};
