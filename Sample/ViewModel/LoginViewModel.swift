@@ -48,6 +48,16 @@ class LoginViewModel: ObservableObject
         urlComponents.path = "/test/as-web-auth"
         urlComponents.queryItems = [
             URLQueryItem(name: "redirect_uri", value: callbackUrl),
+            URLQueryItem(name: "ticket", value: "this-is-my-ticket"),
+            URLQueryItem(name: "state", value: "state_of_mind"),
+            
+            // Uncomment this line and it'll fail just like SSO
+            //URLQueryItem(name: "csp", value: "1"),
+            
+            URLQueryItem(name: "x_frame_options", value: "DENY"),
+            URLQueryItem(name: "cors", value: "1"),
+            
+            //csp=1, x_frame_options=DENY, or cors=1
         ]
         
         guard let url = urlComponents.url else
