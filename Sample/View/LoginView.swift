@@ -110,6 +110,27 @@ struct LoginView: View
                 .applyListItemStyle()
                 .frame(maxWidth: .infinity, alignment: .center)
                 
+                Button
+                {
+                    Task
+                    {
+                        await viewModel.ssoLogin_test("3")
+                    }
+                }
+                label:
+                {
+                    Text("Test Redirect - csp 3")
+                        .applyButtonTextStyle(14)
+                        .padding()
+                }
+                .buttonStyle(.plain)
+                .background {
+                    Capsule()
+                        .fill(.cardBackground)
+                }
+                .applyListItemStyle()
+                .frame(maxWidth: .infinity, alignment: .center)
+                
                 
                 
             }
