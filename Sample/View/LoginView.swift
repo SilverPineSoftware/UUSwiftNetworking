@@ -26,113 +26,45 @@ struct LoginView: View
                     .padding(hPadding)
                     .applyListItemStyle()
                 
-                Button
+                ActionButton("Silverpine SSO")
                 {
                     Task
                     {
-                        await viewModel.ssoLogin() //webAuthenticationSession)
+                        await viewModel.ssoLogin()
                     }
                 }
-                label:
-                {
-                    Text("Silverpine SSO")
-                        .applyButtonTextStyle(14)
-                        .padding()
-                }
-                .buttonStyle(.plain)
-                .background {
-                    Capsule()
-                        .fill(.cardBackground)
-                }
-                .applyListItemStyle()
-                .frame(maxWidth: .infinity, alignment: .center)
                 
-                Button
+                ActionButton("Test Redirect - No CSP")
                 {
                     Task
                     {
                         await viewModel.ssoLogin_test()
                     }
                 }
-                label:
-                {
-                    Text("Test Redirect - No CSP")
-                        .applyButtonTextStyle(14)
-                        .padding()
-                }
-                .buttonStyle(.plain)
-                .background {
-                    Capsule()
-                        .fill(.cardBackground)
-                }
-                .applyListItemStyle()
-                .frame(maxWidth: .infinity, alignment: .center)
                 
-                Button
+                ActionButton("Test Redirect - Broken CSP")
                 {
                     Task
                     {
                         await viewModel.ssoLogin_test("1")
                     }
                 }
-                label:
-                {
-                    Text("Test Redirect - Broken CSP")
-                        .applyButtonTextStyle(14)
-                        .padding()
-                }
-                .buttonStyle(.plain)
-                .background {
-                    Capsule()
-                        .fill(.cardBackground)
-                }
-                .applyListItemStyle()
-                .frame(maxWidth: .infinity, alignment: .center)
                 
-                Button
+                ActionButton("Test Redirect - Dynamic CSP")
                 {
                     Task
                     {
                         await viewModel.ssoLogin_test("2")
                     }
                 }
-                label:
-                {
-                    Text("Test Redirect - Dynamic CSP")
-                        .applyButtonTextStyle(14)
-                        .padding()
-                }
-                .buttonStyle(.plain)
-                .background {
-                    Capsule()
-                        .fill(.cardBackground)
-                }
-                .applyListItemStyle()
-                .frame(maxWidth: .infinity, alignment: .center)
                 
-                Button
+                ActionButton("Test Redirect - csp 3")
                 {
                     Task
                     {
                         await viewModel.ssoLogin_test("3")
                     }
                 }
-                label:
-                {
-                    Text("Test Redirect - csp 3")
-                        .applyButtonTextStyle(14)
-                        .padding()
-                }
-                .buttonStyle(.plain)
-                .background {
-                    Capsule()
-                        .fill(.cardBackground)
-                }
-                .applyListItemStyle()
-                .frame(maxWidth: .infinity, alignment: .center)
-                
-                
-                
             }
             .applyListStyle()
         }
