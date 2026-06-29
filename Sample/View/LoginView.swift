@@ -47,6 +47,71 @@ struct LoginView: View
                 .applyListItemStyle()
                 .frame(maxWidth: .infinity, alignment: .center)
                 
+                Button
+                {
+                    Task
+                    {
+                        await viewModel.ssoLogin_test()
+                    }
+                }
+                label:
+                {
+                    Text("Test Redirect - No CSP")
+                        .applyButtonTextStyle(14)
+                        .padding()
+                }
+                .buttonStyle(.plain)
+                .background {
+                    Capsule()
+                        .fill(.cardBackground)
+                }
+                .applyListItemStyle()
+                .frame(maxWidth: .infinity, alignment: .center)
+                
+                Button
+                {
+                    Task
+                    {
+                        await viewModel.ssoLogin_test("1")
+                    }
+                }
+                label:
+                {
+                    Text("Test Redirect - Broken CSP")
+                        .applyButtonTextStyle(14)
+                        .padding()
+                }
+                .buttonStyle(.plain)
+                .background {
+                    Capsule()
+                        .fill(.cardBackground)
+                }
+                .applyListItemStyle()
+                .frame(maxWidth: .infinity, alignment: .center)
+                
+                Button
+                {
+                    Task
+                    {
+                        await viewModel.ssoLogin_test("2")
+                    }
+                }
+                label:
+                {
+                    Text("Test Redirect - Dynamic CSP")
+                        .applyButtonTextStyle(14)
+                        .padding()
+                }
+                .buttonStyle(.plain)
+                .background {
+                    Capsule()
+                        .fill(.cardBackground)
+                }
+                .applyListItemStyle()
+                .frame(maxWidth: .infinity, alignment: .center)
+                
+                
+                
             }
             .applyListStyle()
         }

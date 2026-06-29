@@ -31,7 +31,7 @@ class LoginViewModel: ObservableObject
     {
     }
 
-    func ssoLogin_test() async
+    func ssoLogin_test(_ cspHeader: String? = nil) async
     {
         //https://uu-networking.spsw.io/test/as-web-auth?redirect_uri=uu-networking%3A%2F%2Flogin
         self.state = UURandom.bytes(length: 32).uuToHexString()
@@ -55,13 +55,18 @@ class LoginViewModel: ObservableObject
             //URLQueryItem(name: "csp", value: "1"),
             
             // This line directs the test server to form a dynamic csp header that works
-            URLQueryItem(name: "csp", value: "2"),
+            //URLQueryItem(name: "csp", value: "2"),
             
             URLQueryItem(name: "x_frame_options", value: "DENY"),
             URLQueryItem(name: "cors", value: "1"),
             
             //csp=1, x_frame_options=DENY, or cors=1
         ]
+        
+        if let csp = cspHeader
+        {
+            urlComponents.queryItems?.append(URLQueryItem(name: "csp", value: csp))
+        }
         
         guard let url = urlComponents.url else
         {
