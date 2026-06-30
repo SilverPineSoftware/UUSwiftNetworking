@@ -1,5 +1,5 @@
 //
-//  LoginViewModel.swift
+//  AccountViewModel.swift
 //  UUSwiftNetworkingSample
 //
 //  Created by Ryan DeVore on 6/25/26.
@@ -14,10 +14,10 @@ import AuthenticationServices
 import UUSwiftCore
 import CryptoKit
 
-private let LOG_TAG = "LoginViewModel"
+private let LOG_TAG = "AccountViewModel"
 
 @MainActor
-class LoginViewModel: ObservableObject
+class AccountViewModel: ObservableObject
 {
     @Published var isLoading: Bool = false
     
@@ -30,72 +30,6 @@ class LoginViewModel: ObservableObject
     init()
     {
     }
-
-    func ssoLogin_test(_ cspHeader: String? = nil) async
-    {
-        //https://uu-networking.spsw.io/test/as-web-auth?redirect_uri=uu-networking%3A%2F%2Flogin
-        self.state = UURandom.bytes(length: 32).uuToHexString()
-        let pkce = UUPKCE.generate()
-        
-        //let callbackUrl = "https://uu-static.spsw.io/login"
-        //let callbackUrl = "uu://networking_sample_login"
-        let callbackUrl = "uu-networking://login"
-        let callbackUrlScheme = "uu-networking"
-        
-        var urlComponents = URLComponents()
-        urlComponents.scheme = "https"
-        urlComponents.host = "uu-networking.spsw.io"
-        urlComponents.path = "/test/as-web-auth"
-        urlComponents.queryItems = [
-            URLQueryItem(name: "redirect_uri", value: callbackUrl),
-            URLQueryItem(name: "ticket", value: "this-is-my-ticket"),
-            URLQueryItem(name: "state", value: "state_of_mind"),
-            
-            // Uncomment this line and it'll fail just like SSO
-            //URLQueryItem(name: "csp", value: "1"),
-            
-            // This line directs the test server to form a dynamic csp header that works
-            //URLQueryItem(name: "csp", value: "2"),
-            
-            URLQueryItem(name: "x_frame_options", value: "DENY"),
-            URLQueryItem(name: "cors", value: "1"),
-            
-            //csp=1, x_frame_options=DENY, or cors=1
-        ]
-        
-        if let csp = cspHeader
-        {
-            urlComponents.queryItems?.append(URLQueryItem(name: "csp", value: csp))
-        }
-        
-        guard let url = urlComponents.url else
-        {
-            NSLog("ERROR! Unable to create URL")
-            return
-        }
-        
-        DispatchQueue.main.async
-        {
-            UULog.debug(tag: LOG_TAG, message: "Opening SSO Login URL: \(url)")
-            
-            let session = ASWebAuthenticationSession(
-                url: url,
-                callbackURLScheme: callbackUrlScheme,
-                completionHandler: { callbackUrl, callbackError in
-                    
-                    UULog.debug(tag: LOG_TAG, message: "SSO Callback URL: \(String(describing: callbackUrl))")
-                    UULog.debug(tag: LOG_TAG, message: "SSO Callback Error: \(String(describing: callbackError))")
-                })
-        
-        
-            session.prefersEphemeralWebBrowserSession = false
-            session.presentationContextProvider = self.context
-            self.session = session
-            self.pkce = pkce
-            let started = session.start()
-            UULog.debug(tag: LOG_TAG, message: "ASWebAuthenticationSession started: \(started)")
-        }
-    }
     
     func ssoLogin() async
     {
@@ -104,7 +38,7 @@ class LoginViewModel: ObservableObject
         
         //let callbackUrl = "https://uu-static.spsw.io/login"
         let callbackUrl = "uu-networking://login"
-        let callbackUrlScheme = "uu-networking"
+        let callbackUrlScheme = callbackUrl.uuUrlScheme
         
         var urlComponents = URLComponents()
         urlComponents.scheme = "https"
@@ -137,6 +71,15 @@ class LoginViewModel: ObservableObject
                     
                     UULog.debug(tag: LOG_TAG, message: "SSO Callback URL: \(String(describing: callbackUrl))")
                     UULog.debug(tag: LOG_TAG, message: "SSO Callback Error: \(String(describing: callbackError))")
+                    
+                    if let err = callbackError
+                    {
+                        // Show Error
+                    }
+                    else if let url = callbackUrl
+                    {
+                        self.finishLogin(url)
+                    }
                 })
         
         
@@ -147,6 +90,11 @@ class LoginViewModel: ObservableObject
             let started = session.start()
             UULog.debug(tag: LOG_TAG, message: "ASWebAuthenticationSession started: \(started)")
         }
+    }
+    
+    func magicLinkLogin() async
+    {
+        
     }
     
     func finishLogin(_ url: URL)

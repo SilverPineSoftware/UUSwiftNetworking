@@ -12,7 +12,7 @@ enum AppScreen: CaseIterable, CustomStringConvertible, Identifiable, Hashable
     var id: Self { self }
     
     case home
-    case login
+    case account
     case shutterstock
     case openAi
     case about
@@ -24,8 +24,8 @@ enum AppScreen: CaseIterable, CustomStringConvertible, Identifiable, Hashable
             case .home:
                 return "Home"
             
-            case .login:
-                return "Login"
+            case .account:
+                return "Account"
             
             case .shutterstock:
                 return "Shutterstock"

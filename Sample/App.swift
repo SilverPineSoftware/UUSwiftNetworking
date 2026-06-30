@@ -79,7 +79,7 @@ struct SampleApp: App
     //@UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     
     private let menuViewModel = MenuViewModel()
-    private let loginViewModel = LoginViewModel()
+    private let accountViewModel = AccountViewModel()
     
     init()
     {
@@ -94,17 +94,16 @@ struct SampleApp: App
         {
             RootView()
                 .environmentObject(menuViewModel)
-                .environmentObject(loginViewModel)
+                .environmentObject(accountViewModel)
                 .onOpenURL
                 { url in
                     UULog.debug(tag: LOG_TAG, message: "On Open URL called: \(url)")
-                    loginViewModel.finishLogin(url)
+                    accountViewModel.finishLogin(url)
                 }
                 .onContinueUserActivity(NSUserActivityTypeBrowsingWeb)
                 { activity in
                     UULog.debug(tag: LOG_TAG, message: "On Open URL called: \(activity)")
                 }
         }
-        
     }
 }
