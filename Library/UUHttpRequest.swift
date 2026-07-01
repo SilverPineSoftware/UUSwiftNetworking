@@ -14,7 +14,7 @@ open class UUHttpRequest: @unchecked Sendable
 {
 	public var url : String = ""
 	public var httpMethod : UUHttpMethod = .get
-	public var queryArguments : UUQueryStringArgs = [:]
+	public var queryItems : [URLQueryItem]? = nil
 	public var headerFields : UUHttpHeaders = [:]
     public var body: UUHttpBody? = nil
     public var timeout : TimeInterval = UUHttpConfig.shared.defaultTimeout
@@ -24,11 +24,11 @@ open class UUHttpRequest: @unchecked Sendable
 	public var responseHandler : UUHttpResponseHandler = UUBaseResponseHandler()
     public var authorizationProvider: UUHttpAuthorizationProvider? = nil
     
-	public init(url : String, method: UUHttpMethod = .get, queryArguments: UUQueryStringArgs = [:], headers: UUHttpHeaders = [:], body : UUHttpBody? = nil)
+	public init(url : String, method: UUHttpMethod = .get, queryItems: [URLQueryItem]? = nil, headers: UUHttpHeaders = [:], body : UUHttpBody? = nil)
 	{
 		self.url = url
 		self.httpMethod = method
-		self.queryArguments = queryArguments
+		self.queryItems = queryItems
 		self.headerFields = headers
 		self.body = body
 	}
@@ -37,7 +37,15 @@ open class UUHttpRequest: @unchecked Sendable
     {
         let request = self
         
-        var fullUrl = request.url
+        guard var urlComponents = URLComponents(string: request.url) else
+        {
+            UULog.verbose(tag: LOG_TAG, message: "Unable to create URLComponents from request.url: \(request.url)")
+            return nil
+        }
+        
+        urlComponents.queryItems = request.queryItems
+        
+        /*var fullUrl = request.url
         
         if (request.queryArguments.count > 0)
         {
@@ -49,23 +57,23 @@ open class UUHttpRequest: @unchecked Sendable
             }
             
             fullUrl = "\(startingURL)\(queryString)"
-        }
+        }*/
         
-        guard let url = URL.init(string: fullUrl) else
+        guard let url = urlComponents.url else
         {
-            UULog.verbose(tag: LOG_TAG, message: "Invalid URL: \(fullUrl)")
+            UULog.verbose(tag: LOG_TAG, message: "Invalid URL: \(request.url)")
             return nil
         }
         
         guard url.scheme != nil else
         {
-            UULog.verbose(tag: LOG_TAG, message: "URL scheme is nil: \(fullUrl)")
+            UULog.verbose(tag: LOG_TAG, message: "URL scheme is nil: \(request.url)")
             return nil
         }
         
         guard url.host != nil else
         {
-            UULog.verbose(tag: LOG_TAG, message: "URL host is nil: \(fullUrl)")
+            UULog.verbose(tag: LOG_TAG, message: "URL host is nil: \(request.url)")
             return nil
         }
         
@@ -130,11 +138,11 @@ open class UUCodableHttpRequest<SuccessType: Codable, ErrorType: Codable>: UUHtt
     public override init(
         url: String,
         method: UUHttpMethod = .get,
-        queryArguments: UUQueryStringArgs = [:],
+        queryItems: [URLQueryItem]? = nil,
         headers: UUHttpHeaders = [:],
         body: UUHttpBody? = nil)
     {
-        super.init(url: url, method: method, queryArguments: queryArguments, headers: headers, body: body)
+        super.init(url: url, method: method, queryItems: queryItems, headers: headers, body: body)
         
         responseHandler = UUJsonCodableResponseHandler<SuccessType, ErrorType>()
     }

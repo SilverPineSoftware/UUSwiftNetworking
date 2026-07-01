@@ -28,14 +28,14 @@ final class EchoTests: BaseOnlineTest
     {
         let session = uuHttpSessionForTest
         
-        var queryArgs = UUQueryStringArgs()
-        queryArgs["fieldOne"] = "GetValue"
-        queryArgs["fieldTwo"] = 42
+        var queryArgs = [URLQueryItem]()
+        queryArgs.append(URLQueryItem(name: "fieldOne", value: "GetValue"))
+        queryArgs.append(URLQueryItem(name: "fieldTwo", value: "42"))
         
         let req = UUCodableHttpRequest<EchoObject, UUEmptyCodable>(
             url: echoControllerJsonUrl,
             method: .get,
-            queryArguments: queryArgs)
+            queryItems: queryArgs)
         
         let result = await session.executeTyped(req)
         switch (result)
@@ -53,14 +53,14 @@ final class EchoTests: BaseOnlineTest
     {
         let session = uuHttpSessionForTest
         
-        var queryArgs = UUQueryStringArgs()
-        queryArgs["fieldOne"] = "StatusTest"
-        queryArgs["fieldTwo"] = 1
+        var queryArgs = [URLQueryItem]()
+        queryArgs.append(URLQueryItem(name: "fieldOne", value: "StatusTest"))
+        queryArgs.append(URLQueryItem(name: "fieldTwo", value: "1"))
         
         let req = UUCodableHttpRequest<EchoObject, UUEmptyCodable>(
             url: echoControllerJsonUrl,
             method: .get,
-            queryArguments: queryArgs,
+            queryItems: queryArgs,
             headers: echoHeaders(statusCode: 201))
         
         let result = await session.executeTyped(req)
@@ -78,14 +78,14 @@ final class EchoTests: BaseOnlineTest
     {
         let session = uuHttpSessionForTest
         
-        var queryArgs = UUQueryStringArgs()
-        queryArgs["fieldOne"] = "ArrayTest"
-        queryArgs["fieldTwo"] = 7
+        var queryArgs = [URLQueryItem]()
+        queryArgs.append(URLQueryItem(name: "fieldOne", value: "ArrayTest"))
+        queryArgs.append(URLQueryItem(name: "fieldTwo", value: "7"))
         
         let req = UUCodableHttpRequest<[EchoObject], UUEmptyCodable>(
             url: echoControllerJsonUrl,
             method: .get,
-            queryArguments: queryArgs,
+            queryItems: queryArgs,
             headers: echoHeaders(returnObjectCount: 3))
         
         let result = await session.executeTyped(req)
@@ -104,10 +104,14 @@ final class EchoTests: BaseOnlineTest
     {
         let session = uuHttpSessionForTest
         
+        var queryArgs = [URLQueryItem]()
+        queryArgs.append(URLQueryItem(name: "fieldOne", value: "ErrorPath"))
+        queryArgs.append(URLQueryItem(name: "fieldTwo", value: "0"))
+        
         let req = UUCodableHttpRequest<EchoObject, UUEmptyCodable>(
             url: echoControllerJsonUrl,
             method: .get,
-            queryArguments: ["fieldOne": "ErrorPath", "fieldTwo": 0],
+            queryItems: queryArgs,
             headers: echoHeaders(statusCode: 404))
         
         let result = await session.executeTyped(req)

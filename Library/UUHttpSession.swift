@@ -177,27 +177,27 @@ extension UUHttpSession
         return await shared.execute(request)
     }
     
-    public static func get(url : String, queryArguments : UUQueryStringArgs = [:], headers: UUHttpHeaders = [:]) async -> UUHttpResponse
+    public static func get(url : String, queryItems : [URLQueryItem]? = nil, headers: UUHttpHeaders = [:]) async -> UUHttpResponse
     {
-        let req = UUHttpRequest(url: url, method: .get, queryArguments: queryArguments, headers: headers)
+        let req = UUHttpRequest(url: url, method: .get, queryItems: queryItems, headers: headers)
         return await execute(req)
     }
     
-    public static func delete(url : String, queryArguments : UUQueryStringArgs = [:], headers: UUHttpHeaders = [:]) async -> UUHttpResponse
+    public static func delete(url : String, queryItems : [URLQueryItem]? = nil, headers: UUHttpHeaders = [:]) async -> UUHttpResponse
     {
-        let req = UUHttpRequest(url: url, method: .delete, queryArguments: queryArguments, headers: headers)
+        let req = UUHttpRequest(url: url, method: .delete, queryItems: queryItems, headers: headers)
         return await execute(req)
     }
     
-    public static func put(url : String, queryArguments : UUQueryStringArgs = [:], headers: UUHttpHeaders = [:], body: UUHttpBody?) async -> UUHttpResponse
+    public static func put(url : String, queryItems : [URLQueryItem]? = nil, headers: UUHttpHeaders = [:], body: UUHttpBody?) async -> UUHttpResponse
     {
-        let req = UUHttpRequest(url: url, method: .put, queryArguments: queryArguments, headers: headers, body: body)
+        let req = UUHttpRequest(url: url, method: .put, queryItems: queryItems, headers: headers, body: body)
         return await execute(req)
     }
     
-    public static func post(url : String, queryArguments : UUQueryStringArgs = [:], headers: UUHttpHeaders = [:], body: UUHttpBody?) async -> UUHttpResponse
+    public static func post(url : String, queryItems : [URLQueryItem]? = nil, headers: UUHttpHeaders = [:], body: UUHttpBody?) async -> UUHttpResponse
     {
-        let req = UUHttpRequest(url: url, method: .post, queryArguments: queryArguments, headers: headers, body: body)
+        let req = UUHttpRequest(url: url, method: .post, queryItems: queryItems, headers: headers, body: body)
         return await execute(req)
     }
 }

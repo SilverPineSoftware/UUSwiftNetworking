@@ -38,10 +38,10 @@ class UUHttpErrorHandlingTests: BaseOnlineTest
         let url = testConfig.timeoutUrl
         
         let timeout = 10
-        var queryArgs = UUQueryStringArgs()
-        queryArgs["timeout"] = timeout
+        var queryArgs = [URLQueryItem]()
+        queryArgs.append(URLQueryItem(name: "timeout", value: "\(timeout)"))
         
-        let request = UUHttpRequest(url: url, method: .get, queryArguments: queryArgs)
+        let request = UUHttpRequest(url: url, method: .get, queryItems: queryArgs)
         request.timeout = TimeInterval(timeout / 2)
         
         UUTestLog("Starting request, timeout: \(request.timeout)")
@@ -104,11 +104,11 @@ class UUHttpErrorHandlingTests: BaseOnlineTest
         
         let url = testConfig.invalidJsonUrl
         
-        var queryArgs = UUQueryStringArgs()
-        queryArgs["stringField"] = "UnitTestString"
-        queryArgs["numberField"] = 57
+        var queryArgs = [URLQueryItem]()
+        queryArgs.append(URLQueryItem(name: "stringField", value: "UnitTestString"))
+        queryArgs.append(URLQueryItem(name: "numberField", value: "57"))
         
-        let request = UUHttpRequest(url: url, method: .get, queryArguments: queryArgs)
+        let request = UUHttpRequest(url: url, method: .get, queryItems: queryArgs)
         let handler = UUJsonCodableResponseHandler<FakeCodable, UUEmptyCodable>()
 
         request.responseHandler = handler

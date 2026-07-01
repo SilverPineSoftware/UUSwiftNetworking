@@ -40,17 +40,17 @@ final class TestApi: UURemoteApi
 
     func getObject(_ echo: TestApiObject?) async -> Result<TestApiObject, Error>
     {
-        var queryArgs: UUQueryStringArgs = [:]
+        var queryArgs: [URLQueryItem] = []
         if let echo
         {
-            if !echo.id.isEmpty { queryArgs["id"] = echo.id }
-            if !echo.name.isEmpty { queryArgs["name"] = echo.name }
-            if !echo.data.isEmpty { queryArgs["data"] = echo.data }
+            if !echo.id.isEmpty { queryArgs.append(.init(name: "id", value: echo.id)) }
+            if !echo.name.isEmpty { queryArgs.append(.init(name: "name", value: echo.name)) }
+            if !echo.data.isEmpty { queryArgs.append(.init(name: "data", value: echo.data)) }
         }
 
         let request = UUCodableHttpRequest<TestApiObject, TestApiError>(
             url: "\(apiUrl)/single",
-            queryArguments: queryArgs
+            queryItems: queryArgs
         )
 
         return await executeTyped(request)
@@ -60,7 +60,7 @@ final class TestApi: UURemoteApi
     {
         let request = UUCodableHttpRequest<[TestApiObject], TestApiError>(
             url: "\(apiUrl)/multiple",
-            queryArguments: ["count": "\(count)"]
+            queryItems: [.init(name: "count", value: "\(count)")]
         )
 
         return await executeTyped(request)

@@ -8,9 +8,6 @@
 import Foundation
 import UUSwiftCore
 
-public typealias UUQueryStringArgs = [AnyHashable:Any]
-public typealias UUHttpHeaders = [AnyHashable:Any]
-
 public enum UUHttpMethod : String
 {
 	case get = "GET"

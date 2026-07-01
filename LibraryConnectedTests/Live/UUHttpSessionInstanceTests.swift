@@ -22,9 +22,9 @@ class UUHttpSessionInstanceTests: BaseOnlineTest
         
         let url = testConfig.echoJsonUrl
         
-        var queryArgs = UUQueryStringArgs()
-        queryArgs["fieldOne"] = "SomeValue"
-        queryArgs["fieldTwo"] = 1234
+        var queryArgs = [URLQueryItem]()
+        queryArgs.append(URLQueryItem(name: "fieldOne", value: "SomeValue"))
+        queryArgs.append(URLQueryItem(name: "fieldTwo", value: "1234"))
         
         var headers = UUHttpHeaders()
         headers["UU-Return-Object-Count"] = 1
@@ -32,7 +32,7 @@ class UUHttpSessionInstanceTests: BaseOnlineTest
         let request = UUCodableHttpRequest<SimpleObject, UUEmptyCodable>(
             url: url,
             method: .get,
-            queryArguments: queryArgs,
+            queryItems: queryArgs,
             headers: headers)
         
         let result = await session.executeTyped(request)
@@ -53,9 +53,9 @@ class UUHttpSessionInstanceTests: BaseOnlineTest
         
         let url = testConfig.echoJsonUrl
         
-        var queryArgs = UUQueryStringArgs()
-        queryArgs["fieldOne"] = "SomeValue"
-        queryArgs["fieldTwo"] = 1234
+        var queryArgs = [URLQueryItem]()
+        queryArgs.append(URLQueryItem(name: "fieldOne", value: "SomeValue"))
+        queryArgs.append(URLQueryItem(name: "fieldTwo", value: "1234"))
         
         var headers = UUHttpHeaders()
         headers["UU-Return-Object-Count"] = 3
@@ -63,7 +63,7 @@ class UUHttpSessionInstanceTests: BaseOnlineTest
         let request = UUCodableHttpRequest<[SimpleObject], UUEmptyCodable>(
             url: url,
             method: .get,
-            queryArguments: queryArgs,
+            queryItems: queryArgs,
             headers: headers)
         
         let result = await session.executeTyped(request)

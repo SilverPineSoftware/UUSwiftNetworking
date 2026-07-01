@@ -54,12 +54,12 @@ nonisolated class ShutterstockApi: UURemoteApi
         //https://api.shutterstock.com/v2/images/search
         let req = UUCodableHttpRequest<ShutterstockSearchImagesResponse, ShutterstockError>(url: formatUrl(ShutterstockEndpoint.searchImages))
         
-        var args: UUQueryStringArgs = [:]
-        args["page"] = "\(page)"
-        args["per_page"] = "\(count)" // 500 is the max allowed
-        args["query"] = query
-        
-        req.queryArguments = args
+        var args: [URLQueryItem] = []
+        args.append(.init(name: "page", value: "\(page)"))
+        args.append(.init(name: "per_page", value: "\(count)")) // 500 is the max allowed
+        args.append(.init(name: "query", value: "\(query)"))
+     
+        req.queryItems = args
         
         let result = await executeTyped(req)
         
