@@ -26,6 +26,8 @@ class AccountViewModel: ObservableObject
     private var pkce: UUPKCE? = nil
     
     let context = SsoPresentationAnchor()
+    
+    var api: UUNetworkingApi = AppCloud.api
 
     init()
     {
