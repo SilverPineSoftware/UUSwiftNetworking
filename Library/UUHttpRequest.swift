@@ -45,20 +45,6 @@ open class UUHttpRequest: @unchecked Sendable
         
         urlComponents.queryItems = request.queryItems
         
-        /*var fullUrl = request.url
-        
-        if (request.queryArguments.count > 0)
-        {
-            let startingURL = request.url
-            var queryString = request.queryArguments.uuBuildQueryString()
-            if startingURL.contains("?")
-            {
-                queryString = queryString.replacingOccurrences(of: "?", with: "&")
-            }
-            
-            fullUrl = "\(startingURL)\(queryString)"
-        }*/
-        
         guard let url = urlComponents.url else
         {
             UULog.verbose(tag: LOG_TAG, message: "Invalid URL: \(request.url)")
