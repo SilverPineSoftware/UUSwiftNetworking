@@ -43,7 +43,10 @@ open class UUHttpRequest: @unchecked Sendable
             return nil
         }
         
-        urlComponents.queryItems = request.queryItems
+        if let queryItems = request.queryItems
+        {
+            urlComponents.queryItems = (urlComponents.queryItems ?? []) + queryItems
+        }
         
         guard let url = urlComponents.url else
         {

@@ -89,7 +89,29 @@ final class UUHttpRequestTests: XCTestCase
         XCTAssertEqual(urlRequest?.url?.absoluteString, "https://api.example.com/v1/items?search=hello%20world&page=2")
     }
 
-    func test_buildURLRequest_replacesExistingQueryWithProvidedQueryItems() async throws
+    func test_buildURLRequest_preservesExistingQueryStringArguments() async throws
+    {
+        let request = UUHttpRequest(url: "https://api.example.com/download?uu_file=image-001.jpg")
+
+        let urlRequest = await request.buildURLRequest()
+        let components = URLComponents(url: try XCTUnwrap(urlRequest?.url), resolvingAgainstBaseURL: false)
+
+        XCTAssertEqual(urlRequest?.url?.absoluteString, "https://api.example.com/download?uu_file=image-001.jpg")
+        XCTAssertEqual(components?.queryItems?.first(where: { $0.name == "uu_file" })?.value, "image-001.jpg")
+    }
+
+    func test_buildURLRequest_preservesExistingQueryStringArgumentsWithMultipleValues() async throws
+    {
+        let request = UUHttpRequest(url: "https://api.example.com/download?uu_file=image-001.jpg&token=abc123")
+
+        let urlRequest = await request.buildURLRequest()
+        let components = URLComponents(url: try XCTUnwrap(urlRequest?.url), resolvingAgainstBaseURL: false)
+
+        XCTAssertEqual(components?.queryItems?.first(where: { $0.name == "uu_file" })?.value, "image-001.jpg")
+        XCTAssertEqual(components?.queryItems?.first(where: { $0.name == "token" })?.value, "abc123")
+    }
+
+    func test_buildURLRequest_appendsProvidedQueryItemsToExistingQuery() async throws
     {
         let request = UUHttpRequest(
             url: "https://api.example.com/v1/items?old=true",
@@ -101,11 +123,11 @@ final class UUHttpRequestTests: XCTestCase
         let urlRequest = await request.buildURLRequest()
         let components = URLComponents(url: try XCTUnwrap(urlRequest?.url), resolvingAgainstBaseURL: false)
 
-        XCTAssertNil(components?.queryItems?.first(where: { $0.name == "old" }))
+        XCTAssertEqual(components?.queryItems?.first(where: { $0.name == "old" })?.value, "true")
         XCTAssertEqual(components?.queryItems?.first(where: { $0.name == "new" })?.value, "true")
     }
 
-    func test_buildURLRequest_removesExistingQueryWhenQueryItemsIsEmptyArray() async
+    func test_buildURLRequest_preservesExistingQueryWhenQueryItemsIsEmptyArray() async
     {
         let request = UUHttpRequest(
             url: "https://api.example.com/v1/items?old=true",
@@ -114,17 +136,16 @@ final class UUHttpRequestTests: XCTestCase
 
         let urlRequest = await request.buildURLRequest()
 
-        XCTAssertEqual(urlRequest?.url?.absoluteString, "https://api.example.com/v1/items?")
-        XCTAssertEqual(urlRequest?.url?.query, "")
+        XCTAssertEqual(urlRequest?.url?.absoluteString, "https://api.example.com/v1/items?old=true")
     }
 
-    func test_buildURLRequest_removesExistingQueryWhenQueryItemsIsNil() async
+    func test_buildURLRequest_preservesExistingQueryWhenQueryItemsIsNil() async
     {
         let request = UUHttpRequest(url: "https://api.example.com/v1/items?old=true")
 
         let urlRequest = await request.buildURLRequest()
 
-        XCTAssertEqual(urlRequest?.url?.absoluteString, "https://api.example.com/v1/items")
+        XCTAssertEqual(urlRequest?.url?.absoluteString, "https://api.example.com/v1/items?old=true")
     }
 
     func test_buildURLRequest_supportsQueryItemWithoutValue() async
