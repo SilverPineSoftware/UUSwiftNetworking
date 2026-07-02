@@ -83,9 +83,13 @@ struct SampleApp: App
     
     init()
     {
+        let appConfig = AppConfig.shared
+        
         let logger = UULogger.console
         logger.logLevel = .debug
         UULog.setLogger(logger)
+        
+        UULog.debug(tag: LOG_TAG, message: "AppConfig: \(appConfig)")
     }
     
     var body: some Scene
@@ -98,7 +102,7 @@ struct SampleApp: App
                 .onOpenURL
                 { url in
                     UULog.debug(tag: LOG_TAG, message: "On Open URL called: \(url)")
-                    accountViewModel.finishLogin(url)
+                    //accountViewModel.finishLogin(url)
                 }
                 .onContinueUserActivity(NSUserActivityTypeBrowsingWeb)
                 { activity in

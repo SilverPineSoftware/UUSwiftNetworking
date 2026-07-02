@@ -24,17 +24,9 @@ import Foundation
 ///
 /// Subclasses may expose a more specific config type (for example, API keys or base URLs) while
 /// still inheriting these common networking defaults.
-public struct UURemoteApiConfig
+open class UURemoteApiConfig
 {
-    /// The authorization provider applied to requests that do not define their own.
-    ///
-    /// ``UURemoteApi/prepareRequest(_:)`` assigns this value to
-    /// ``UUHttpRequest/authorizationProvider`` only when the request's provider is `nil`.
-    /// Requests with an explicit provider are left unchanged.
-    ///
-    /// Typical values include ``UUBasicAuthorizationProvider`` or a custom
-    /// ``UUHttpAuthorizationProvider`` subclass that attaches bearer tokens or signed headers.
-    public var authorizationProvider: UUHttpAuthorizationProvider? = nil
+    public var baseUrl: String = ""
     
     /// The request timeout applied by ``UURemoteApi/prepareRequest(_:)`` to each ``UUHttpRequest``.
     ///
@@ -66,11 +58,11 @@ public struct UURemoteApiConfig
     ///   - networkTimeout: The timeout, in seconds, assigned to each request before execution.
     ///     Defaults to ``UUHttpConfig/shared`` ``UUHttpConfig/defaultTimeout``.
     public init(
-        authorizationProvider: UUHttpAuthorizationProvider? = nil,
+        baseUrl: String = "",
         networkTimeout: TimeInterval = UUHttpConfig.shared.defaultTimeout
     )
     {
-        self.authorizationProvider = authorizationProvider
+        self.baseUrl = baseUrl
         self.networkTimeout = networkTimeout
     }
 }

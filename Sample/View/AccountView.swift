@@ -34,13 +34,13 @@ struct AccountView: View
                     }
                 }
                 
-                ActionButton("Login - Link")
+                /*ActionButton("Login - Link")
                 {
                     Task
                     {
                         await viewModel.magicLinkLogin()
                     }
-                }
+                }*/
             }
             .applyListStyle()
         }

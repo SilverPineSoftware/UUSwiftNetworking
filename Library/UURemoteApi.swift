@@ -51,6 +51,16 @@ open class UURemoteApi
     /// Defaults to a new ``UUHttpSession`` instance. Assign a custom session for testing or
     /// per-API configuration such as timeouts or protocol classes.
     public var session: UUHttpSession = UUHttpSession()
+    
+    /// The authorization provider applied to requests that do not define their own.
+    ///
+    /// ``prepareRequest(_:)`` assigns this value to
+    /// ``authorizationProvider`` only when the request's provider is `nil`.
+    /// Requests with an explicit provider are left unchanged.
+    ///
+    /// Typical values include ``UUBasicAuthorizationProvider`` or a custom
+    /// ``UUHttpAuthorizationProvider`` subclass that attaches bearer tokens or signed headers.
+    public var authorizationProvider: UUHttpAuthorizationProvider? = nil
 
     /// Shared request defaults for this API client.
     ///
@@ -105,7 +115,7 @@ open class UURemoteApi
     {
         if (request.authorizationProvider == nil)
         {
-            request.authorizationProvider = self.config.authorizationProvider
+            request.authorizationProvider = self.authorizationProvider
         }
         
         request.timeout = self.config.networkTimeout

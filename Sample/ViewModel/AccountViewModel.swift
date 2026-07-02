@@ -22,12 +22,14 @@ class AccountViewModel: ObservableObject
     @Published var isLoading: Bool = false
     
     private var session: ASWebAuthenticationSession? = nil
-    private var state: String? = nil
-    private var pkce: UUPKCE? = nil
+//    private var state: String? = nil
+//    private var pkce: UUPKCE? = nil
     
     let context = SsoPresentationAnchor()
     
-    var api: UUNetworkingApi = AppCloud.api
+    var api: UUNetworkingApi = AppServices.networking
+    
+    private var loginRequest: LoginRequest? = nil
 
     init()
     {
@@ -35,26 +37,19 @@ class AccountViewModel: ObservableObject
     
     func ssoLogin() async
     {
-        self.state = UURandom.bytes(length: 32).uuToHexString()
-        let pkce = UUPKCE.generate()
+        let req = LoginRequest()
         
-        //let callbackUrl = "https://uu-static.spsw.io/login"
-        let callbackUrl = "uu-networking://login"
-        let callbackUrlScheme = callbackUrl.uuUrlScheme
+        let loginResult = await api.getLoginUrl(req)
         
-        var urlComponents = URLComponents()
-        urlComponents.scheme = "https"
-        urlComponents.host = "uu-networking.spsw.io"
-        urlComponents.path = "/api/auth/login"
-        urlComponents.queryItems = [
-            URLQueryItem(name: "redirect_uri", value: callbackUrl),
-            URLQueryItem(name: "state", value: state),  
-        ]
-        
-        guard let url = urlComponents.url else
+        let url: URL
+        switch (loginResult)
         {
-            NSLog("ERROR! Unable to create URL")
-            return
+            case .success(let loginUrl):
+                url = loginUrl
+            
+            case .failure(let err):
+                UULog.debug(tag: LOG_TAG, message: "Failed to get login URL: \(err)")
+                return
         }
         
         DispatchQueue.main.async
@@ -63,7 +58,7 @@ class AccountViewModel: ObservableObject
             
             let session = ASWebAuthenticationSession(
                 url: url,
-                callbackURLScheme: callbackUrlScheme,
+                callbackURLScheme: req.callbackUrl.uuUrlScheme,
                 completionHandler: { callbackUrl, callbackError in
                     
                     UULog.debug(tag: LOG_TAG, message: "SSO Callback URL: \(String(describing: callbackUrl))")
@@ -72,10 +67,14 @@ class AccountViewModel: ObservableObject
                     if let err = callbackError
                     {
                         // Show Error
+                        UULog.debug(tag: LOG_TAG, message: "Login Failure: \(err)")
                     }
                     else if let url = callbackUrl
                     {
-                        self.finishLogin(url)
+                        Task
+                        {
+                            await self.finishLogin(url)
+                        }
                     }
                 })
         
@@ -83,12 +82,34 @@ class AccountViewModel: ObservableObject
             session.prefersEphemeralWebBrowserSession = false
             session.presentationContextProvider = self.context
             self.session = session
-            self.pkce = pkce
+            self.loginRequest = req
             let started = session.start()
             UULog.debug(tag: LOG_TAG, message: "ASWebAuthenticationSession started: \(started)")
         }
     }
     
+    func finishLogin(_ url: URL) async
+    {
+        // Clear login temporary variables when this method finishes
+        defer
+        {
+            self.loginRequest = nil
+        }
+        
+        self.session?.cancel()
+        self.session = nil
+        
+        guard let loginRequest = self.loginRequest else
+        {
+            UULog.debug(tag: LOG_TAG, message: "Login request not set")
+            return
+        }
+        
+        let result = await api.completeLogin(loginRequest, url)
+        UULog.debug(tag: LOG_TAG, message: "complete login result: \(result)")
+    }
+    
+    /*
     func ssoLogin_direct() async
     {
         self.state = UURandom.bytes(length: 32).uuToHexString()
@@ -149,14 +170,15 @@ class AccountViewModel: ObservableObject
             let started = session.start()
             UULog.debug(tag: LOG_TAG, message: "ASWebAuthenticationSession started: \(started)")
         }
-    }
+    }*/
     
+    /*
     func magicLinkLogin() async
     {
         
     }
     
-    func finishLogin(_ url: URL)
+    func finishLogin_direct(_ url: URL)
     {
         // Clear login temporary variables when this method finishes
         defer
@@ -235,10 +257,10 @@ class AccountViewModel: ObservableObject
                 }
             }
         }
-        
-    }
+    }*/
 }
 
+/*
 struct LoginCompleteRequest: Codable
 {
     let clientId: String
@@ -279,4 +301,4 @@ struct LoginCompleteResponse: Codable
         case scope
     }
 }
-
+*/

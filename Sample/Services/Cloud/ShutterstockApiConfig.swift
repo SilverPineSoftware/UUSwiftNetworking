@@ -33,7 +33,7 @@ nonisolated public struct ShutterstockApiConfig: Codable
     var apiConfig: UURemoteApiConfig
     {
         var cfg = UURemoteApiConfig()
-        cfg.authorizationProvider = UUBasicAuthorizationProvider(userName: clientKey, password: clientSecret)
+        //cfg.authorizationProvider = UUBasicAuthorizationProvider(userName: clientKey, password: clientSecret)
         return cfg
     }
     
