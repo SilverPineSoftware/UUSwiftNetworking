@@ -44,8 +44,65 @@ class AccountViewModel: ObservableObject
         
         var urlComponents = URLComponents()
         urlComponents.scheme = "https"
+        urlComponents.host = "uu-networking.spsw.io"
+        urlComponents.path = "/api/auth/login"
+        urlComponents.queryItems = [
+            URLQueryItem(name: "redirect_uri", value: callbackUrl),
+            URLQueryItem(name: "state", value: state),  
+        ]
+        
+        guard let url = urlComponents.url else
+        {
+            NSLog("ERROR! Unable to create URL")
+            return
+        }
+        
+        DispatchQueue.main.async
+        {
+            UULog.debug(tag: LOG_TAG, message: "Opening SSO Login URL: \(url)")
+            
+            let session = ASWebAuthenticationSession(
+                url: url,
+                callbackURLScheme: callbackUrlScheme,
+                completionHandler: { callbackUrl, callbackError in
+                    
+                    UULog.debug(tag: LOG_TAG, message: "SSO Callback URL: \(String(describing: callbackUrl))")
+                    UULog.debug(tag: LOG_TAG, message: "SSO Callback Error: \(String(describing: callbackError))")
+                    
+                    if let err = callbackError
+                    {
+                        // Show Error
+                    }
+                    else if let url = callbackUrl
+                    {
+                        self.finishLogin(url)
+                    }
+                })
+        
+        
+            session.prefersEphemeralWebBrowserSession = false
+            session.presentationContextProvider = self.context
+            self.session = session
+            self.pkce = pkce
+            let started = session.start()
+            UULog.debug(tag: LOG_TAG, message: "ASWebAuthenticationSession started: \(started)")
+        }
+    }
+    
+    func ssoLogin_direct() async
+    {
+        self.state = UURandom.bytes(length: 32).uuToHexString()
+        let pkce = UUPKCE.generate()
+        
+        //let callbackUrl = "https://uu-static.spsw.io/login"
+        let callbackUrl = "uu-networking://login"
+        let callbackUrlScheme = callbackUrl.uuUrlScheme
+        
+        var urlComponents = URLComponents()
+        urlComponents.scheme = "https"
         urlComponents.host = "sso.spsw.dev"
         urlComponents.path = "/mobile/authorize"
+        //urlComponents.path = "/authorize"
         urlComponents.queryItems = [
             URLQueryItem(name: "response_type", value: "code"),
             URLQueryItem(name: "client_id", value: "uu-networking-sample"),
