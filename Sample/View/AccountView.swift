@@ -31,7 +31,7 @@ struct AccountView: View
                         TwoLineLabelRowView(label: "Display Name", value: u.displayName)
                         TwoLineLabelRowView(label: "Role", value: u.role)
                         TwoLineLabelRowView(label: "Is Super User", value: u.isSuperUser ? "Yes" : "No")
-                        TwoLineLabelRowView(label: "Valid Until", value: u.tokenValidUntil.uuFormat(UUDate.Formats.iso8601DateTime))
+                        TwoLineLabelRowView(label: "Valid Until", value: u.tokenValidUntil.uuFormat("yyyy-MM-dd hh:mm:ss a"))
                     }
                 }
                 else
