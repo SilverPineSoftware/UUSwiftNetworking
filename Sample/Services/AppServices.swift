@@ -13,9 +13,9 @@ struct AppServices: Sendable
     private init() { } // Enforce only singleton usage
     
     
-    static let networking: UUNetworkingApi =
+    static let appServer: AppServerApi =
     {
-        return UUNetworkingApiImpl(AppConfig.shared)
+        return UUAppServerApi(AppConfig.shared)
     }()
     
 }

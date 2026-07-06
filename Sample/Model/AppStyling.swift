@@ -102,13 +102,13 @@ extension View
             )
     }
     
-//    func applyLeadingFullWidthStyle() -> some View
-//    {
-//        return self.frame(maxWidth: .infinity, alignment: .leading)
-//            .multilineTextAlignment(.leading)
-//    }
+    func applyLeadingFullWidthStyle() -> some View
+    {
+        return self.frame(maxWidth: .infinity, alignment: .leading)
+            .multilineTextAlignment(.leading)
+    }
     
-    /*func applyLabelTextStyle(_ fontSize: CGFloat) -> some View
+    func applyLabelTextStyle(_ fontSize: CGFloat) -> some View
     {
         return self.font(.title2) //   AppFonts.label(size: fontSize))
             .foregroundColor(.textLabel)
@@ -126,6 +126,7 @@ extension View
             .applyLeadingFullWidthStyle()
     }
     
+    /*
     func applyLinkTextStyle(_ fontSize: CGFloat) -> some View
     {
         return self.font(.uuBody)
@@ -140,7 +141,6 @@ extension View
             .uuLeadingFullWidthStyle()
     }
     
-    /*
     func applySingleLineBodyTextStyle(_ fontSize: CGFloat, minimumScaleFactor: CGFloat = 0.7) -> some View
     {
         return self.font(.uuBody)
@@ -148,7 +148,7 @@ extension View
             .applyLeadingFullWidthStyle()
             .lineLimit(1)
             .minimumScaleFactor(minimumScaleFactor)
-    }*/
+    }
     
     func applyButtonTextStyle(_ fontSize: CGFloat) -> some View
     {

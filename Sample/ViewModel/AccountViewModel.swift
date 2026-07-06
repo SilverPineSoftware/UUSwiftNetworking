@@ -19,20 +19,37 @@ private let LOG_TAG = "AccountViewModel"
 @MainActor
 class AccountViewModel: ObservableObject
 {
+    // Published data elements
+    @Published var user: AppServerDTO.User? = nil
     @Published var isLoading: Bool = false
     
+    // Injectable app services
+    let api: AppServerApi
+    
+    // Private temporary variables
     private var session: ASWebAuthenticationSession? = nil
-//    private var state: String? = nil
-//    private var pkce: UUPKCE? = nil
-    
-    let context = SsoPresentationAnchor()
-    
-    var api: UUNetworkingApi = AppServices.networking
-    
+    private let context = SsoPresentationAnchor()
     private var loginRequest: LoginRequest? = nil
 
-    init()
+    init(api: AppServerApi = AppServices.appServer)
     {
+        self.api = api
+    }
+    
+    func refresh() async
+    {
+        let result = await api.getMe()
+        UULog.debug(tag: LOG_TAG, message: "getMe returned: \(result)")
+        
+        switch (result)
+        {
+            case .success(let user):
+                self.user = user
+            
+            case .failure(let err):
+                UULog.debug(tag: LOG_TAG, message: "Failed to get user: \(err)")
+        }
+        
     }
     
     func ssoLogin() async

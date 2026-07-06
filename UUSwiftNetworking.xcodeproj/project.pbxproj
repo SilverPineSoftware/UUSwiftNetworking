@@ -125,10 +125,10 @@
 		0840B65F2FD5D580006F57DE /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Services/Cloud/AppServerApi.swift,
 				Services/Cloud/ShutterstockApi.swift,
 				Services/Cloud/ShutterstockApiConfig.swift,
 				Services/Cloud/SilverpineSsoApi.swift,
-				Services/Cloud/UUNetworkingApi.swift,
 			);
 			target = 0840B4512FD5A20B006F57DE /* LibraryTests */;
 		};
@@ -149,9 +149,9 @@
 		08817FD92FF1D5A000658EB9 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Services/Cloud/AppServerApi.swift,
 				Services/Cloud/ShutterstockApi.swift,
 				Services/Cloud/ShutterstockApiConfig.swift,
-				Services/Cloud/UUNetworkingApi.swift,
 			);
 			target = 08817FA42FF1D3D200658EB9 /* LibraryConnectedTests */;
 		};
