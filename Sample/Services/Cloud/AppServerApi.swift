@@ -12,45 +12,6 @@ import UUSwiftNetworking
 
 private let LOG_TAG = "AppServerApi"
 
-enum AppServerError: Error
-{
-    case noRefreshToken
-    
-    case invalidConfigUrl
-    case invalidLoginUrl
-    case stateCheckFailed
-    case apiCallFailed(Error)
-    
-    
-    case unexpectedError(String)
-}
-
-extension AppServerError: LocalizedError
-{
-    var errorDescription: String?
-    {
-        switch (self)
-        {
-            case .noRefreshToken:
-                return "No refresh token stored locally"
-            
-            case .invalidConfigUrl:
-                return "Invalid configuration URL"
-            
-            case .invalidLoginUrl:
-                return "Invalid login URL"
-            
-            case .stateCheckFailed:
-                return "State check failed"
-            
-            case .apiCallFailed(let err):
-                return "API call failed: \(err.localizedDescription)"
-            
-            case .unexpectedError(let message):
-                return "Unexpected error: \(message)"
-        }
-    }
-}
 
 struct LoginRequest
 {
@@ -80,7 +41,102 @@ struct CompleteLoginRequest: Codable
     }
 }
 
-struct AppServerDTO
+protocol UUJsonDateDecoder: Sendable
+{
+    func decode(_ decoder: any Decoder) throws -> Date
+}
+
+struct JsonDateDecoderImpl: UUJsonDateDecoder
+{
+    private let formatters: [DateFormatter]
+    
+    init(_ formatters: [DateFormatter])
+    {
+        self.formatters = formatters
+    }
+    
+    func decode(_ decoder: any Decoder) throws -> Date
+    {
+        let container = try decoder.singleValueContainer()
+        let dateString = try container.decode(String.self)
+        
+        for formatter in self.formatters
+        {
+            UULog.debug(tag: LOG_TAG, message: "Trying to decode \(dateString) with formatter: \(formatter)")
+            if let date = formatter.date(from: dateString)
+            {
+                return date
+            }
+        }
+        
+        throw DecodingError.dataCorruptedError(
+            in: container,
+            debugDescription: "Unable to parse date string: \(dateString)")
+    }
+}
+
+nonisolated class AppServerResponseHandler<ResponseType: Codable, ErrorType: Codable>: UUJsonCodableResponseHandler<ResponseType, ErrorType>
+{
+    private let jsonDateDecoder = JsonDateDecoderImpl([
+        DateFormatter.uuCachedFormatter(UUDate.Formats.rfc3339WithMillis)
+    ])
+    
+    override init()
+    {
+        super.init()
+        
+        jsonDecoder.dateDecodingStrategy = .custom({ decoder in
+            
+            try self.jsonDateDecoder.decode(decoder)
+        })
+    }
+    
+    /*
+    private static func decodeDate(from decoder: Decoder) throws -> Date
+    {
+        let container = try decoder.singleValueContainer()
+        let dateString = try container.decode(String.self)
+        
+        if let date = makeISO8601DateFormatter(includeFractionalSeconds: true).date(from: dateString)
+        {
+            return date
+        }
+        
+        if let date = makeISO8601DateFormatter(includeFractionalSeconds: false).date(from: dateString)
+        {
+            return date
+        }
+        
+        throw DecodingError.dataCorruptedError(
+            in: container,
+            debugDescription: "Expected an ISO 8601 date string, but found: \(dateString)")
+    }
+    
+    private static func makeISO8601DateFormatter(includeFractionalSeconds: Bool) -> ISO8601DateFormatter
+    {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = includeFractionalSeconds
+            ? [.withInternetDateTime, .withFractionalSeconds]
+            : [.withInternetDateTime]
+        return formatter
+    }*/
+}
+
+/*
+extension UUCodableHttpRequest
+{
+    func useAppServerJSONDecoder()
+    {
+        guard let responseHandler = responseHandler as? UUJsonCodableResponseHandler<SuccessType, ErrorType> else
+        {
+            return
+        }
+        
+        responseHandler.jsonDecoder = AppServerJSONDecoder.make()
+    }
+}*/
+
+enum AppServerDTO
 {
     struct RefreshTokenRequest: Codable
     {
@@ -101,7 +157,7 @@ struct AppServerDTO
     {
         let accessToken: String
         let tokenType: String
-        let expiresAt: String
+        let expiresAt: Date
         let refreshToken: String?
         let idToken: String?
         let scope: String?
@@ -158,6 +214,20 @@ struct AppServerDTO
     }
 }
 
+extension AppServerDTO.CompleteLoginResponse
+{
+    var asAppUser: AppUser
+    {
+        AppUser(
+            id: user.id,
+            email: user.email,
+            displayName: user.displayName,
+            role: user.role,
+            isSuperUser: user.isSuperUser,
+            tokenValidUntil: expiresAt)
+    }
+}
+
 struct ServerErrorResponse: Codable
 {
     let error: String
@@ -179,15 +249,15 @@ struct ConfigItem: Codable
 protocol AppServerApi: Sendable
 {
     /// Returns the URL that the app needs to open in a secure web browser to log the user into the application.
-    func getLoginUrl(_ request: LoginRequest) async -> Result<URL, AppServerError>
+    func getLoginUrl(_ request: LoginRequest) async -> Result<URL, AppError>
     
-    func completeLogin(_ request: LoginRequest, _ url: URL) async -> Result<AppServerDTO.User, AppServerError>
+    func completeLogin(_ request: LoginRequest, _ url: URL) async -> Result<AppUser, AppError>
     
-    func getMe() async -> Result<AppServerDTO.User, AppServerError>
+    func getMe() async -> Result<AppUser, AppError>
     
-    func getConfig(_ key: String) async -> Result<String, AppServerError>
-    func putConfig(_ key: String) async -> AppServerError?
-    func deleteConfig(_ key: String) async -> AppServerError?
+    func getConfig(_ key: String) async -> Result<String, AppError>
+    func putConfig(_ key: String, _ value: String) async -> AppError?
+    func deleteConfig(_ key: String) async -> AppError?
 }
 
 nonisolated
@@ -265,7 +335,15 @@ final class UUAppServerApi: UURemoteApi, AppServerApi
     
     //MARK: UURemoteApi Overrides
     
-    override func shouldRenewApiAuthorization(_ error: any Error) async -> Bool
+    override func prepareTypedRequest<SuccessType: Codable, ErrorType: Codable>(
+        _ request: UUCodableHttpRequest<SuccessType, ErrorType>) async
+    {
+        await super.prepareTypedRequest(request)
+        
+        request.responseHandler = AppServerResponseHandler<SuccessType, ErrorType>()
+    }
+    
+    override func isApiAuthorizationNeeded() async -> Bool
     {
         await authProvider.readAccessToken()
         await authProvider.readRefreshToken()
@@ -278,7 +356,7 @@ final class UUAppServerApi: UURemoteApi, AppServerApi
         
         guard let refreshToken = authProvider.refreshToken else
         {
-            return UURenewAuthorizationResponse(didAttempt: false, error: AppServerError.noRefreshToken)
+            return UURenewAuthorizationResponse(didAttempt: false, error: AppError.noRefreshToken)
         }
         
         let payload = AppServerDTO.RefreshTokenRequest(refreshToken: refreshToken)
@@ -305,7 +383,7 @@ final class UUAppServerApi: UURemoteApi, AppServerApi
     
     //MARK: UUNetworkApi implementation
     
-    func getLoginUrl(_ request: LoginRequest) async -> Result<URL, AppServerError>
+    func getLoginUrl(_ request: LoginRequest) async -> Result<URL, AppError>
     {
         guard var urlComponents = URLComponents(string: config.baseUrl) else
         {
@@ -328,7 +406,7 @@ final class UUAppServerApi: UURemoteApi, AppServerApi
         }
     }
     
-    func completeLogin(_ loginRequest: LoginRequest, _ url: URL) async -> Result<AppServerDTO.User, AppServerError>
+    func completeLogin(_ loginRequest: LoginRequest, _ url: URL) async -> Result<AppUser, AppError>
     {
         let urlPath = url.path(percentEncoded: false)
         UULog.debug(tag: LOG_TAG, message: "URLPath: \(urlPath)")
@@ -370,11 +448,11 @@ final class UUAppServerApi: UURemoteApi, AppServerApi
                 UULog.debug(tag: LOG_TAG, message: "Successfully completed login: \(res.accessToken)")
             
                 await authProvider.saveLoginResponse(res)
-                return .success(res.user)
+                    return .success(res.asAppUser)
         }
     }
     
-    func getMe() async -> Result<AppServerDTO.User, AppServerError>
+    func getMe() async -> Result<AppUser, AppError>
     {
         let request = UUCodableHttpRequest<AppServerDTO.GetMeResponse, ServerErrorResponse>(
             url: "\(self.config.baseUrl)/api/me",
@@ -390,11 +468,17 @@ final class UUAppServerApi: UURemoteApi, AppServerApi
             case .success(let response):
                 UULog.debug(tag: LOG_TAG, message: "Successfully fetched me: \(response)")
             
-                return .success(response.user)
+            return .success(AppUser(
+                id: response.user.id,
+                email: response.user.email,
+                displayName: response.user.displayName,
+                role: response.user.role,
+                isSuperUser: response.user.isSuperUser,
+                tokenValidUntil: Date()))
         }
     }
     
-    func getConfig(_ key: String) async -> Result<String, AppServerError>
+    func getConfig(_ key: String) async -> Result<String, AppError>
     {
         let request = UUCodableHttpRequest<ConfigItem, ServerErrorResponse>(
             url: "\(self.config.baseUrl)/api/config/\(key)",
@@ -414,13 +498,44 @@ final class UUAppServerApi: UURemoteApi, AppServerApi
         }
     }
     
-    func putConfig(_ key: String) async -> AppServerError?
+    func putConfig(_ key: String, _ value: String) async -> AppError?
     {
-        return nil
+        let request = UUCodableHttpRequest<UUEmptyCodable, ServerErrorResponse>(
+            url: "\(self.config.baseUrl)/api/config/\(key)",
+            method: .put,
+            body: UUJsonBody(ConfigItem(key: key, value: value)))
+        
+        let apiResult = await executeTyped(request)
+        switch (apiResult)
+        {
+            case .failure(let err):
+                UULog.debug(tag: LOG_TAG, message: "Failed to put config: \(err)")
+                return .apiCallFailed(err)
+            
+            case .success(let response):
+                UULog.debug(tag: LOG_TAG, message: "Successfully updated config: \(response)")
+            
+                return nil
+        }
     }
     
-    func deleteConfig(_ key: String) async -> AppServerError?
+    func deleteConfig(_ key: String) async -> AppError?
     {
-        return nil
+        let request = UUCodableHttpRequest<UUEmptyCodable, ServerErrorResponse>(
+            url: "\(self.config.baseUrl)/api/config/\(key)",
+            method: .delete)
+        
+        let apiResult = await executeTyped(request)
+        switch (apiResult)
+        {
+            case .failure(let err):
+                UULog.debug(tag: LOG_TAG, message: "Failed to put config: \(err)")
+                return .apiCallFailed(err)
+            
+            case .success(let response):
+                UULog.debug(tag: LOG_TAG, message: "Successfully updated config: \(response)")
+            
+                return nil
+        }
     }
 }

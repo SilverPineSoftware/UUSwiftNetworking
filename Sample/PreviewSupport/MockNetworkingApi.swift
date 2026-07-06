@@ -10,39 +10,39 @@ import Foundation
 
 class MockNetworkingApi: AppServerApi
 {
-    var getLoginUrlResult: Result<URL, AppServerError> = .failure(.unexpectedError("Mock not implemented"))
-    var completeLoginResult: Result<AppServerDTO.User, AppServerError> = .failure(.unexpectedError("Mock not implemented"))
-    var getMeResult: Result<AppServerDTO.User, AppServerError> = .failure(.unexpectedError("Mock not implemented"))
-    var getConfigResult: Result<String, AppServerError> = .failure(.unexpectedError("Mock not implemented"))
-    var putConfigResult: AppServerError? = .unexpectedError("Mock not implemented")
-    var deleteConfigResult: AppServerError? = .unexpectedError("Mock not implemented")
+    var getLoginUrlResult: Result<URL, AppError> = .failure(.unexpectedError("Mock not implemented"))
+    var completeLoginResult: Result<AppUser, AppError> = .failure(.unexpectedError("Mock not implemented"))
+    var getMeResult: Result<AppUser, AppError> = .failure(.unexpectedError("Mock not implemented"))
+    var getConfigResult: Result<String, AppError> = .failure(.unexpectedError("Mock not implemented"))
+    var putConfigResult: AppError? = .unexpectedError("Mock not implemented")
+    var deleteConfigResult: AppError? = .unexpectedError("Mock not implemented")
     
-    func getLoginUrl(_ request: LoginRequest) async -> Result<URL, AppServerError>
+    func getLoginUrl(_ request: LoginRequest) async -> Result<URL, AppError>
     {
         return getLoginUrlResult
     }
     
-    func completeLogin(_ request: LoginRequest, _ url: URL) async -> Result<AppServerDTO.User, AppServerError>
+    func completeLogin(_ request: LoginRequest, _ url: URL) async -> Result<AppUser, AppError>
     {
         return completeLoginResult
     }
     
-    func getMe() async -> Result<AppServerDTO.User, AppServerError>
+    func getMe() async -> Result<AppUser, AppError>
     {
         return getMeResult
     }
     
-    func getConfig(_ key: String) async -> Result<String, AppServerError>
+    func getConfig(_ key: String) async -> Result<String, AppError>
     {
         return getConfigResult
     }
     
-    func putConfig(_ key: String) async -> AppServerError?
+    func putConfig(_ key: String, _ value: String) async -> AppError?
     {
         return putConfigResult
     }
     
-    func deleteConfig(_ key: String) async -> AppServerError?
+    func deleteConfig(_ key: String) async -> AppError?
     {
         return deleteConfigResult
     }

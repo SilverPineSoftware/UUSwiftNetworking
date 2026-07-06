@@ -120,6 +120,19 @@ open class UURemoteApi
         
         request.timeout = self.config.networkTimeout
     }
+
+    /// Prepares a typed codable request for execution by applying shared API configuration.
+    ///
+    /// The default implementation delegates to ``prepareRequest(_:)``. Override this method in
+    /// subclasses that need typed request customization, such as installing an app-specific
+    /// ``UUJsonCodableResponseHandler`` for every codable request.
+    ///
+    /// - Parameter request: The typed request about to be executed.
+    open func prepareTypedRequest<SuccessType: Codable, ErrorType: Codable>(
+        _ request: UUCodableHttpRequest<SuccessType, ErrorType>) async
+    {
+        await prepareRequest(request)
+    }
     
     /// Sends a single HTTP request without proactive or reactive authorization renewal.
     ///
@@ -197,7 +210,7 @@ open class UURemoteApi
     open func executeTypedWithoutAuthorizationRenewal<SuccessType: Codable, ErrorType: Codable>(
         _ request: UUCodableHttpRequest<SuccessType, ErrorType>) async -> Result<SuccessType, Error>
     {
-        await prepareRequest(request)
+        await prepareTypedRequest(request)
         return await session.executeTyped(request)
     }
 

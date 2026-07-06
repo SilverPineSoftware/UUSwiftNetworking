@@ -74,12 +74,13 @@ struct AccountView: View
     let vm: AccountViewModel = {
         let api = MockNetworkingApi()
         api.getMeResult = .success(
-            AppServerDTO.User(
+            AppUser(
                 id: "fake-id",
                 email: "fake@mocked.com",
                 displayName: "Mock User",
                 role: "normal",
-                isSuperUser: false
+                isSuperUser: false,
+                tokenValidUntil: Date()
             )
         )
 

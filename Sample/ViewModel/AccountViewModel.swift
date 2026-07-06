@@ -20,7 +20,7 @@ private let LOG_TAG = "AccountViewModel"
 class AccountViewModel: ObservableObject
 {
     // Published data elements
-    @Published var user: AppServerDTO.User? = nil
+    @Published var user: AppUser? = nil
     @Published var isLoading: Bool = false
     
     // Injectable app services
