@@ -90,128 +90,6 @@ nonisolated class AppServerResponseHandler<ResponseType: Codable, ErrorType: Cod
             try self.jsonDateDecoder.decode(decoder)
         })
     }
-    
-    /*
-    private static func decodeDate(from decoder: Decoder) throws -> Date
-    {
-        let container = try decoder.singleValueContainer()
-        let dateString = try container.decode(String.self)
-        
-        if let date = makeISO8601DateFormatter(includeFractionalSeconds: true).date(from: dateString)
-        {
-            return date
-        }
-        
-        if let date = makeISO8601DateFormatter(includeFractionalSeconds: false).date(from: dateString)
-        {
-            return date
-        }
-        
-        throw DecodingError.dataCorruptedError(
-            in: container,
-            debugDescription: "Expected an ISO 8601 date string, but found: \(dateString)")
-    }
-    
-    private static func makeISO8601DateFormatter(includeFractionalSeconds: Bool) -> ISO8601DateFormatter
-    {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = includeFractionalSeconds
-            ? [.withInternetDateTime, .withFractionalSeconds]
-            : [.withInternetDateTime]
-        return formatter
-    }*/
-}
-
-/*
-extension UUCodableHttpRequest
-{
-    func useAppServerJSONDecoder()
-    {
-        guard let responseHandler = responseHandler as? UUJsonCodableResponseHandler<SuccessType, ErrorType> else
-        {
-            return
-        }
-        
-        responseHandler.jsonDecoder = AppServerJSONDecoder.make()
-    }
-}*/
-
-enum AppServerDTO
-{
-    struct RefreshTokenRequest: Codable
-    {
-        let refreshToken: String
-        
-        init(refreshToken: String)
-        {
-            self.refreshToken = refreshToken
-        }
-        
-        enum CodingKeys: String, CodingKey
-        {
-            case refreshToken = "refresh_token"
-        }
-    }
-
-    struct CompleteLoginResponse: Codable
-    {
-        let accessToken: String
-        let tokenType: String
-        let expiresAt: Date
-        let refreshToken: String?
-        let idToken: String?
-        let scope: String?
-        let user: User
-        
-        enum CodingKeys: String, CodingKey
-        {
-            case accessToken = "access_token"
-            case tokenType = "token_type"
-            case expiresAt = "expires_at"
-            case refreshToken = "refresh_token"
-            case idToken = "id_token"
-            case scope
-            case user
-        }
-    }
-    
-    struct Auth: Codable
-    {
-        let role: String
-        let roles: [String]
-        let isSuperUser: Bool
-        
-        enum CodingKeys: String, CodingKey
-        {
-            case role
-            case roles
-            case isSuperUser = "is_superuser"
-        }
-    }
-    
-    struct User: Codable
-    {
-        let id: String
-        let email: String
-        let displayName: String
-        let role: String
-        let isSuperUser: Bool
-        
-        enum CodingKeys: String, CodingKey
-        {
-            case id
-            case email
-            case displayName = "display_name"
-            case role
-            case isSuperUser = "is_superuser"
-        }
-    }
-    
-    struct GetMeResponse: Codable
-    {
-        let user: User
-        let auth: Auth
-    }
 }
 
 extension AppServerDTO.CompleteLoginResponse
@@ -468,13 +346,25 @@ final class UUAppServerApi: UURemoteApi, AppServerApi
             case .success(let response):
                 UULog.debug(tag: LOG_TAG, message: "Successfully fetched me: \(response)")
             
-            return .success(AppUser(
-                id: response.user.id,
-                email: response.user.email,
-                displayName: response.user.displayName,
-                role: response.user.role,
-                isSuperUser: response.user.isSuperUser,
-                tokenValidUntil: Date()))
+                let accessTokenExpiration: Date
+                
+                if let jwt = UUSignedJsonWebToken.parse(authProvider.authorization ?? "").uuSuccess,
+                   let jwtExpiration = jwt.expiration
+                {
+                    accessTokenExpiration = jwtExpiration
+                }
+                else
+                {
+                    accessTokenExpiration = Date.init(timeIntervalSince1970: 0)
+                }
+            
+                return .success(AppUser(
+                    id: response.user.id,
+                    email: response.user.email,
+                    displayName: response.user.displayName,
+                    role: response.user.role,
+                    isSuperUser: response.user.isSuperUser,
+                    tokenValidUntil: accessTokenExpiration))
         }
     }
     

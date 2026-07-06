@@ -126,6 +126,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Services/Cloud/AppServerApi.swift,
+				Services/Cloud/AppServerDTO.swift,
 				Services/Cloud/ShutterstockApi.swift,
 				Services/Cloud/ShutterstockApiConfig.swift,
 				Services/Cloud/SilverpineSsoApi.swift,
@@ -150,6 +151,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Services/Cloud/AppServerApi.swift,
+				Services/Cloud/AppServerDTO.swift,
 				Services/Cloud/ShutterstockApi.swift,
 				Services/Cloud/ShutterstockApiConfig.swift,
 			);
