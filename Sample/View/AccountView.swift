@@ -7,6 +7,7 @@
 
 import SwiftUI
 import AuthenticationServices
+import UUSwiftCore
 
 struct AccountView: View
 {
@@ -30,6 +31,7 @@ struct AccountView: View
                         TwoLineLabelRowView(label: "Display Name", value: u.displayName)
                         TwoLineLabelRowView(label: "Role", value: u.role)
                         TwoLineLabelRowView(label: "Is Super User", value: u.isSuperUser ? "Yes" : "No")
+                        TwoLineLabelRowView(label: "Valid Until", value: u.tokenValidUntil.uuFormat(UUDate.Formats.iso8601DateTime))
                     }
                 }
                 else
