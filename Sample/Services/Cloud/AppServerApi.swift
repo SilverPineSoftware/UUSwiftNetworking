@@ -144,42 +144,99 @@ class KeychainAuthorizationProvider: UUHttpAuthorizationProvider
     private static let accessTokenKey = "networking_api.access_token"
     private static let refreshTokenKey = "networking_api.refresh_token"
     
+    /*private var accessTokenJwt: UUSignedJsonWebToken? = nil
+    
+    var accessToken: String? = nil
+    {
+        didSet
+        {
+            if let token = accessToken
+            {
+                accessTokenJwt = UUSignedJsonWebToken.parse(token).uuSuccess
+            }
+            else
+            {
+                accessTokenJwt = nil
+            }
+        }
+    }
+    
     var refreshToken: String? = nil
+    
+    var accessTokenExpiration: Date?
+    {
+        accessTokenJwt?.expiration
+    }*/
     
     override func attachAuthorization(_ request: UUHttpRequest) async
     {
-        await readAccessToken()
+        if let accessToken = await readAccessToken()
+        {
+            self.authorization = accessToken
+        }
+        
         await super.attachAuthorization(request)
     }
     
-    func readAccessToken() async
+    func readAccessToken() async -> String?
     {
         guard let accessTokenBytes = await UUSecurity.keychain.read(key: Self.accessTokenKey).uuSuccess else
         {
-            return
+            return nil
         }
         
         guard let accessToken = String(data: accessTokenBytes, encoding: .utf8) else
         {
-            return
+            return nil
         }
         
-        self.authorization = accessToken
+        return accessToken
     }
     
-    func readRefreshToken() async
+    func readAccessTokenExpiration() async -> Date?
+    {
+        return await readAccessToken()?.asSignedJsonWebToken?.expiration
+    }
+    
+    func isAuthorizationNeeded() async -> Bool
+    {
+        return await readAccessTokenExpiration() != nil
+    }
+    
+    /*
+    func readAccessToken() async -> UUSignedJsonWebToken?
+    {
+        guard let accessTokenBytes = await UUSecurity.keychain.read(key: Self.accessTokenKey).uuSuccess else
+        {
+            return nil
+        }
+        
+        guard let accessToken = String(data: accessTokenBytes, encoding: .utf8) else
+        {
+            return nil
+        }
+        
+        guard let jwt = UUSignedJsonWebToken.parse(accessToken).uuSuccess else
+        {
+            return nil
+        }
+        
+        return jwt
+    }*/
+    
+    func readRefreshToken() async -> String?
     {
         guard let refreshTokenBytes = await UUSecurity.keychain.read(key: Self.refreshTokenKey).uuSuccess else
         {
-            return
+            return nil
         }
         
         guard let refreshToken = String(data: refreshTokenBytes, encoding: .utf8) else
         {
-            return
+            return nil
         }
         
-        self.refreshToken = refreshToken
+        return refreshToken
     }
     
     func saveLoginResponse(_ loginResponse: AppServerDTO.CompleteLoginResponse) async
@@ -223,16 +280,12 @@ final class UUAppServerApi: UURemoteApi, AppServerApi
     
     override func isApiAuthorizationNeeded() async -> Bool
     {
-        await authProvider.readAccessToken()
-        await authProvider.readRefreshToken()
-        return (authProvider.authorization == nil || authProvider.refreshToken == nil)
+        return await authProvider.isAuthorizationNeeded()
     }
     
     override func renewApiAuthorization() async -> UURenewAuthorizationResponse
     {
-        await authProvider.readRefreshToken()
-        
-        guard let refreshToken = authProvider.refreshToken else
+        guard let refreshToken = await authProvider.readRefreshToken() else
         {
             return UURenewAuthorizationResponse(didAttempt: false, error: AppError.noRefreshToken)
         }
@@ -346,16 +399,9 @@ final class UUAppServerApi: UURemoteApi, AppServerApi
             case .success(let response):
                 UULog.debug(tag: LOG_TAG, message: "Successfully fetched me: \(response)")
             
-                let accessTokenExpiration: Date
-                
-                if let jwt = UUSignedJsonWebToken.parse(authProvider.authorization ?? "").uuSuccess,
-                   let jwtExpiration = jwt.expiration
+                guard let accessTokenExpiration = await authProvider.readAccessTokenExpiration() else
                 {
-                    accessTokenExpiration = jwtExpiration
-                }
-                else
-                {
-                    accessTokenExpiration = Date.init(timeIntervalSince1970: 0)
+                    return .failure(.notSignedIn)
                 }
             
                 return .success(AppUser(
@@ -427,5 +473,14 @@ final class UUAppServerApi: UURemoteApi, AppServerApi
             
                 return nil
         }
+    }
+}
+
+
+fileprivate extension String
+{
+    var asSignedJsonWebToken: UUSignedJsonWebToken?
+    {
+        UUSignedJsonWebToken.parse(self).uuSuccess
     }
 }

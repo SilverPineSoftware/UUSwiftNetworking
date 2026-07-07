@@ -11,6 +11,7 @@ import Foundation
 enum AppError: Error
 {
     case noRefreshToken
+    case notSignedIn
     
     case invalidConfigUrl
     case invalidLoginUrl
@@ -29,6 +30,9 @@ extension AppError: LocalizedError
         {
             case .noRefreshToken:
                 return "No refresh token stored locally"
+            
+            case .notSignedIn:
+                return "There is no active user session"
             
             case .invalidConfigUrl:
                 return "Invalid configuration URL"
