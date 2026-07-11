@@ -21,7 +21,9 @@ class AccountViewModel: ObservableObject
 {
     // Published data elements
     @Published var user: AppUser? = nil
+    @Published var error: AppError? = nil
     @Published var isLoading: Bool = false
+    @Published var isLoggedIn: Bool = false
     
     // Injectable app services
     let api: AppServerApi
@@ -40,16 +42,7 @@ class AccountViewModel: ObservableObject
     {
         let result = await api.getMe()
         UULog.debug(tag: LOG_TAG, message: "getMe returned: \(result)")
-        
-        switch (result)
-        {
-            case .success(let user):
-                self.user = user
-            
-            case .failure(let err):
-                UULog.debug(tag: LOG_TAG, message: "Failed to get user: \(err)")
-        }
-        
+        handleUserResult(result)
     }
     
     func ssoLogin() async
@@ -124,198 +117,30 @@ class AccountViewModel: ObservableObject
         
         let result = await api.completeLogin(loginRequest, url)
         UULog.debug(tag: LOG_TAG, message: "complete login result: \(result)")
+        handleUserResult(result)
     }
     
-    /*
-    func ssoLogin_direct() async
+    private func handleUserResult(_ result: Result<AppUser, AppError>)
     {
-        self.state = UURandom.bytes(length: 32).uuToHexString()
-        let pkce = UUPKCE.generate()
-        
-        //let callbackUrl = "https://uu-static.spsw.io/login"
-        let callbackUrl = "uu-networking://login"
-        let callbackUrlScheme = callbackUrl.uuUrlScheme
-        
-        var urlComponents = URLComponents()
-        urlComponents.scheme = "https"
-        urlComponents.host = "sso.spsw.dev"
-        urlComponents.path = "/mobile/authorize"
-        //urlComponents.path = "/authorize"
-        urlComponents.queryItems = [
-            URLQueryItem(name: "response_type", value: "code"),
-            URLQueryItem(name: "client_id", value: "uu-networking-sample"),
-            URLQueryItem(name: "redirect_uri", value: callbackUrl),
-            URLQueryItem(name: "state", value: state),
-            URLQueryItem(name: "scope", value: "openid email profile"),
-            URLQueryItem(name: "code_challenge", value: pkce.codeChallenge),
-            URLQueryItem(name: "code_challenge_method", value: pkce.challengeMethod),
-        ]
-        
-        guard let url = urlComponents.url else
+        switch (result)
         {
-            NSLog("ERROR! Unable to create URL")
-            return
-        }
-        
-        DispatchQueue.main.async
-        {
-            UULog.debug(tag: LOG_TAG, message: "Opening SSO Login URL: \(url)")
+            case .success(let user):
+                self.error = nil
+                self.user = user
             
-            let session = ASWebAuthenticationSession(
-                url: url,
-                callbackURLScheme: callbackUrlScheme,
-                completionHandler: { callbackUrl, callbackError in
-                    
-                    UULog.debug(tag: LOG_TAG, message: "SSO Callback URL: \(String(describing: callbackUrl))")
-                    UULog.debug(tag: LOG_TAG, message: "SSO Callback Error: \(String(describing: callbackError))")
-                    
-                    if let err = callbackError
-                    {
-                        // Show Error
-                    }
-                    else if let url = callbackUrl
-                    {
-                        self.finishLogin(url)
-                    }
-                })
-        
-        
-            session.prefersEphemeralWebBrowserSession = false
-            session.presentationContextProvider = self.context
-            self.session = session
-            self.pkce = pkce
-            let started = session.start()
-            UULog.debug(tag: LOG_TAG, message: "ASWebAuthenticationSession started: \(started)")
+            case .failure(let err):
+                self.error = err
+                self.user = nil
         }
-    }*/
-    
-    /*
-    func magicLinkLogin() async
-    {
         
+        self.isLoggedIn = (self.user != nil)
     }
     
-    func finishLogin_direct(_ url: URL)
+    func ssoLogout() async
     {
-        // Clear login temporary variables when this method finishes
-        defer
-        {
-            self.session = nil
-            self.state = nil
-            self.pkce = nil
-        }
-        
-        self.session?.cancel()
-        self.session = nil
-        
-        guard let stateCheck = self.state else
-        {
-            UULog.debug(tag: LOG_TAG, message: "Login state not set")
-            return
-        }
-        
-        guard let pkce = self.pkce else
-        {
-            UULog.debug(tag: LOG_TAG, message: "PKCE not set")
-            return
-        }
-        
-        let urlPath = url.path(percentEncoded: false)
-        UULog.debug(tag: LOG_TAG, message: "URLPath: \(urlPath)")
-        
-        if let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
-           let queryItems = components.queryItems,
-           let ticketItem = queryItems.first(where: { $0.name == "ticket" }),
-           let ticket = ticketItem.value,
-           let stateItem = queryItems.first(where: { $0.name == "state" }),
-           let state = stateItem.value
-        {
-            UULog.debug(tag: LOG_TAG, message: "Ticket: \(ticket)")
-            UULog.debug(tag: LOG_TAG, message: "State: \(state)")
-            
-            if (state != stateCheck)
-            {
-                UULog.debug(tag: LOG_TAG, message: "State check failed!, expected: \(stateCheck) but received: \(state)")
-                return
-            }
-            
-            var urlComponents = URLComponents()
-            urlComponents.scheme = "https"
-            urlComponents.host = "sso.spsw.dev"
-            urlComponents.path = "/mobile/complete"
-            
-            guard let url = urlComponents.url else
-            {
-                NSLog("ERROR! Unable to create URL")
-                return
-            }
-            
-            let req = LoginCompleteRequest(clientId: "uu-networking-sample", ticket: ticket, codeVerifier: pkce.codeVerifier)
-            
-            Task
-            {
-                let req = UUHttpRequest(url: url.absoluteString, method: .post, body: UUJsonBody(req))
-                req.responseHandler = UUJsonCodableResponseHandler<LoginCompleteResponse, LoginCompleteResponse>()
-                
-                let result = await UUHttpSession.execute(req)
-                if let error = result.httpError
-                {
-                    UULog.debug(tag: LOG_TAG, message: "Error: \(error)")
-                }
-                else if let appResponse = result.parsedResponse as? LoginCompleteResponse
-                {
-                    UULog.debug(tag: LOG_TAG, message: "\(appResponse))")
-                    
-                    _ = await UUSecurity.keychain.writeString(key: "access_token", accessLevel: .afterFirstUnlockThisDeviceOnly, string: appResponse.accessToken)
-                }
-                else
-                {
-                    UULog.debug(tag: LOG_TAG, message: "Unknown response type")
-                }
-            }
-        }
-    }*/
-}
-
-/*
-struct LoginCompleteRequest: Codable
-{
-    let clientId: String
-    let ticket: String
-    let codeVerifier: String
-    
-    init(clientId: String, ticket: String, codeVerifier: String)
-    {
-        self.clientId = clientId
-        self.ticket = ticket
-        self.codeVerifier = codeVerifier
-    }
-    
-    enum CodingKeys: String, CodingKey
-    {
-        case clientId = "client_id"
-        case ticket
-        case codeVerifier = "code_verifier"
+        let err = await api.logout()
+        UULog.debug(tag: LOG_TAG, message: "Logout complete.  Error: \(err?.localizedDescription ?? "none")")
+        self.user = nil
+        self.error = nil
     }
 }
-
-struct LoginCompleteResponse: Codable
-{
-    let accessToken: String
-    let tokenType: String
-    let expiresAt: String
-    let refreshToken: String?
-    let idToken: String?
-    let scope: String?
-    
-    enum CodingKeys: String, CodingKey
-    {
-        case accessToken = "access_token"
-        case tokenType = "token_type"
-        case expiresAt = "expires_at"
-        case refreshToken = "refresh_token"
-        case idToken = "id_token"
-        case scope
-    }
-}
-*/

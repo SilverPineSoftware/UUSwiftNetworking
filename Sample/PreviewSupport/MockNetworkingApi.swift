@@ -16,6 +16,7 @@ class MockNetworkingApi: AppServerApi
     var getConfigResult: Result<String, AppError> = .failure(.unexpectedError("Mock not implemented"))
     var putConfigResult: AppError? = .unexpectedError("Mock not implemented")
     var deleteConfigResult: AppError? = .unexpectedError("Mock not implemented")
+    var logoutResult: AppError? = .unexpectedError("Mock not implemented")
     
     func getLoginUrl(_ request: LoginRequest) async -> Result<URL, AppError>
     {
@@ -25,6 +26,11 @@ class MockNetworkingApi: AppServerApi
     func completeLogin(_ request: LoginRequest, _ url: URL) async -> Result<AppUser, AppError>
     {
         return completeLoginResult
+    }
+    
+    func logout() async -> AppError?
+    {
+        return logoutResult
     }
     
     func getMe() async -> Result<AppUser, AppError>

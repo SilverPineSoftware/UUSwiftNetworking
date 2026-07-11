@@ -131,6 +131,8 @@ protocol AppServerApi: Sendable
     
     func completeLogin(_ request: LoginRequest, _ url: URL) async -> Result<AppUser, AppError>
     
+    func logout() async -> AppError?
+    
     func getMe() async -> Result<AppUser, AppError>
     
     func getConfig(_ key: String) async -> Result<String, AppError>
@@ -143,30 +145,6 @@ class KeychainAuthorizationProvider: UUHttpAuthorizationProvider
 {
     private static let accessTokenKey = "networking_api.access_token"
     private static let refreshTokenKey = "networking_api.refresh_token"
-    
-    /*private var accessTokenJwt: UUSignedJsonWebToken? = nil
-    
-    var accessToken: String? = nil
-    {
-        didSet
-        {
-            if let token = accessToken
-            {
-                accessTokenJwt = UUSignedJsonWebToken.parse(token).uuSuccess
-            }
-            else
-            {
-                accessTokenJwt = nil
-            }
-        }
-    }
-    
-    var refreshToken: String? = nil
-    
-    var accessTokenExpiration: Date?
-    {
-        accessTokenJwt?.expiration
-    }*/
     
     override func attachAuthorization(_ request: UUHttpRequest) async
     {
@@ -203,27 +181,6 @@ class KeychainAuthorizationProvider: UUHttpAuthorizationProvider
         return await readAccessTokenExpiration() != nil
     }
     
-    /*
-    func readAccessToken() async -> UUSignedJsonWebToken?
-    {
-        guard let accessTokenBytes = await UUSecurity.keychain.read(key: Self.accessTokenKey).uuSuccess else
-        {
-            return nil
-        }
-        
-        guard let accessToken = String(data: accessTokenBytes, encoding: .utf8) else
-        {
-            return nil
-        }
-        
-        guard let jwt = UUSignedJsonWebToken.parse(accessToken).uuSuccess else
-        {
-            return nil
-        }
-        
-        return jwt
-    }*/
-    
     func readRefreshToken() async -> String?
     {
         guard let refreshTokenBytes = await UUSecurity.keychain.read(key: Self.refreshTokenKey).uuSuccess else
@@ -249,6 +206,12 @@ class KeychainAuthorizationProvider: UUHttpAuthorizationProvider
             let refreshTokenBytes = Data(refreshToken.utf8)
             _ = await UUSecurity.keychain.write(key: Self.refreshTokenKey, accessLevel: .afterFirstUnlockThisDeviceOnly, data: refreshTokenBytes)
         }
+    }
+    
+    func reset() async
+    {
+        _ = await UUSecurity.keychain.clear(key: Self.accessTokenKey)
+        _ = await UUSecurity.keychain.clear(key: Self.refreshTokenKey)
     }
 }
 
@@ -381,6 +344,12 @@ final class UUAppServerApi: UURemoteApi, AppServerApi
                 await authProvider.saveLoginResponse(res)
                     return .success(res.asAppUser)
         }
+    }
+    
+    func logout() async -> AppError?
+    {
+        await authProvider.reset()
+        return nil
     }
     
     func getMe() async -> Result<AppUser, AppError>

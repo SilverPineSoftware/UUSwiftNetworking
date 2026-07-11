@@ -24,6 +24,33 @@ enum AppError: Error
 
 extension AppError: LocalizedError
 {
+    var errorName: String
+    {
+        switch (self)
+        {
+            case .noRefreshToken:
+                return "no_refresh_token"
+            
+            case .notSignedIn:
+                return "not_signed_in"
+            
+            case .invalidConfigUrl:
+                return "invalid_config_url"
+            
+            case .invalidLoginUrl:
+                return "invalid_login_url"
+            
+            case .stateCheckFailed:
+                return "state_check_failed"
+            
+            case .apiCallFailed(_):
+                return "api_call_failed"
+            
+            case .unexpectedError(_):
+                return "unexpected_error"
+        }
+    }
+    
     var errorDescription: String?
     {
         switch (self)
