@@ -1,5 +1,5 @@
 //
-//  UUBasicAuthorizationProvider.swift
+//  UUBasicAuthorization.swift
 //  UUSwiftNetworking
 //
 //  Created by Ryan DeVore on 6/3/26.
@@ -19,7 +19,7 @@ import Foundation
 /// This matches REST APIs that accept a username and password on every request, or an API key as
 /// ``userName`` with a shared ``password``.
 ///
-/// ``formatAuthorization()`` returns `nil` (and ``UUHttpAuthorizationProvider/attachAuthorization(_:)``
+/// ``formatAuthorization()`` returns `nil` (and ``UUHttpAuthorization/attachAuthorization(_:)``
 /// adds no header) when ``userName`` or ``password`` is `nil`.
 ///
 /// ``userName`` and ``password`` may be updated at any time; the next request uses the current values.
@@ -27,24 +27,24 @@ import Foundation
 /// Example (single request):
 ///
 /// ```swift
-/// request.authorizationProvider = UUBasicAuthorizationProvider(
+/// request.authorization = UUBasicAuthorization(
 ///     userName: "my-api-key",
 ///     password: "my-secret"
 /// )
 /// ```
 ///
 /// - SeeAlso: [RFC 7617](https://datatracker.ietf.org/doc/html/rfc7617) (HTTP Basic Access Authentication)
-/// - SeeAlso: ``UUHttpAuthorizationProvider``
-/// - SeeAlso: ``UUHttpRequest/authorizationProvider``
-open class UUBasicAuthorizationProvider: UUHttpAuthorizationProvider
+/// - SeeAlso: ``UUHttpAuthorization``
+/// - SeeAlso: ``UUHttpRequest/authorization``
+open class UUBasicAuthorization: UUHttpAuthorization, @unchecked Sendable
 {
     /// User name or API key identifier.
-    var userName: String?
+    public var userName: String?
 
     /// Password or secret paired with ``userName``.
-    var password: String?
+    public var password: String?
     
-    /// Creates a Basic authentication provider for the given credentials.
+    /// Creates a Basic authorization model for the given credentials.
     ///
     /// - Parameters:
     ///   - userName: User name or API key identifier.

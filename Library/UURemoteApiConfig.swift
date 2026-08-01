@@ -10,15 +10,13 @@ import Foundation
 
 /// Shared configuration applied to every request sent through a ``UURemoteApi`` instance.
 ///
-/// ``UURemoteApi/prepareRequest(_:)`` reads this value when preparing ``UUHttpRequest`` objects:
-/// the authorization provider is copied onto requests that do not already specify one, and
-/// ``networkTimeout`` is assigned to each request before execution.
+/// ``UURemoteApi/prepareRequest(_:)`` reads this value when preparing ``UUHttpRequest`` objects,
+/// assigning ``networkTimeout`` to each request before execution.
 ///
 /// Configure once on the API instance rather than on individual requests:
 ///
 /// ```swift
 /// let api = MyRemoteApi()
-/// api.config.authorizationProvider = UUBasicAuthorizationProvider(userName: "user", password: "pass")
 /// api.config.networkTimeout = 30
 /// ```
 ///
@@ -45,16 +43,11 @@ open class UURemoteApiConfig
     /// it is sent through ``UURemoteApi/session``.
     ///
     /// ```swift
-    /// let config = UURemoteApiConfig(
-    ///     authorizationProvider: UUBasicAuthorizationProvider(userName: "user", password: "pass"),
-    ///     networkTimeout: 30
-    /// )
+    /// let config = UURemoteApiConfig(networkTimeout: 30)
     /// api.config = config
     /// ```
     ///
     /// - Parameters:
-    ///   - authorizationProvider: The provider copied onto requests whose
-    ///     ``UUHttpRequest/authorizationProvider`` is `nil`. Pass `nil` for unauthenticated APIs.
     ///   - networkTimeout: The timeout, in seconds, assigned to each request before execution.
     ///     Defaults to ``UUHttpConfig/shared`` ``UUHttpConfig/defaultTimeout``.
     public init(

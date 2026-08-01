@@ -240,34 +240,28 @@ final class UUHttpRequestTests: XCTestCase
         XCTAssertEqual(urlRequest?.value(forHTTPHeaderField: "Retry-After"), "30")
     }
 
-    func test_buildURLRequest_appliesHeadersAddedByAuthorizationProvider() async
+    func test_buildURLRequest_appliesAuthorizationHeaderFromAuthorization() async
     {
-        let provider = HeaderAddingAuthorizationProvider(
-            key: "X-Provider",
-            value: "provider-value"
-        )
+        let authorization = HeaderValueAuthorization(value: "Bearer provider-value")
         let request = UUHttpRequest(url: testUrl)
-        request.authorizationProvider = provider
+        request.authorization = authorization
 
         let urlRequest = await request.buildURLRequest()
 
-        XCTAssertEqual(provider.attachCount, 1)
-        XCTAssertEqual(urlRequest?.value(forHTTPHeaderField: "X-Provider"), "provider-value")
+        XCTAssertEqual(authorization.attachCount, 1)
+        XCTAssertEqual(urlRequest?.value(forHTTPHeaderField: UUHttpHeader.authorization), "Bearer provider-value")
     }
 
-    func test_buildURLRequest_authorizationProviderCanOverwriteExistingHeaderBeforeHeadersAreApplied() async
+    func test_buildURLRequest_authorizationCanOverwriteExistingAuthorizationHeaderBeforeHeadersAreApplied() async
     {
-        let provider = HeaderAddingAuthorizationProvider(
-            key: UUHttpHeader.authorization,
-            value: "Bearer new-token"
-        )
+        let authorization = HeaderValueAuthorization(value: "Bearer new-token")
         let request = UUHttpRequest(
             url: testUrl,
             headers: [
                 UUHttpHeader.authorization: "Bearer old-token"
             ]
         )
-        request.authorizationProvider = provider
+        request.authorization = authorization
 
         let urlRequest = await request.buildURLRequest()
 
@@ -275,22 +269,20 @@ final class UUHttpRequestTests: XCTestCase
     }
 }
 
-private final class HeaderAddingAuthorizationProvider: UUHttpAuthorizationProvider
+private final class HeaderValueAuthorization: UUHttpAuthorization, @unchecked Sendable
 {
-    private let key: String
     private let value: String
     private(set) var attachCount = 0
 
-    init(key: String, value: String)
+    init(value: String)
     {
-        self.key = key
         self.value = value
-        super.init()
+        super.init(authorization: nil)
     }
 
-    override func attachAuthorization(_ request: UUHttpRequest) async
+    override func attachAuthorization(_ request: UUHttpRequest)
     {
         attachCount += 1
-        request.headerFields[key] = value
+        request.headerFields[UUHttpHeader.authorization] = value
     }
 }

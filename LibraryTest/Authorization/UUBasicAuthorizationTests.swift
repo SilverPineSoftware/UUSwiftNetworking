@@ -1,5 +1,5 @@
 //
-//  UUBasicAuthorizationProviderTests.swift
+//  UUBasicAuthorizationTests.swift
 //  UUSwiftNetworking
 //
 //  Created by Ryan DeVore on 6/14/26.
@@ -8,7 +8,7 @@
 import XCTest
 @testable import UUSwiftNetworking
 
-final class UUBasicAuthorizationProviderTests: XCTestCase
+final class UUBasicAuthorizationTests: XCTestCase
 {
     private let testUrl = "https://api.example.com/resource"
 
@@ -16,53 +16,53 @@ final class UUBasicAuthorizationProviderTests: XCTestCase
 
     func test_init_usesBasicScheme()
     {
-        let provider = UUBasicAuthorizationProvider(userName: "user", password: "pass")
+        let authorization = UUBasicAuthorization(userName: "user", password: "pass")
 
-        XCTAssertEqual(provider.scheme, "Basic")
+        XCTAssertEqual(authorization.scheme, "Basic")
     }
 
     func test_formatAuthorization_returnsBase64EncodedCredentials()
     {
-        let provider = UUBasicAuthorizationProvider(userName: "user", password: "pass")
+        let authorization = UUBasicAuthorization(userName: "user", password: "pass")
         let expected = Data("user:pass".utf8).base64EncodedString()
 
-        XCTAssertEqual(provider.formatAuthorization(), expected)
+        XCTAssertEqual(authorization.formatAuthorization(), expected)
         XCTAssertEqual(expected, "dXNlcjpwYXNz")
     }
 
     func test_formatAuthorization_returnsNilWhenUserNameIsNil()
     {
-        let provider = UUBasicAuthorizationProvider(userName: nil, password: "pass")
+        let authorization = UUBasicAuthorization(userName: nil, password: "pass")
 
-        XCTAssertNil(provider.formatAuthorization())
+        XCTAssertNil(authorization.formatAuthorization())
     }
 
     func test_formatAuthorization_returnsNilWhenPasswordIsNil()
     {
-        let provider = UUBasicAuthorizationProvider(userName: "user", password: nil)
+        let authorization = UUBasicAuthorization(userName: "user", password: nil)
 
-        XCTAssertNil(provider.formatAuthorization())
+        XCTAssertNil(authorization.formatAuthorization())
     }
 
     func test_formatAuthorization_reflectsUpdatedCredentials()
     {
-        let provider = UUBasicAuthorizationProvider(userName: "first", password: "secret")
-        provider.userName = "api-key"
-        provider.password = "updated"
+        let authorization = UUBasicAuthorization(userName: "first", password: "secret")
+        authorization.userName = "api-key"
+        authorization.password = "updated"
 
         let expected = Data("api-key:updated".utf8).base64EncodedString()
-        XCTAssertEqual(provider.formatAuthorization(), expected)
+        XCTAssertEqual(authorization.formatAuthorization(), expected)
     }
 
     // MARK: - attachAuthorization
 
-    func test_attachAuthorization_addsBasicAuthorizationHeader() async
+    func test_attachAuthorization_addsBasicAuthorizationHeader()
     {
-        let provider = UUBasicAuthorizationProvider(userName: "my-api-key", password: "my-secret")
+        let authorization = UUBasicAuthorization(userName: "my-api-key", password: "my-secret")
         let request = UUHttpRequest(url: testUrl)
         let expectedCredential = Data("my-api-key:my-secret".utf8).base64EncodedString()
 
-        await provider.attachAuthorization(request)
+        authorization.attachAuthorization(request)
 
         XCTAssertEqual(
             request.headerFields[UUHttpHeader.authorization] as? String,
@@ -70,22 +70,22 @@ final class UUBasicAuthorizationProviderTests: XCTestCase
         )
     }
 
-    func test_attachAuthorization_doesNotAddHeaderWhenCredentialsAreIncomplete() async
+    func test_attachAuthorization_doesNotAddHeaderWhenCredentialsAreIncomplete()
     {
-        let provider = UUBasicAuthorizationProvider(userName: "user", password: nil)
+        let authorization = UUBasicAuthorization(userName: "user", password: nil)
         let request = UUHttpRequest(url: testUrl)
 
-        await provider.attachAuthorization(request)
+        authorization.attachAuthorization(request)
 
         XCTAssertNil(request.headerFields[UUHttpHeader.authorization])
     }
 
     // MARK: - buildURLRequest
 
-    func test_buildURLRequest_addsBasicAuthorizationHeaderFromProvider() async
+    func test_buildURLRequest_addsBasicAuthorizationHeaderFromAuthorization() async
     {
         let request = UUHttpRequest(url: testUrl)
-        request.authorizationProvider = UUBasicAuthorizationProvider(userName: "user", password: "pass")
+        request.authorization = UUBasicAuthorization(userName: "user", password: "pass")
 
         let urlRequest = await request.buildURLRequest()
 
@@ -98,7 +98,7 @@ final class UUBasicAuthorizationProviderTests: XCTestCase
     func test_buildURLRequest_omitsAuthorizationHeaderWhenCredentialsAreMissing() async
     {
         let request = UUHttpRequest(url: testUrl)
-        request.authorizationProvider = UUBasicAuthorizationProvider(userName: nil, password: nil)
+        request.authorization = UUBasicAuthorization(userName: nil, password: nil)
 
         let urlRequest = await request.buildURLRequest()
 

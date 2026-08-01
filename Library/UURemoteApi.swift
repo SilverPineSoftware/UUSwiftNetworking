@@ -52,25 +52,24 @@ open class UURemoteApi
     /// per-API configuration such as timeouts or protocol classes.
     public var session: UUHttpSession = UUHttpSession()
     
-    /// The authorization provider applied to requests that do not define their own.
+    /// The authorization provider used to load authorization for requests that do not define their own.
     ///
-    /// ``prepareRequest(_:)`` assigns this value to
-    /// ``authorizationProvider`` only when the request's provider is `nil`.
-    /// Requests with an explicit provider are left unchanged.
+    /// ``prepareRequest(_:)`` asks this provider for a ``UUHttpAuthorization`` only when the
+    /// request's ``UUHttpRequest/authorization`` is `nil`. Requests with explicit authorization
+    /// are left unchanged.
     ///
-    /// Typical values include ``UUBasicAuthorizationProvider`` or a custom
-    /// ``UUHttpAuthorizationProvider`` subclass that attaches bearer tokens or signed headers.
+    /// Typical values include ``UUStaticHttpAuthorizationProvider`` or a custom provider that
+    /// reads encrypted credentials from Keychain.
     public var authorizationProvider: UUHttpAuthorizationProvider? = nil
 
     /// Shared request defaults for this API client.
     ///
-    /// ``prepareRequest(_:)`` applies ``UURemoteApiConfig/authorizationProvider`` and
+    /// ``prepareRequest(_:)`` applies provider-loaded authorization and
     /// ``UURemoteApiConfig/networkTimeout`` to each ``UUHttpRequest`` before it is sent through
-    /// ``session``. Set this once on the API instance instead of configuring every request
-    /// manually.
+    /// ``session``.
     ///
-    /// - Note: Requests that already have an ``UUHttpRequest/authorizationProvider`` keep their
-    ///   existing provider; only `nil` providers are populated from config.
+    /// - Note: Requests that already have an ``UUHttpRequest/authorization`` keep their existing
+    ///   authorization; only `nil` authorization values are populated from the API provider.
     public var config = UURemoteApiConfig()
     
     /// Creates a remote API with default session and no authorization provider.
@@ -86,7 +85,7 @@ open class UURemoteApi
     /// authorization is required (see ``shouldRenewApiAuthorization(_:)``), renewal is attempted
     /// again and the original request is retried once when renewal reports `didAttempt`.
     ///
-    /// - Parameter request: The request to execute. Its ``UUHttpRequest/authorizationProvider``
+    /// - Parameter request: The request to execute. Its ``UUHttpRequest/authorization``
     ///   is populated from ``authorizationProvider`` when nil.
     /// - Returns: The HTTP response. When proactive renewal fails, the response contains the
     ///   renewal error and no network call is made. When reactive renewal fails, the renewal
@@ -106,16 +105,17 @@ open class UURemoteApi
 
     /// Prepares a request for execution by applying shared API configuration.
     ///
-    /// The default implementation assigns ``authorizationProvider`` to
-    /// ``UUHttpRequest/authorizationProvider`` when the request's provider is `nil`.
+    /// The default implementation loads authorization from ``authorizationProvider`` and assigns it
+    /// to ``UUHttpRequest/authorization`` when the request's authorization is `nil`.
     /// Override to add headers, base URLs, or other per-request setup.
     ///
     /// - Parameter request: The request about to be executed.
     open func prepareRequest(_ request: UUHttpRequest) async
     {
-        if (request.authorizationProvider == nil)
+        if request.authorization == nil,
+           let authorizationResult = await self.authorizationProvider?.loadAuthorization()
         {
-            request.authorizationProvider = self.authorizationProvider
+            request.authorization = try? authorizationResult.get()
         }
         
         request.timeout = self.config.networkTimeout
@@ -140,9 +140,8 @@ open class UURemoteApi
     /// method does not perform proactive renewal, reactive renewal, or automatic retry.
     ///
     /// Use this inside ``renewApiAuthorization()`` for login, token refresh, and other requests that
-    /// must not re-enter the authorization lifecycle. Pair with ``UUEmptyAuthorizationProvider`` on
-    /// the request when the renewal call should not attach ``UURemoteApiConfig/authorizationProvider``
-    /// credentials.
+    /// must not re-enter the authorization lifecycle. Pair with ``UUEmptyAuthorization`` on the
+    /// request when the renewal call should not attach provider-loaded credentials.
     ///
     /// Example:
     ///
@@ -150,9 +149,9 @@ open class UURemoteApi
     /// open override func renewApiAuthorization() async -> UURenewAuthorizationResponse
     /// {
     ///     let request = UUHttpRequest(url: tokenUrl, method: .post, body: credentialsBody)
-    ///     request.authorizationProvider = UUEmptyAuthorizationProvider()
+    ///     request.authorization = UUEmptyAuthorization()
     ///     let response = await executeWithoutAuthorizationRenewal(request)
-    ///     // Parse tokens and update config.authorizationProvider ...
+    ///     // Parse tokens and update authorizationProvider ...
     ///     return UURenewAuthorizationResponse(didAttempt: true, error: response.httpError)
     /// }
     /// ```
@@ -162,7 +161,7 @@ open class UURemoteApi
     ///
     /// - SeeAlso: ``execute(_:)``
     /// - SeeAlso: ``executeTypedWithoutAuthorizationRenewal(_:)``
-    /// - SeeAlso: ``UUEmptyAuthorizationProvider``
+    /// - SeeAlso: ``UUEmptyAuthorization``
     open func executeWithoutAuthorizationRenewal(_ request: UUHttpRequest) async -> UUHttpResponse
     {
         await prepareRequest(request)
@@ -198,15 +197,15 @@ open class UURemoteApi
     /// this method does not perform proactive renewal, reactive renewal, or automatic retry.
     ///
     /// Use this inside ``renewApiAuthorization()`` when the renewal flow expects a parsed codable
-    /// response. Pair with ``UUEmptyAuthorizationProvider`` when the renewal request should not
-    /// attach ``UURemoteApiConfig/authorizationProvider`` credentials.
+    /// response. Pair with ``UUEmptyAuthorization`` when the renewal request should not attach
+    /// provider-loaded credentials.
     ///
     /// - Parameter request: A codable HTTP request describing the expected success and error types.
     /// - Returns: `.success` with the parsed model, or `.failure` with a network or parse error.
     ///
     /// - SeeAlso: ``executeTyped(_:)``
     /// - SeeAlso: ``executeWithoutAuthorizationRenewal(_:)``
-    /// - SeeAlso: ``UUEmptyAuthorizationProvider``
+    /// - SeeAlso: ``UUEmptyAuthorization``
     open func executeTypedWithoutAuthorizationRenewal<SuccessType: Codable, ErrorType: Codable>(
         _ request: UUCodableHttpRequest<SuccessType, ErrorType>) async -> Result<SuccessType, Error>
     {

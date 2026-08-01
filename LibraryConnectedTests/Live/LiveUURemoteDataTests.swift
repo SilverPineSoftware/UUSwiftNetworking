@@ -265,15 +265,17 @@ class LiveUURemoteDataTests: BaseOnlineTest
 
     private func getImageUrls(count: Int, large: Bool) async -> [String]
     {
-        let cfg = ShutterstockApiConfig(
+        let credentials = ShutterstockCredentials(
             clientKey: testConfig.shutterstockClientKey,
             clientSecret: testConfig.shutterstockClientSecret
         )
 
-        let api = ShutterstockApi()
-        api.config = cfg.apiConfig
+        let credentialsStore = LiveShutterstockCredentialsStore(credentials: credentials)
+        let api = UUShutterstockApi(
+            baseUrl: "https://api.shutterstock.com",
+            credentialsStore: credentialsStore)
 
-        let result = await api.searchImages(query: "forest", count: count, large: large)
+        let result = await api.searchImagePage(query: "forest", page: 1, count: count, large: large)
         return (try? result.get()) ?? []
     }
 
@@ -345,5 +347,30 @@ private final class ResumeOnce<T: Sendable>: @unchecked Sendable
 
         self.continuation = nil
         continuation.resume(returning: value)
+    }
+}
+
+private final class LiveShutterstockCredentialsStore: ShutterstockCredentialsStore, @unchecked Sendable
+{
+    private let credentials: ShutterstockCredentials
+
+    init(credentials: ShutterstockCredentials)
+    {
+        self.credentials = credentials
+    }
+
+    func loadCredentials() async -> Result<ShutterstockCredentials, Error>
+    {
+        return .success(credentials)
+    }
+
+    func saveCredentials(_ credentials: ShutterstockCredentials) async -> Error?
+    {
+        return nil
+    }
+
+    func clearCredentials() async -> Error?
+    {
+        return nil
     }
 }

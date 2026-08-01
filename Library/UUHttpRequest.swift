@@ -22,7 +22,7 @@ open class UUHttpRequest: @unchecked Sendable
 	public var startTime : TimeInterval = 0
 	public var httpRequest : URLRequest? = nil
 	public var responseHandler : UUHttpResponseHandler = UUBaseResponseHandler()
-    public var authorizationProvider: UUHttpAuthorizationProvider? = nil
+    public var authorization: UUHttpAuthorization? = nil
     
 	public init(url : String, method: UUHttpMethod = .get, queryItems: [URLQueryItem]? = nil, headers: UUHttpHeaders = [:], body : UUHttpBody? = nil)
 	{
@@ -71,7 +71,7 @@ open class UUHttpRequest: @unchecked Sendable
         req.timeoutInterval = request.timeout
         req.cachePolicy = request.cachePolicy
         
-        await self.authorizationProvider?.attachAuthorization(self)
+        self.authorization?.attachAuthorization(self)
         
         for key in request.headerFields.keys
         {

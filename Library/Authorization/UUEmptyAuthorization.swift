@@ -1,5 +1,5 @@
 //
-//  UUEmptyAuthorizationProvider.swift
+//  UUEmptyAuthorization.swift
 //  UUSwiftNetworking
 //
 //  Created by Ryan DeVore on 6/14/26.
@@ -8,22 +8,22 @@
 
 import Foundation
 
-/// A no-op authorization provider that never attaches an `Authorization` header.
+/// A no-op authorization model that never attaches an `Authorization` header.
 ///
-/// Use this when a request should be sent without credentials from ``UUHttpAuthorizationProvider``,
-/// even though ``UURemoteApi`` normally applies ``UURemoteApiConfig/authorizationProvider`` to
-/// every request in ``UURemoteApi/prepareRequest(_:)``.
+/// Use this when a request should be sent without credentials from ``UURemoteApi/authorizationProvider``,
+/// even though the API normally applies provider-loaded authorization to every request in
+/// ``UURemoteApi/prepareRequest(_:)``.
 ///
 /// Authorization renewal is often a different flow than a normal API call. For example, a token
 /// refresh or login endpoint may expect a username and password in the body rather than the
-/// bearer token used elsewhere. Setting ``UUHttpRequest/authorizationProvider`` to
-/// `UUEmptyAuthorizationProvider()` on that request skips attaching the class-level credentials.
+/// bearer token used elsewhere. Setting ``UUHttpRequest/authorization`` to
+/// `UUEmptyAuthorization()` on that request skips attaching the class-level credentials.
 ///
 /// Typical pattern:
 ///
-/// 1. Set ``UURemoteApiConfig/authorizationProvider`` once on the API client for ordinary calls.
+/// 1. Set ``UURemoteApi/authorizationProvider`` once on the API client for ordinary calls.
 /// 2. In ``UURemoteApi/renewApiAuthorization()``, build the renewal request and assign
-///    `UUEmptyAuthorizationProvider()` (or a custom provider for alternate headers) before
+///    `UUEmptyAuthorization()` before
 ///    executing it.
 ///
 /// Example (skip auth on a login request):
@@ -32,23 +32,23 @@ import Foundation
 /// open override func renewApiAuthorization() async -> UURenewAuthorizationResponse
 /// {
 ///     let request = UUHttpRequest(url: loginUrl, method: .post, body: credentialsBody)
-///     request.authorizationProvider = UUEmptyAuthorizationProvider()
+///     request.authorization = UUEmptyAuthorization()
 ///     let response = await executeWithoutAuthorizationRenewal(request)
-///     // Parse tokens and update config.authorizationProvider ...
+///     // Parse tokens and update the API's authorization provider ...
 ///     return UURenewAuthorizationResponse(didAttempt: true, error: response.httpError)
 /// }
 /// ```
 ///
 /// ``UURemoteApi/prepareRequest(_:)`` does not replace a request's existing
-/// ``UUHttpRequest/authorizationProvider``, so the empty provider remains in effect for that
+/// ``UUHttpRequest/authorization``, so the empty authorization remains in effect for that
 /// request only.
 ///
-/// - SeeAlso: ``UUHttpAuthorizationProvider``
+/// - SeeAlso: ``UUHttpAuthorization``
 /// - SeeAlso: ``UURemoteApi/renewApiAuthorization()``
 /// - SeeAlso: ``UURemoteApi/executeWithoutAuthorizationRenewal(_:)``
-/// - SeeAlso: ``UURemoteApiConfig/authorizationProvider``
-/// - SeeAlso: ``UUHttpRequest/authorizationProvider``
-open class UUEmptyAuthorizationProvider: UUHttpAuthorizationProvider
+/// - SeeAlso: ``UURemoteApi/authorizationProvider``
+/// - SeeAlso: ``UUHttpRequest/authorization``
+open class UUEmptyAuthorization: UUHttpAuthorization, @unchecked Sendable
 {
     /// Always returns `nil`, indicating that no credential string should be sent.
     open override func formatAuthorization() -> String?
@@ -57,7 +57,7 @@ open class UUEmptyAuthorizationProvider: UUHttpAuthorizationProvider
     }
 
     /// Intentionally does nothing; no `Authorization` header is added or modified.
-    open override func attachAuthorization(_ request: UUHttpRequest) async
+    open override func attachAuthorization(_ request: UUHttpRequest)
     {
         // Do nothing
     }
