@@ -1,4 +1,6 @@
 {
     "base_url": "https://uu-networking.spsw.io",
-    "login_callback_url": "uu-networking://login"
+    "login_callback_url": "uu-networking://login",
+    
+    "shutterstock_base_url": "https://api.shutterstock.com"
 }

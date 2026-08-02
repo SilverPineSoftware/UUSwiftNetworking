@@ -141,19 +141,19 @@ protocol AppServerApi: Sendable
 }
 
 nonisolated
-class KeychainAuthorizationProvider: UUHttpAuthorizationProvider
+class KeychainAuthorizationProvider: UUHttpAuthorizationProvider, @unchecked Sendable
 {
     private static let accessTokenKey = "networking_api.access_token"
     private static let refreshTokenKey = "networking_api.refresh_token"
     
-    override func attachAuthorization(_ request: UUHttpRequest) async
+    override func loadAuthorization() async -> Result<UUHttpAuthorization?, Error>
     {
         if let accessToken = await readAccessToken()
         {
-            self.authorization = accessToken
+            return .success(UUHttpAuthorization(authorization: accessToken))
         }
         
-        await super.attachAuthorization(request)
+        return .success(nil)
     }
     
     func readAccessToken() async -> String?
@@ -302,7 +302,7 @@ final class UUAppServerApi: UURemoteApi, AppServerApi
     
     func completeLogin(_ loginRequest: LoginRequest, _ url: URL) async -> Result<AppUser, AppError>
     {
-        let urlPath = url.path(percentEncoded: false)
+        let urlPath = url.path
         UULog.debug(tag: LOG_TAG, message: "URLPath: \(urlPath)")
         
         guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),

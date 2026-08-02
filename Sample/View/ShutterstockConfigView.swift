@@ -75,7 +75,7 @@ struct ShutterstockConfigView: View
                             Spacer()
                         }
                         
-                        TextField("Client Secret", text: $viewModel.clientSecret)
+                        SecureField("Client Secret", text: $viewModel.clientSecret)
                             .padding(10)
                             .background(Color(.cardBackground))
                             .cornerRadius(8)
@@ -88,6 +88,34 @@ struct ShutterstockConfigView: View
                             .foregroundColor(.textBody)
                             .font(.body.monospaced())
 
+                    }
+                    
+                    if let credentialsError = viewModel.credentialsError
+                    {
+                        Text(credentialsError)
+                            .font(.footnote.monospaced())
+                            .foregroundColor(.red)
+                    }
+                    
+                    HStack
+                    {
+                        Button("Clear")
+                        {
+                            Task
+                            {
+                                await viewModel.clearCredentials()
+                            }
+                        }
+                        
+                        Spacer()
+                        
+                        Button("Save")
+                        {
+                            Task
+                            {
+                                await viewModel.saveCredentials()
+                            }
+                        }
                     }
                 }
                 
@@ -122,6 +150,10 @@ struct ShutterstockConfigView: View
         }
         .safeAreaPadding([.top, .trailing])
         .background(.appBackground)
+        .task
+        {
+            await viewModel.loadCredentials()
+        }
     }
 }
 

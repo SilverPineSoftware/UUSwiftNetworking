@@ -16,7 +16,7 @@
       "target" : {
         "containerPath" : "container:UUSwiftNetworking.xcodeproj",
         "identifier" : "08D2A55E2FD49AE900059110",
-        "name" : "UUSwiftNetworkingSampleTests"
+        "name" : "SampleTests"
       }
     }
   ],

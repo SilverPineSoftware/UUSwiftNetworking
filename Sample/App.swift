@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 import UUSwiftCore
 
 private let LOG_TAG = "App"
@@ -76,8 +77,6 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 @main
 struct SampleApp: App
 {
-    //@UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
-    
     private let menuViewModel = MenuViewModel()
     private let accountViewModel = AccountViewModel()
     

@@ -35,6 +35,13 @@ final class UUShutterstockApiTests: XCTestCase
     {
         let testConfig = try XCTUnwrap(SampleTestConfig.load(from: "SampleTestConfig"))
         return ShutterstockApiConfig(
+            baseUrl: "https://api.shutterstock.com")
+    }
+    
+    private func loadCredentials() throws -> ShutterstockCredentials
+    {
+        let testConfig = try XCTUnwrap(SampleTestConfig.load(from: "SampleTestConfig"))
+        return ShutterstockCredentials(
             clientKey: testConfig.shutterstockClientKey,
             clientSecret: testConfig.shutterstockClientSecret)
     }
@@ -50,9 +57,12 @@ final class UUShutterstockApiTests: XCTestCase
         // https://developer.apple.com/documentation/xctest
         
         let cfg = try loadConfig()
+        let credentials = try loadCredentials()
+        let credentialsStore = TestShutterstockCredentialsStore(credentials: credentials)
         
-        let api = ShutterstockApi()
-        api.config = cfg.apiConfig
+        let api = UUShutterstockApi(
+            baseUrl: cfg.baseUrl,
+            credentialsStore: credentialsStore)
         
         let result = await api.searchImagePage(query: "cat", page: 1, count: 10, large: true)
         
@@ -93,4 +103,29 @@ final class UUShutterstockApiTests: XCTestCase
         }
     }
 
+}
+
+private final class TestShutterstockCredentialsStore: ShutterstockCredentialsStore, @unchecked Sendable
+{
+    private let credentials: ShutterstockCredentials
+    
+    init(credentials: ShutterstockCredentials)
+    {
+        self.credentials = credentials
+    }
+    
+    func loadCredentials() async -> Result<ShutterstockCredentials, Error>
+    {
+        return .success(credentials)
+    }
+    
+    func saveCredentials(_ credentials: ShutterstockCredentials) async -> Error?
+    {
+        return nil
+    }
+    
+    func clearCredentials() async -> Error?
+    {
+        return nil
+    }
 }

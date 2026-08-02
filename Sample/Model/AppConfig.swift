@@ -12,6 +12,8 @@ struct AppConfig: Codable, Sendable
 {
     let baseUrl: String
     let loginCallbackUrl: String
+    
+    let shutterstockBaseUrl: String
 }
 
 extension AppConfig

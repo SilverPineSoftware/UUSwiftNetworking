@@ -7,6 +7,14 @@
 //
 
 import Foundation
+
+
+public struct ShutterstockApiConfig
+{
+    let baseUrl: String
+}
+
+/*
 import UUSwiftNetworking
 
 nonisolated public struct ShutterstockApiConfig: Codable
@@ -30,12 +38,11 @@ nonisolated public struct ShutterstockApiConfig: Codable
         case clientSecret = "client_secret"
     }
     
-    var apiConfig: UURemoteApiConfig
-    {
-        var cfg = UURemoteApiConfig()
-        //cfg.authorizationProvider = UUBasicAuthorizationProvider(userName: clientKey, password: clientSecret)
-        return cfg
-    }
+//    var apiConfig: UURemoteApiConfig
+//    {
+//        var cfg = UURemoteApiConfig()
+//        return cfg
+//    }
     
     static func load() -> Self
     {
@@ -57,3 +64,4 @@ nonisolated public struct ShutterstockApiConfig: Codable
         }
     }
 }
+*/

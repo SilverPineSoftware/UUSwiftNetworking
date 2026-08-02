@@ -18,4 +18,9 @@ struct AppServices: Sendable
         return UUAppServerApi(AppConfig.shared)
     }()
     
+    static let shutterstockServer: ShutterstockApi =
+    {
+        return UUShutterstockApi(baseUrl: AppConfig.shared.shutterstockBaseUrl)
+    }()
+    
 }

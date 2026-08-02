@@ -19,41 +19,62 @@ class ShutterstockViewModel: ObservableObject
     @Published var isLoading: Bool = false
 
     @Published var clientKey: String = ""
-    {
-        didSet
-        {
-            var cfg = ShutterstockApiConfig.load()
-            cfg.clientKey = clientKey
-            cfg.save()
-
-            api.config = cfg.apiConfig
-        }
-    }
-
     @Published var clientSecret: String = ""
-    {
-        didSet
-        {
-            var cfg = ShutterstockApiConfig.load()
-            cfg.clientSecret = clientSecret
-            cfg.save()
-
-            api.config = cfg.apiConfig
-        }
-    }
-    
+    @Published var credentialsError: String?
     @Published var perPage: Int = 20
 
-    nonisolated(unsafe) private var api: ShutterstockApi = ShutterstockApi()
+    private var api: ShutterstockApi = AppServices.shutterstockServer
     private var currentPage: Int = 0
     private var hasMore: Bool = true
     //private let perPage: Int = 20
 
     init()
     {
-        let cfg = ShutterstockApiConfig.load()
-        clientKey = cfg.clientKey
-        clientSecret = cfg.clientSecret
+
+    }
+    
+    func loadCredentials() async
+    {
+        switch await api.loadCredentials()
+        {
+            case .failure(let error):
+                credentialsError = "\(error)"
+            
+            case .success(let credentials):
+                clientKey = credentials.clientKey
+                clientSecret = credentials.clientSecret
+                credentialsError = nil
+        }
+    }
+    
+    func saveCredentials() async
+    {
+        let credentials = ShutterstockCredentials(
+            clientKey: clientKey,
+            clientSecret: clientSecret)
+        
+        if let error = await api.saveCredentials(credentials)
+        {
+            credentialsError = "\(error)"
+        }
+        else
+        {
+            credentialsError = nil
+        }
+    }
+    
+    func clearCredentials() async
+    {
+        if let error = await api.clearCredentials()
+        {
+            credentialsError = "\(error)"
+        }
+        else
+        {
+            clientKey = ""
+            clientSecret = ""
+            credentialsError = nil
+        }
     }
 
     func search() async

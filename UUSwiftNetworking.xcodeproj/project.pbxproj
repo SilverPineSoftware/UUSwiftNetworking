@@ -125,10 +125,15 @@
 		0840B65F2FD5D580006F57DE /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Model/AppConfig.swift,
+				Model/AppError.swift,
+				Model/AppUser.swift,
 				Services/Cloud/AppServerApi.swift,
 				Services/Cloud/AppServerDTO.swift,
 				Services/Cloud/ShutterstockApi.swift,
 				Services/Cloud/ShutterstockApiConfig.swift,
+				Services/Cloud/ShutterstockCredentialsStore.swift,
+				Services/Cloud/ShutterstockDTO.swift,
 				Services/Cloud/SilverpineSsoApi.swift,
 			);
 			target = 0840B4512FD5A20B006F57DE /* LibraryTests */;
@@ -150,10 +155,15 @@
 		08817FD92FF1D5A000658EB9 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Model/AppConfig.swift,
+				Model/AppError.swift,
+				Model/AppUser.swift,
 				Services/Cloud/AppServerApi.swift,
 				Services/Cloud/AppServerDTO.swift,
 				Services/Cloud/ShutterstockApi.swift,
 				Services/Cloud/ShutterstockApiConfig.swift,
+				Services/Cloud/ShutterstockCredentialsStore.swift,
+				Services/Cloud/ShutterstockDTO.swift,
 			);
 			target = 08817FA42FF1D3D200658EB9 /* LibraryConnectedTests */;
 		};
@@ -759,6 +769,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "com.silverpine.uu.network.test-host.ConnectedTestHost";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTS_MACCATALYST = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
@@ -798,6 +809,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "com.silverpine.uu.network.test-host.ConnectedTestHost";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTS_MACCATALYST = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -829,7 +841,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/UUSwiftNetworkingSample.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/UUSwiftNetworkingSample";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Sample.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Sample";
 			};
 			name = Debug;
 		};
@@ -854,7 +866,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/UUSwiftNetworkingSample.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/UUSwiftNetworkingSample";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Sample.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Sample";
 			};
 			name = Release;
 		};
