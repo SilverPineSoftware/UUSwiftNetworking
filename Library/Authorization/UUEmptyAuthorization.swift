@@ -48,7 +48,7 @@ import Foundation
 /// - SeeAlso: ``UURemoteApi/executeWithoutAuthorizationRenewal(_:)``
 /// - SeeAlso: ``UURemoteApi/authorizationProvider``
 /// - SeeAlso: ``UUHttpRequest/authorization``
-open class UUEmptyAuthorization: UUHttpAuthorization, @unchecked Sendable
+open class UUEmptyAuthorization: UUHttpAuthorization
 {
     /// Always returns `nil`, indicating that no credential string should be sent.
     open override func formatAuthorization() -> String?

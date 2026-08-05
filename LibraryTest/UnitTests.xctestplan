@@ -55,7 +55,7 @@
       "target" : {
         "containerPath" : "container:UUSwiftNetworking.xcodeproj",
         "identifier" : "0840B4512FD5A20B006F57DE",
-        "name" : "UUSwiftNetworkingTests"
+        "name" : "LibraryTests"
       }
     }
   ],

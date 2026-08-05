@@ -13,7 +13,7 @@ import Foundation
 /// Raw ``UUHttpRequest`` values use ``UUHttpRequest/authorization`` directly. Higher-level API
 /// clients use a provider when credentials need to be loaded from storage, refreshed, or otherwise
 /// resolved at request time.
-open class UUHttpAuthorizationProvider: @unchecked Sendable
+open class UUHttpAuthorizationProvider
 {
     public init()
     {
@@ -46,7 +46,7 @@ open class UUHttpAuthorizationProvider: @unchecked Sendable
 }
 
 /// In-memory authorization provider for simple API clients and tests.
-open class UUStaticHttpAuthorizationProvider: UUHttpAuthorizationProvider, @unchecked Sendable
+open class UUStaticHttpAuthorizationProvider: UUHttpAuthorizationProvider
 {
     public var authorization: UUHttpAuthorization?
     

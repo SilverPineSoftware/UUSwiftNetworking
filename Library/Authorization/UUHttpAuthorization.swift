@@ -40,7 +40,7 @@ import Foundation
 ///
 /// - SeeAlso: ``UUBasicAuthorization``
 /// - SeeAlso: ``UUHttpRequest/authorization``
-open class UUHttpAuthorization: @unchecked Sendable
+open class UUHttpAuthorization
 {
     /// Authentication scheme, the first token in the header value (for example `"Bearer"` or `"Basic"`).
     /// Must not include a trailing space.

@@ -36,7 +36,7 @@ import Foundation
 /// - SeeAlso: [RFC 7617](https://datatracker.ietf.org/doc/html/rfc7617) (HTTP Basic Access Authentication)
 /// - SeeAlso: ``UUHttpAuthorization``
 /// - SeeAlso: ``UUHttpRequest/authorization``
-open class UUBasicAuthorization: UUHttpAuthorization, @unchecked Sendable
+open class UUBasicAuthorization: UUHttpAuthorization
 {
     /// User name or API key identifier.
     public var userName: String?
