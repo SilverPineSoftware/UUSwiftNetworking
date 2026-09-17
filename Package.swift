@@ -19,11 +19,11 @@ let package = Package(
 	dependencies: [
 		.package(
 			url: "https://github.com/SilverPineSoftware/UUSwiftCore.git",
-            from: "1.7.0"
+            from: "1.7.2"
 		),
         .package(
             url: "https://github.com/SilverPineSoftware/UUSwiftTestCore.git",
-            from: "0.0.4"
+            from: "0.0.5"
         )
 	],
 
