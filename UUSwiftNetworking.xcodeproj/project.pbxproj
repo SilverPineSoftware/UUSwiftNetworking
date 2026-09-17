@@ -1220,7 +1220,7 @@
 			repositoryURL = "https://github.com/SilverPineSoftware/UUSwiftCore";
 			requirement = {
 				kind = exactVersion;
-				version = 1.7.0;
+				version = 1.7.2;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
