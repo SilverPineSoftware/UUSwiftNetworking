@@ -64,10 +64,10 @@ final class UUEmptyAuthorizationTests: XCTestCase
 
     // MARK: - UURemoteApi integration
 
-    func test_prepareRequest_doesNotReplaceEmptyAuthorizationWithApiProvider() async
+    func test_prepareRequest_replacesEmptyAuthorizationWithApiProvider() async
     {
-        let apiProvider = UUStaticHttpAuthorizationProvider(
-            UUBasicAuthorization(userName: "api", password: "secret"))
+        let providerAuthorization = UUBasicAuthorization(userName: "api", password: "secret")
+        let apiProvider = UUStaticHttpAuthorizationProvider(providerAuthorization)
         let emptyAuthorization = UUEmptyAuthorization()
         let request = UUHttpRequest(url: testUrl)
         request.authorization = emptyAuthorization
@@ -77,10 +77,10 @@ final class UUEmptyAuthorizationTests: XCTestCase
 
         await api.prepareRequest(request)
 
-        XCTAssertTrue(request.authorization === emptyAuthorization)
+        XCTAssertTrue(request.authorization === providerAuthorization)
     }
 
-    func test_prepareRequest_emptyAuthorizationSkipsApiProviderOnNetworkRequest() async
+    func test_prepareRequest_emptyAuthorizationUsesApiProviderOnNetworkRequest() async
     {
         let apiProvider = UUStaticHttpAuthorizationProvider(
             UUBasicAuthorization(userName: "api", password: "secret"))
@@ -93,7 +93,9 @@ final class UUEmptyAuthorizationTests: XCTestCase
         await api.prepareRequest(request)
         let urlRequest = await request.buildURLRequest()
 
-        XCTAssertNil(urlRequest?.value(forHTTPHeaderField: UUHttpHeader.authorization))
+        XCTAssertEqual(
+            urlRequest?.value(forHTTPHeaderField: UUHttpHeader.authorization),
+            "Basic YXBpOnNlY3JldA==")
     }
 }
 

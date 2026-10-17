@@ -112,11 +112,7 @@ open class UURemoteApi
     /// - Parameter request: The request about to be executed.
     open func prepareRequest(_ request: UUHttpRequest) async
     {
-        if request.authorization == nil,
-           let authorizationResult = await self.authorizationProvider?.loadAuthorization()
-        {
-            request.authorization = try? authorizationResult.get()
-        }
+        request.authorization = try? await self.authorizationProvider?.loadAuthorization().get()
         
         request.timeout = self.config.networkTimeout
     }

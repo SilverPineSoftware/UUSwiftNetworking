@@ -283,7 +283,7 @@ final class UURemoteApiTests: XCTestCase
         XCTAssertTrue(request.authorization === authorization)
     }
 
-    func test_prepareRequest_doesNotReplaceExistingRequestAuthorization() async
+    func test_prepareRequest_replacesExistingRequestAuthorizationWithProviderAuthorization() async
     {
         let apiAuthorization = UUBasicAuthorization(userName: "api", password: "api")
         let requestAuthorization = UUBasicAuthorization(userName: "req", password: "req")
@@ -294,7 +294,35 @@ final class UURemoteApiTests: XCTestCase
 
         await api.prepareRequest(request)
 
-        XCTAssertTrue(request.authorization === requestAuthorization)
+        XCTAssertTrue(request.authorization === apiAuthorization)
+    }
+
+    func test_prepareRequest_reloadsProviderAuthorizationOnEachCall() async
+    {
+        let firstAuthorization = UUHttpAuthorization(authorization: "first")
+        let secondAuthorization = UUHttpAuthorization(authorization: "second")
+        let provider = UUStaticHttpAuthorizationProvider(firstAuthorization)
+        let request = remoteApiTestRequest()
+        let api = TestRemoteApi()
+        api.authorizationProvider = provider
+
+        await api.prepareRequest(request)
+        XCTAssertTrue(request.authorization === firstAuthorization)
+
+        provider.authorization = secondAuthorization
+        await api.prepareRequest(request)
+        XCTAssertTrue(request.authorization === secondAuthorization)
+    }
+
+    func test_prepareRequest_clearsExistingAuthorizationWhenNoProviderIsConfigured() async
+    {
+        let request = remoteApiTestRequest()
+        request.authorization = UUHttpAuthorization(authorization: "request-token")
+        let api = TestRemoteApi()
+
+        await api.prepareRequest(request)
+
+        XCTAssertNil(request.authorization)
     }
 
     // MARK: - executeWithoutAuthorizationRenewal
