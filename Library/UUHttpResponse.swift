@@ -17,7 +17,7 @@ public class UUHttpResponse
     public let rawResponse: Data?
     public let endTime: TimeInterval
 
-    required init(
+    public required init(
         request: UUHttpRequest,
         response: HTTPURLResponse? = nil,
         error: Error? = nil,
