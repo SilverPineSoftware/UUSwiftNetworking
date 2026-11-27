@@ -10,6 +10,18 @@ import SwiftUI
 struct ShutterstockConfigView: View
 {
     @ObservedObject var viewModel: ShutterstockViewModel
+
+    @State private var savedClientKey: String = ""
+    @State private var savedClientSecret: String = ""
+    @State private var didLoadCredentials: Bool = false
+    @State private var showDiscardConfirmation: Bool = false
+    @State private var showClearConfirmation: Bool = false
+
+    private var hasUnsavedChanges: Bool
+    {
+        didLoadCredentials &&
+        (viewModel.clientKey != savedClientKey || viewModel.clientSecret != savedClientSecret)
+    }
     
     var body: some View
     {
@@ -21,9 +33,13 @@ struct ShutterstockConfigView: View
                 
                 Button(action:
                 {
-                    withAnimation
+                    if hasUnsavedChanges
                     {
-                        viewModel.showConfig = false
+                        showDiscardConfirmation = true
+                    }
+                    else
+                    {
+                        closeConfig()
                     }
                 })
                 {
@@ -102,10 +118,7 @@ struct ShutterstockConfigView: View
                     {
                         Button("Clear")
                         {
-                            Task
-                            {
-                                await viewModel.clearCredentials()
-                            }
+                            showClearConfirmation = true
                         }
                         
                         Spacer()
@@ -115,10 +128,26 @@ struct ShutterstockConfigView: View
                             Task
                             {
                                 await viewModel.saveCredentials()
+
+                                if viewModel.credentialsError == nil
+                                {
+                                    updateSavedCredentials()
+                                }
                             }
                         }
+                        .disabled(!hasUnsavedChanges)
                     }
                     .buttonStyle(.borderless)
+                }
+                footer:
+                {
+                    if hasUnsavedChanges
+                    {
+                        Label("Unsaved changes", systemImage: "exclamationmark.circle.fill")
+                            .font(.footnote.monospaced())
+                            .foregroundColor(.orange)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
                 }
                 
                 SettingsGroup("Config")
@@ -152,9 +181,59 @@ struct ShutterstockConfigView: View
         }
         .safeAreaPadding([.top, .trailing])
         .background(.appBackground)
+        .alert("Unsaved Changes", isPresented: $showDiscardConfirmation)
+        {
+            Button("Keep Editing", role: .cancel) { }
+            Button("Discard Changes", role: .destructive)
+            {
+                viewModel.clientKey = savedClientKey
+                viewModel.clientSecret = savedClientSecret
+                closeConfig()
+            }
+        }
+        message:
+        {
+            Text("Your Shutterstock credentials have unsaved changes. Are you sure you want to abandon them?")
+        }
+        .alert("Clear Credentials?", isPresented: $showClearConfirmation)
+        {
+            Button("Cancel", role: .cancel) { }
+            Button("Clear", role: .destructive)
+            {
+                Task
+                {
+                    await viewModel.clearCredentials()
+
+                    if viewModel.credentialsError == nil
+                    {
+                        updateSavedCredentials()
+                    }
+                }
+            }
+        }
+        message:
+        {
+            Text("This will permanently remove the saved Shutterstock client key and secret.")
+        }
         .task
         {
             await viewModel.loadCredentials()
+            updateSavedCredentials()
+            didLoadCredentials = true
+        }
+    }
+
+    private func updateSavedCredentials()
+    {
+        savedClientKey = viewModel.clientKey
+        savedClientSecret = viewModel.clientSecret
+    }
+
+    private func closeConfig()
+    {
+        withAnimation
+        {
+            viewModel.showConfig = false
         }
     }
 }
