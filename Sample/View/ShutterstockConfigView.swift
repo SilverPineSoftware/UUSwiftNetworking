@@ -76,6 +76,7 @@ struct ShutterstockConfigView: View
                         }
                         
                         SecureField("Client Secret", text: $viewModel.clientSecret)
+                            .textContentType(.oneTimeCode)
                             .padding(10)
                             .background(Color(.cardBackground))
                             .cornerRadius(8)
@@ -117,6 +118,7 @@ struct ShutterstockConfigView: View
                             }
                         }
                     }
+                    .buttonStyle(.borderless)
                 }
                 
                 SettingsGroup("Config")
